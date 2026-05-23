@@ -1,0 +1,20 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Datasets
+data/
+*.zip
+
+# Outputs, Logs, Checkpoints
+outputs/
+wandb/
+
+# IDE files
+.vscode/
+__pycache__/
+*.pyc
+
+# Misnamed directory from extraction if any
+"{data,models,utils,configs,scripts,outputs"
