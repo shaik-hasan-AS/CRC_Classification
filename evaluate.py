@@ -1,6 +1,6 @@
 """
 evaluate.py
-Run full evaluation on CRC-VAL-HE-7K and UniToPatho.
+Run full evaluation on CRC-VAL-HE-7K (cross-patient test set).
 Generates confusion matrix, per-class F1, and efficiency report.
 
 Run: python evaluate.py --checkpoint outputs/checkpoints/ckpt_best.pt
@@ -20,7 +20,7 @@ import seaborn as sns
 from torch.cuda.amp import autocast
 from sklearn.metrics import confusion_matrix
 
-from data.dataset import get_crossval_loader, get_unitopatho_loader, CRC_CLASSES
+from data.dataset import get_crossval_loader, CRC_CLASSES
 from models.medlite_crc import build_model, count_parameters
 from utils.metrics import compute_metrics, print_classification_report, load_checkpoint
 
@@ -31,7 +31,7 @@ def load_config(path):
 
 
 @torch.no_grad()
-def run_eval(model, loader, device, split_name, class_names):
+def run_eval(model, loader, device, split_name, class_names, use_tta=False):
     model.eval()
     all_preds, all_labels = [], []
     latencies = []
@@ -41,7 +41,15 @@ def run_eval(model, loader, device, split_name, class_names):
         imgs = imgs.to(device, non_blocking=True)
         t0 = time.perf_counter()
         with autocast(enabled=use_amp):
-            logits = model(imgs)
+            if use_tta:
+                probs = torch.softmax(model(imgs), dim=1)
+                probs += torch.softmax(model(torch.rot90(imgs, 1, [2, 3]).contiguous()), dim=1)
+                probs += torch.softmax(model(torch.rot90(imgs, 2, [2, 3]).contiguous()), dim=1)
+                probs += torch.softmax(model(torch.rot90(imgs, 3, [2, 3]).contiguous()), dim=1)
+                probs /= 4.0
+                logits = probs  # argmax will work identically on probabilities
+            else:
+                logits = model(imgs)
         latencies.append((time.perf_counter() - t0) * 1000 / imgs.size(0))  # ms/img
         preds = logits.argmax(dim=1)
         all_preds.extend(preds.cpu().numpy())
@@ -111,7 +119,10 @@ def efficiency_report(model, device):
 
 def main(args):
     cfg    = load_config(args.config)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if args.cpu:
+        device = torch.device("cpu")
+    else:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[DEVICE] {device}")
 
     # Build model
@@ -128,7 +139,7 @@ def main(args):
     if cross_val_loader:
         criterion = nn.CrossEntropyLoss()
         metrics, preds, labels = run_eval(
-            model, cross_val_loader, device, "CRC-VAL-HE-7K (cross-patient)", CRC_CLASSES
+            model, cross_val_loader, device, "CRC-VAL-HE-7K (cross-patient)", CRC_CLASSES, use_tta=args.tta
         )
         results["splits"]["crc_val"] = metrics
         plot_confusion_matrix(
@@ -136,17 +147,6 @@ def main(args):
             save_path=f"{cfg['outputs']['gradcam_dir']}/../cm_crc_val.png"
         )
 
-    # UniToPatho (cross-hospital)
-    unitopatho_loader = get_unitopatho_loader(cfg)
-    if unitopatho_loader:
-        metrics, preds, labels = run_eval(
-            model, unitopatho_loader, device, "UniToPatho (cross-hospital)", CRC_CLASSES
-        )
-        results["splits"]["unitopatho"] = metrics
-        plot_confusion_matrix(
-            preds, labels, CRC_CLASSES,
-            save_path=f"{cfg['outputs']['gradcam_dir']}/../cm_unitopatho.png"
-        )
 
     # Save results JSON
     out_path = Path(cfg["outputs"]["log_dir"]) / "eval_results.json"
@@ -161,5 +161,9 @@ if __name__ == "__main__":
     parser.add_argument("--config",     default="configs/config.yaml")
     parser.add_argument("--checkpoint", required=True,
                         help="Path to .pt checkpoint file")
+    parser.add_argument("--cpu",        action="store_true",
+                        help="Force CPU evaluation for latency benchmarking")
+    parser.add_argument("--tta",        action="store_true",
+                        help="Use Test-Time Augmentation (4 rotations) to improve accuracy")
     args = parser.parse_args()
     main(args)

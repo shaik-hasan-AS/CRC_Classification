@@ -1,6 +1,6 @@
 project:
-  name: "MedLite-CRC"
-  description: "Lightweight stain-robust CNN for colon histopathology classification"
+  name: "MedLite-CRC-LargeKernel"
+  description: "Knowledge Distillation from MobileNetV2 to MedLite V1"
   seed: 42
 
 data:
@@ -44,6 +44,13 @@ training:
   early_stopping_patience: 20
   grad_clip: 1.0
   mixed_precision: true         # AMP for RTX 4060
+  
+  # Knowledge Distillation Config
+  use_kd: true
+  teacher_model: "mobilenetv2"
+  teacher_checkpoint: "outputs/checkpoints_mobilenetv2/ckpt_epoch051_acc0.9883.pt"
+  kd_temperature: 3.0
+  kd_alpha: 0.5
 
 model:
   name: "MedLiteCRC"
@@ -58,7 +65,7 @@ wandb:
   log_freq: 50                  # log every N batches
 
 outputs:
-  checkpoint_dir: "outputs/checkpoints"
+  checkpoint_dir: "outputs/checkpoints_large_kernel"
   log_dir: "outputs/logs"
   gradcam_dir: "outputs/gradcam"
   save_top_k: 3                 # keep top-3 checkpoints by val accuracy

@@ -1,0 +1,77 @@
+data:
+  augmentation:
+    color_jitter: true
+    color_jitter_brightness: 0.3
+    color_jitter_contrast: 0.3
+    color_jitter_hue: 0.08
+    color_jitter_saturation: 0.15
+    normalize_mean:
+    - 0.7406
+    - 0.5331
+    - 0.7059
+    normalize_std:
+    - 0.1651
+    - 0.2174
+    - 0.1574
+    random_erasing: true
+    random_erasing_p: 0.15
+    random_flip: true
+    random_rotation: true
+    stain_probability: 0.6
+    stain_sigma1: 0.3
+    stain_sigma2: 0.3
+    use_stain_augment: true
+  classes:
+  - ADI
+  - BACK
+  - DEB
+  - LYM
+  - MUC
+  - MUS
+  - NORM
+  - STR
+  - TUM
+  image_size: 224
+  nct_crc_train_dir: data/NCT-CRC-HE-100K
+  nct_crc_val_dir: data/CRC-VAL-HE-7K
+  num_classes: 9
+  num_workers: 4
+  pin_memory: true
+model:
+  attention_reduction: 16
+  base_channels: 48
+  dropout: 0.45
+  name: MedLiteCRC
+outputs:
+  checkpoint_dir: outputs/checkpoints_v2_scratch
+  gradcam_dir: outputs/gradcam
+  log_dir: outputs/logs
+  save_top_k: 3
+project:
+  description: V2 architecture with SiLU and 48 base channels
+  name: MedLite-CRC-v2
+  seed: 42
+training:
+  batch_size: 64
+  class_weight_method: inverse_freq
+  crossval_eval_freq: 5
+  early_stopping_patience: 25
+  epochs: 200
+  focal_gamma: 2.0
+  grad_clip: 1.0
+  label_smoothing: 0.1
+  loss: focal
+  lr: 0.001
+  mixed_precision: true
+  mixup_alpha: 0.2
+  optimizer: adamw
+  scheduler: cosine
+  use_class_weights: true
+  val_batch_size: 128
+  warmup_epochs: 10
+  weight_decay: 0.001
+wandb:
+  enabled: true
+  entity: ''
+  log_freq: 50
+  project: MedLite-CRC

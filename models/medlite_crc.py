@@ -16,7 +16,7 @@ import torch.nn.functional as F
 # ── Utility Blocks ─────────────────────────────────────────────────────────────
 
 def conv_bn_relu6(in_ch, out_ch, kernel=3, stride=1, padding=1, groups=1):
-    """Conv + BatchNorm + ReLU6 (standard mobile building block)."""
+    """Conv + BatchNorm + ReLU6 (Swish) for smoother gradients."""
     return nn.Sequential(
         nn.Conv2d(in_ch, out_ch, kernel, stride=stride,
                   padding=padding, groups=groups, bias=False),
@@ -245,15 +245,43 @@ class MedLiteCRC(nn.Module):
 
 # ── Model Factory ──────────────────────────────────────────────────────────────
 
-def build_model(cfg) -> MedLiteCRC:
+def build_model(cfg) -> nn.Module:
     model_cfg = cfg.get("model", {})
-    model = MedLiteCRC(
-        num_classes   = cfg["data"]["num_classes"],
-        base_channels = model_cfg.get("base_channels", 32),
-        reduction     = model_cfg.get("attention_reduction", 16),
-        dropout       = model_cfg.get("dropout", 0.4),
-    )
-    return model
+    model_name = model_cfg.get("name", "MedLiteCRC")
+    num_classes = cfg["data"]["num_classes"]
+
+    if model_name == "MedLiteCRC":
+        return MedLiteCRC(
+            num_classes   = num_classes,
+            base_channels = model_cfg.get("base_channels", 48),
+            reduction     = model_cfg.get("attention_reduction", 16),
+            dropout       = model_cfg.get("dropout", 0.4),
+        )
+
+    # Baselines
+    import torchvision.models as models
+
+    if model_name == "MobileNetV2":
+        model = models.mobilenet_v2(weights=None)
+        model.classifier[1] = nn.Linear(model.last_channel, num_classes)
+        return model
+
+    if model_name == "EfficientNetB0":
+        model = models.efficientnet_b0(weights=None)
+        model.classifier[1] = nn.Linear(model.classifier[1].in_features, num_classes)
+        return model
+
+    if model_name == "ShuffleNetV2":
+        model = models.shufflenet_v2_x1_0(weights=None)
+        model.fc = nn.Linear(model.fc.in_features, num_classes)
+        return model
+
+    if model_name == "ResNet50":
+        model = models.resnet50(weights=None)
+        model.fc = nn.Linear(model.fc.in_features, num_classes)
+        return model
+
+    raise ValueError(f"Unknown model: {model_name}")
 
 
 def count_parameters(model: nn.Module) -> dict:

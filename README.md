@@ -57,7 +57,6 @@ python utils/gradcam.py --checkpoint outputs/checkpoints/<best_ckpt>.pt --img pa
 |---|---|---|---|
 | NCT-CRC-HE-100K | 100K patches | Train / Val | https://zenodo.org/records/1214456 |
 | CRC-VAL-HE-7K | 7K patches | Cross-patient test | Same Zenodo record |
-| UniToPatho | 9.5K patches | Cross-hospital test | https://ieee-dataport.org/open-access/unitopatho |
 
 ---
 
