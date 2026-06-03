@@ -5,12 +5,12 @@ Run: python train.py
       python train.py --config configs/finetune_v2.yaml --finetune outputs/checkpoints/ckpt_epoch175_acc0.9984.pt
 """
 
-import os
-import sys
+
+
 import time
 import random
 import argparse
-from pathlib import Path
+
 
 import yaml
 import numpy as np
@@ -28,7 +28,7 @@ from utils.metrics import (
     compute_metrics, print_classification_report,
     CheckpointManager, EarlyStopping, AverageMeter, load_checkpoint
 )
-from utils.losses import FocalLoss, compute_class_weights, PairwiseConfusionPenalty
+from utils.losses import compute_class_weights
 
 
 # ── Reproducibility ───────────────────────────────────────────────────────────
@@ -94,21 +94,12 @@ def build_criterion(cfg, train_dataset=None):
         )
         print(f"  [LOSS] Class weights: {class_weights.numpy().round(3)}")
 
-    if loss_type == "focal":
-        gamma = tr.get("focal_gamma", 2.0)
-        print(f"  [LOSS] FocalLoss(gamma={gamma}, smoothing={label_smoothing})")
-        return FocalLoss(
-            alpha=class_weights,
-            gamma=gamma,
-            label_smoothing=label_smoothing,
-        )
-    else:
-        print(f"  [LOSS] CrossEntropyLoss(smoothing={label_smoothing})")
-        criterion = nn.CrossEntropyLoss(
-            weight=class_weights,
-            label_smoothing=label_smoothing,
-        )
-        return criterion
+    print(f"  [LOSS] CrossEntropyLoss(smoothing={label_smoothing})")
+    criterion = nn.CrossEntropyLoss(
+        weight=class_weights,
+        label_smoothing=label_smoothing,
+    )
+    return criterion
 
 
 # ── Mixup Augmentation ────────────────────────────────────────────────────────
@@ -182,11 +173,7 @@ def train_one_epoch(model, loader, criterion, optimizer, scaler, device, cfg, ep
     use_mixup   = mixup_alpha > 0
     use_cutmix  = cutmix_alpha > 0
 
-    # Instantiate the Pairwise Confusion Penalty for STR (7) and MUS (5) / ADI (0)
-    if cfg["training"].get("use_confusion_penalty", False):
-        penalty_loss = PairwiseConfusionPenalty(pairs=[(7, 5), (7, 0)], penalty_weight=0.5).to(device)
-    else:
-        penalty_loss = None
+
 
     for step, (imgs, labels) in enumerate(loader):
         imgs, labels = imgs.to(device, non_blocking=True), labels.to(device, non_blocking=True)
@@ -222,10 +209,7 @@ def train_one_epoch(model, loader, criterion, optimizer, scaler, device, cfg, ep
                 kd_loss = F.kl_div(log_probs, soft_targets, reduction='batchmean') * (kd_T ** 2)
                 loss = (1. - kd_alpha) * loss + kd_alpha * kd_loss
                 
-            # Add Pairwise Confusion Penalty
-            if penalty_loss is not None:
-                # We apply penalty to raw logits against original labels
-                loss += penalty_loss(logits, labels)
+
 
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)

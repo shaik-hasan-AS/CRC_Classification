@@ -4,7 +4,7 @@ Download NCT-CRC-HE-100K and CRC-VAL-HE-7K from Zenodo.
 Run once before training: python scripts/download_data.py
 """
 
-import os
+
 import sys
 import zipfile
 import urllib.request
@@ -20,6 +20,11 @@ DATASETS = {
     "CRC-VAL-HE-7K": {
         "url": "https://zenodo.org/record/1214456/files/CRC-VAL-HE-7K.zip",
         "dest": "data/CRC-VAL-HE-7K.zip",
+        "extract_to": "data/",
+    },
+    "NCT-CRC-HE-100K-NONORM": {
+        "url": "https://zenodo.org/record/1214456/files/NCT-CRC-HE-100K-NONORM.zip",
+        "dest": "data/NCT-CRC-HE-100K-NONORM.zip",
         "extract_to": "data/",
     },
 }

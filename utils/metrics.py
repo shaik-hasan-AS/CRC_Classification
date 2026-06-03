@@ -4,7 +4,7 @@ Training utilities: metrics, checkpoint management, early stopping, AMP scaler.
 """
 
 import os
-import json
+
 import heapq
 from pathlib import Path
 from typing import Optional
@@ -12,7 +12,7 @@ from typing import Optional
 import torch
 import numpy as np
 from sklearn.metrics import (
-    accuracy_score, f1_score, classification_report, confusion_matrix
+    accuracy_score, f1_score, classification_report
 )
 
 

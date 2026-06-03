@@ -7,6 +7,7 @@ data:
   # Update these paths after downloading
   nct_crc_train_dir: "data/NCT-CRC-HE-100K"
   nct_crc_val_dir: "data/CRC-VAL-HE-7K"
+  nct_crc_nonorm_dir: "data/NCT-CRC-HE-100K-NONORM"
   image_size: 224
   num_classes: 9
   num_workers: 4
@@ -33,17 +34,23 @@ data:
     normalize_std:  [0.1651, 0.2174, 0.1574]   # CRC-specific std
 
 training:
-  epochs: 200
+  epochs: 15
   batch_size: 64
   val_batch_size: 128
   optimizer: "adam"
   lr: 0.001
   weight_decay: 0.0001
   scheduler: "cosine"          # cosine annealing with warmup
-  warmup_epochs: 10
+  warmup_epochs: 2
   early_stopping_patience: 20
   grad_clip: 1.0
   mixed_precision: true         # AMP for RTX 4060
+  
+  # STR vs MUS Fixes
+  loss: "focal"                 # 'ce' or 'focal'
+  focal_gamma: 2.0
+  use_class_weights: true       # Weight loss by inverse frequency
+  use_confusion_penalty: true   # Penalize STR/MUS explicit confusion
 
 model:
   name: "MedLiteCRC"

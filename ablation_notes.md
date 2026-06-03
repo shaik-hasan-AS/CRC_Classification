@@ -61,3 +61,19 @@ The larger receptive field successfully increased the STR recall from **52% to 6
 While the expanded receptive field theoretically helped with macro-texture (Stroma), the massive `11x11` filters acted as a low-pass "blur filter" that smoothed over the critical high-frequency, crisp edge details required to identify fine-grained classes like Lymphocyte nuclei. 
 
 **Conclusion:** The original `3x3, 5x5, 7x7` multi-scale architecture provides the mathematically optimal trade-off between macro-texture recognition and micro-texture preservation for histopathology applications.
+
+---
+
+## 5. Focal Loss and Pairwise Confusion Penalty
+
+### The Hypothesis
+Our model struggled to discriminate between Stroma (STR) and Smooth Muscle (MUS) due to their visual similarities. We hypothesized that applying a **Focal Loss** to upweight hard-to-classify examples, combined with a bespoke **Pairwise Confusion Penalty** (specifically penalizing logits that confuse STR with MUS), would force the network to learn the exact geometric boundaries between wavy stroma and straight muscle fibers.
+
+### The Result (Negative)
+The experiment initially seemed like an incredible success. On the internal `NCT-CRC-HE-100K` validation split, the model achieved a near-perfect **99.69% accuracy** and a **0.9968 Macro-F1 score**. The Stroma vs. Muscle confusion was mathematically eliminated.
+However, when evaluated on the unseen, cross-patient dataset (`CRC-VAL-HE-7K`), the model's accuracy dropped to **94.76%**. Critically, the Stroma recall plummeted to **57.48%** and Muscle precision dropped to **76.72%**.
+
+### The Scientific Conclusion
+The Focal Loss and Pairwise Confusion Penalty caused the model to severely **overfit to the source domain**. By heavily weighting the hardest Stroma examples in the training set, the network "memorized" the specific color profiles, scanning artifacts, and texture signatures of Stroma within the `NCT-CRC-HE-100K` cohort. When presented with Stroma from completely new patients with different H&E staining characteristics in the validation set, the model failed to generalize and defaulted to calling it Muscle.
+
+**Conclusion:** Modifying loss functions to specifically target the hardest edge cases within a single training domain can lead to catastrophic overfitting. For medical imaging, cross-patient generalization is paramount, and standard Cross Entropy Loss with label smoothing is strictly superior for generalization.

@@ -32,6 +32,16 @@ The model was trained on the `NCT-CRC-HE-100K` cohort and evaluated on the stric
 | **CPU Latency** | < 50.0 ms | **0.93 ms** |
 | **Total Parameters** | < 5.0 M | **0.49 M** |
 
+### Baseline Comparisons
+
+| Model | Parameters (M) | Size (MB) | Latency (ms) | Accuracy (%) | Macro-F1 |
+|-------|----------------|-----------|--------------|--------------|----------|
+| **MedLite-CRC (Ours)**| **0.49**       | **~2.0**  | **0.93**     | **95.43**    | **0.928**|
+| ShuffleNetV2          | 1.26           | 5.23      | 0.58         | 95.08        | 0.935    |
+| MobileNetV2           | 2.24           | 9.19      | 1.18         | 94.82        | 0.929    |
+| EfficientNetB0        | 4.02           | 16.38     | 1.53         | 94.81        | 0.927    |
+| ResNet50              | 23.53          | 94.43     | 0.23         | 94.33        | 0.910    |
+
 ### Known Limitations & Open Challenges
 While overall accuracy is extremely high, the model currently exhibits confusion between **Stroma (STR)** and **Smooth Muscle (MUS)** (STR Recall: 52%). Both are eosinophilic fibrous tissues. Extensive ablation studies (testing larger kernels, TTA, and CutMix) have demonstrated that this is a fundamental limitation of the continuous nature of histological tissue rather than a simple hyperparameter issue. Addressing this class imbalance/confusion is a primary focus for the next iteration (e.g., exploring Class-Weighted Loss).
 

@@ -14,13 +14,13 @@ from pathlib import Path
 import yaml
 import numpy as np
 import torch
-import torch.nn as nn
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 from torch.cuda.amp import autocast
 from sklearn.metrics import confusion_matrix
 
-from data.dataset import get_crossval_loader, CRC_CLASSES
+from data.dataset import get_crossval_loader, get_nonorm_loader, CRC_CLASSES
 from models.medlite_crc import build_model, count_parameters
 from utils.metrics import compute_metrics, print_classification_report, load_checkpoint
 
@@ -137,7 +137,6 @@ def main(args):
     # CRC-VAL-HE-7K (cross-patient)
     cross_val_loader = get_crossval_loader(cfg)
     if cross_val_loader:
-        criterion = nn.CrossEntropyLoss()
         metrics, preds, labels = run_eval(
             model, cross_val_loader, device, "CRC-VAL-HE-7K (cross-patient)", CRC_CLASSES, use_tta=args.tta
         )
@@ -145,6 +144,18 @@ def main(args):
         plot_confusion_matrix(
             preds, labels, CRC_CLASSES,
             save_path=f"{cfg['outputs']['gradcam_dir']}/../cm_crc_val.png"
+        )
+
+    # NCT-CRC-HE-100K-NONORM (cross-stain)
+    nonorm_loader = get_nonorm_loader(cfg)
+    if nonorm_loader:
+        metrics, preds, labels = run_eval(
+            model, nonorm_loader, device, "NCT-CRC-HE-100K-NONORM (cross-stain)", CRC_CLASSES, use_tta=args.tta
+        )
+        results["splits"]["nonorm"] = metrics
+        plot_confusion_matrix(
+            preds, labels, CRC_CLASSES,
+            save_path=f"{cfg['outputs']['gradcam_dir']}/../cm_nonorm.png"
         )
 
 
