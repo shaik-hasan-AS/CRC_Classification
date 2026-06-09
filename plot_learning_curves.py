@@ -69,7 +69,7 @@ ax2.grid(True, linestyle=':', alpha=0.7)
 
 plt.tight_layout()
 
-os.makedirs("/home/hasan/.gemini/antigravity/brain/d5b61fe8-871c-4985-a5fd-4aa2ebe2db57/artifacts", exist_ok=True)
-save_path = "/home/hasan/.gemini/antigravity/brain/d5b61fe8-871c-4985-a5fd-4aa2ebe2db57/artifacts/learning_curves.png"
+os.makedirs("assets", exist_ok=True)
+save_path = "assets/learning_curves.png"
 plt.savefig(save_path, dpi=300, bbox_inches='tight')
 print(f"Saved publication-ready curves to: {save_path}")

@@ -27,6 +27,6 @@ for i, cls in enumerate(classes):
     ax.axis('off')
 
 plt.tight_layout()
-os.makedirs("/home/hasan/.gemini/antigravity/brain/d5b61fe8-871c-4985-a5fd-4aa2ebe2db57/artifacts", exist_ok=True)
-plt.savefig("/home/hasan/.gemini/antigravity/brain/d5b61fe8-871c-4985-a5fd-4aa2ebe2db57/artifacts/9_classes_grid.png", dpi=150)
+os.makedirs("assets", exist_ok=True)
+plt.savefig("assets/9_classes_grid.png", dpi=150)
 print("Saved 9_classes_grid.png")

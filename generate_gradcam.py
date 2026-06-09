@@ -20,7 +20,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = build_model(cfg).to(device)
 
 # Load best KD weights
-ckpt = torch.load("outputs/checkpoints_kd_v2/ckpt_epoch000_acc0.9971.pt", map_location=device, weights_only=False)
+ckpt = torch.load("outputs/checkpoints/ckpt_epoch175_acc0.9984.pt", map_location=device, weights_only=False)
 if "model_state_dict" in ckpt:
     model.load_state_dict(ckpt["model_state_dict"])
 else:
@@ -82,6 +82,6 @@ for row, cls_name in enumerate(classes_to_plot):
     axes[row, 1].axis('off')
 
 plt.tight_layout()
-os.makedirs("/home/hasan/.gemini/antigravity/brain/d5b61fe8-871c-4985-a5fd-4aa2ebe2db57/artifacts", exist_ok=True)
-plt.savefig("/home/hasan/.gemini/antigravity/brain/d5b61fe8-871c-4985-a5fd-4aa2ebe2db57/artifacts/gradcam_results.png", dpi=150)
-print("Saved gradcam_results.png")
+os.makedirs("outputs/gradcam", exist_ok=True)
+plt.savefig("outputs/gradcam/gradcam_results.png", dpi=150)
+print("Saved outputs/gradcam/gradcam_results.png")

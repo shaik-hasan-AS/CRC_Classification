@@ -2,7 +2,7 @@
 
 Here is a random sample taken directly from our `NCT-CRC-HE-100K` training dataset. You can see exactly what the CNN "sees" when it tries to classify these 224x224 histological crops.
 
-![9 Tissue Classes](/home/hasan/.gemini/antigravity/brain/d5b61fe8-871c-4985-a5fd-4aa2ebe2db57/artifacts/9_classes_grid.png)
+![9 Tissue Classes](assets/9_classes_grid.png)
 
 ### The Biological Breakdown
 

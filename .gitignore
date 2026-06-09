@@ -16,5 +16,3 @@ wandb/
 __pycache__/
 *.pyc
 
-# Misnamed directory from extraction if any
-"{data,models,utils,configs,scripts,outputs"
