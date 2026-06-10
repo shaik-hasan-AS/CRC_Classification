@@ -27,6 +27,11 @@ DATASETS = {
         "dest": "data/NCT-CRC-HE-100K-NONORM.zip",
         "extract_to": "data/",
     },
+    "CRC-5000": {
+        "url": "https://zenodo.org/record/53169/files/Kather_texture_2016_image_tiles_5000.zip",
+        "dest": "data/CRC-5000.zip",
+        "extract_to": "data/",
+    },
 }
 
 
@@ -91,6 +96,9 @@ if __name__ == "__main__":
 
     for name, info in DATASETS.items():
         final_dir = download_and_extract(name, info)
+        if name == "CRC-5000":
+            print(f"[SKIP VERIFY] {name} (requires mapping script)")
+            continue
         print(f"[VERIFY] {name}")
         verify_structure(final_dir, CLASSES)
 

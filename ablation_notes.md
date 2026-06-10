@@ -77,3 +77,37 @@ However, when evaluated on the unseen, cross-patient dataset (`CRC-VAL-HE-7K`), 
 The Focal Loss and Pairwise Confusion Penalty caused the model to severely **overfit to the source domain**. By heavily weighting the hardest Stroma examples in the training set, the network "memorized" the specific color profiles, scanning artifacts, and texture signatures of Stroma within the `NCT-CRC-HE-100K` cohort. When presented with Stroma from completely new patients with different H&E staining characteristics in the validation set, the model failed to generalize and defaulted to calling it Muscle.
 
 **Conclusion:** Modifying loss functions to specifically target the hardest edge cases within a single training domain can lead to catastrophic overfitting. For medical imaging, cross-patient generalization is paramount, and standard Cross Entropy Loss with label smoothing is strictly superior for generalization.
+
+---
+
+## 6. Cross-Dataset Generalization Failure (Domain Shift & Class Mismatch)
+
+### The Hypothesis
+We hypothesized that MedLite-CRC V1, having achieved 99.8% train accuracy and 94.5% validation accuracy on the NCT-CRC-HE-100K (2018) cohort, would natively generalize to the older CRC-5000 (2016) dataset by the same author, proving robust generalization across patch sizes and slight class distribution shifts. We attempted to merge the 2016 dataset's `COMPLEX` stroma class into our model's `STR` (Stroma) class for evaluation.
+
+### The Result (Negative)
+When evaluating the V1 checkpoint directly on the CRC-5000 dataset, the accuracy plummeted. In our first run (merging `COMPLEX` into `STR`), accuracy was **51.10%**. Even after removing the incompatible `COMPLEX` class entirely and evaluating only the remaining 7 overlapping classes (4,375 images), the accuracy dropped further to **48.98%**. The model fundamentally failed on Lymphocytes (LYM recall: 8.6%) and Tumor (TUM recall: 39%).
+
+### The Scientific Conclusion
+This experiment highlighted two critical failures in cross-domain histopathology evaluation:
+1. **Severe Domain Shift:** Even datasets curated by the exact same author for the exact same disease can possess massive domain shifts due to different lab scanning protocols, hospital origins, and year of extraction (2016 vs 2018). The CNN heavily memorized the staining and scale distributions of the 2018 dataset.
+2. **Taxonomic Incompatibility:** The 2016 dataset lacks `MUC` (Mucus) and `MUS` (Smooth Muscle) entirely. Furthermore, dropping mixed-tissue classes (like `COMPLEX`) does not rescue performance, proving that the underlying feature representations themselves fail to transfer out-of-the-box.
+
+**Conclusion:** Zero-shot generalization across histopathology datasets requires careful alignment of tissue taxonomy and extensive domain adaptation (e.g., Stain Normalization layers might not be enough for multi-year cross-hospital shifts). Merging or dropping incompatible classes cannot fix underlying domain representations.
+
+---
+
+## 7. Structure-Forcing Pipeline vs Deep Domain Shift
+
+### The Hypothesis
+After identifying that the model was "cheating" by relying on dataset-specific background colors and artifacts, we implemented a **Structure-Forcing Pipeline**. This pipeline introduced dynamic Foreground Masking (to eliminate negative-space reliance) and Grayscale Color-Dropout (to force texture-based feature learning). We hypothesized that by forcing the model to learn pure biological morphology, it would successfully generalize across the massive domain gap to the external `CRC-5000` dataset.
+
+### The Result (Negative/Mixed)
+The pipeline successfully fixed the training dynamics. The model no longer artificially spiked to 99% accuracy on Epoch 1, but instead climbed steadily to a robust **98.8% accuracy on the internal 7K validation set**. 
+However, when evaluating this optimized checkpoint on the external `CRC-5000` dataset, the accuracy still crashed to **63.59%** (up from 48.98% previously, but still a failure). Lymphocyte (LYM) recall remained abysmal at 5.28%.
+
+### The Scientific Conclusion
+The Structure-Forcing Pipeline successfully forced the network to learn morphology over color (improving external accuracy by ~15%), but it definitively proved that **Deep Domain Shift in histopathology is insurmountable by augmentation alone.** The hidden "scanner signatures" or specific dye batches of the source dataset create representations that simply do not exist in datasets curated from different hospitals/years.
+
+**Conclusion:** Evaluating models on holdout sets from the *same* clinical cohort (like the internal 7K set) creates a dangerously false sense of security. To solve severe domain shifts, models must be trained on massive, multi-centric datasets with built-in variance (like STARC-9), rather than relying on heavy augmentations to bridge the gap.
+

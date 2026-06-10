@@ -323,7 +323,7 @@ def train(cfg_path: str, resume: str = None, finetune: str = None):
     # ── Loss / Optimizer / Scheduler ─────────────────────────────────────────
     # Get train dataset for class weight computation
     train_dataset = train_loader.dataset
-    criterion = build_criterion(cfg, train_dataset)
+    criterion = build_criterion(cfg, train_dataset).to(device)
     if hasattr(criterion, 'alpha') and criterion.alpha is not None:
         criterion.alpha = criterion.alpha.to(device)
 

@@ -6,8 +6,8 @@ project:
 data:
   # Update these paths after downloading
   nct_crc_train_dir: "data/NCT-CRC-HE-100K"
-  nct_crc_val_dir: "data/CRC-VAL-HE-7K"
-  nct_crc_nonorm_dir: "data/NCT-CRC-HE-100K-NONORM"
+  nct_crc_val_dir: "data/CRC-5000_mapped"
+  nct_crc_nonorm_dir: ""
   image_size: 224
   num_classes: 9
   num_workers: 4
@@ -26,18 +26,8 @@ data:
     - TUM   # Colorectal Adenocarcinoma Epithelium
 
   augmentation:
-    use_foreground_masking: true # Mask out bright background with noise
-    mask_threshold: 0.85
-    grayscale_prob: 0.3          # Color dropout to force texture learning
-    use_stain_augment: true      # key for stain robustness
-    stain_probability: 0.8       # Boosted for domain shift robustness
-    stain_sigma1: 0.3
-    stain_sigma2: 0.3
+    use_stain_augment: true     # key for stain robustness
     color_jitter: true
-    color_jitter_brightness: 0.3
-    color_jitter_contrast: 0.3
-    color_jitter_saturation: 0.2
-    color_jitter_hue: 0.1
     random_flip: true
     random_rotation: true       # 90/180/270 degrees
     normalize_mean: [0.7406, 0.5331, 0.7059]   # CRC-specific mean
@@ -57,10 +47,10 @@ training:
   mixed_precision: true         # AMP for RTX 4060
   
   # STR vs MUS Fixes
-  loss: "ce"                    # 'ce' or 'focal'. Reverting to CE to avoid source-domain overfitting
+  loss: "focal"                 # 'ce' or 'focal'
   focal_gamma: 2.0
   use_class_weights: true       # Weight loss by inverse frequency
-  use_confusion_penalty: false  # Reverting to false to rely on structural features rather than hard penalties
+  use_confusion_penalty: true   # Penalize STR/MUS explicit confusion
 
 model:
   name: "MedLiteCRC"

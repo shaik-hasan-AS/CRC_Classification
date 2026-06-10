@@ -13,14 +13,14 @@ from models.medlite_crc import build_model
 import yaml
 
 # Load config
-with open("configs/finetune_kd.yaml", "r") as f:
+with open("configs/crc5000_eval.yaml", "r") as f:
     cfg = yaml.safe_load(f)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = build_model(cfg).to(device)
 
-# Load best KD weights
-ckpt = torch.load("outputs/checkpoints/ckpt_epoch175_acc0.9984.pt", map_location=device, weights_only=False)
+# Load best weights
+ckpt = torch.load("outputs/checkpoints/ckpt_epoch013_acc0.9880.pt", map_location=device, weights_only=False)
 if "model_state_dict" in ckpt:
     model.load_state_dict(ckpt["model_state_dict"])
 else:
@@ -46,7 +46,7 @@ inv_normalize = transforms.Normalize(
 
 val_dataset = datasets.ImageFolder(cfg["data"]["nct_crc_val_dir"], transform=transform)
 
-classes_to_plot = ["STR", "MUS", "TUM", "LYM"]
+classes_to_plot = ["STR", "TUM", "LYM", "DEB"]
 fig, axes = plt.subplots(len(classes_to_plot), 2, figsize=(8, 4 * len(classes_to_plot)))
 plt.suptitle("MedLite-CRC (V1+KD) GradCAM Visualizations", fontsize=16)
 
