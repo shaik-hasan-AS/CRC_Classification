@@ -5,22 +5,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from torchvision import transforms
-import torchvision.datasets as datasets
-
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
+
 from models.medlite_crc import build_model
+from data.dataset import EvaluationHybridDataset, HYBRID_CLASSES
 import yaml
 
 # Load config
-with open("configs/crc5000_eval.yaml", "r") as f:
+with open("configs/hybrid_eval.yaml", "r") as f:
     cfg = yaml.safe_load(f)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = build_model(cfg).to(device)
 
 # Load best weights
-ckpt = torch.load("outputs/checkpoints/ckpt_epoch013_acc0.9880.pt", map_location=device, weights_only=False)
+ckpt = torch.load("outputs/checkpoints_hybrid11/ckpt_epoch014_acc0.9976.pt", map_location=device, weights_only=False)
 if "model_state_dict" in ckpt:
     model.load_state_dict(ckpt["model_state_dict"])
 else:
@@ -28,7 +28,6 @@ else:
 model.eval()
 
 # We hook onto the final residual block's 2nd convolution
-# In our MedLiteCRC model: model.res_blocks[2].conv2
 target_layers = [model.res_blocks[2].conv2]
 
 cam = GradCAM(model=model, target_layers=target_layers)
@@ -44,19 +43,23 @@ inv_normalize = transforms.Normalize(
     std=[1/s for s in cfg["data"]["augmentation"]["normalize_std"]]
 )
 
-val_dataset = datasets.ImageFolder(cfg["data"]["nct_crc_val_dir"], transform=transform)
+# Use EvaluationHybridDataset to map 9 folders to 11 classes correctly
+val_dataset = EvaluationHybridDataset(cfg["data"]["nct_crc_val_dir"], transform=transform)
 
-classes_to_plot = ["STR", "TUM", "LYM", "DEB"]
+# We want to plot the classes present in CRC-VAL-HE-7K
+classes_to_plot = ["LYM", "STR", "NORM", "ADI", "BACK", "TUM"]
 fig, axes = plt.subplots(len(classes_to_plot), 2, figsize=(8, 4 * len(classes_to_plot)))
-plt.suptitle("MedLite-CRC (V1+KD) GradCAM Visualizations", fontsize=16)
-
-class_to_idx = val_dataset.class_to_idx
+plt.suptitle("Hybrid 11-Class Model Analysis: Grad-CAM on CRC-VAL-HE-7K", fontsize=16)
 
 for row, cls_name in enumerate(classes_to_plot):
-    cls_idx = class_to_idx[cls_name]
+    cls_idx = HYBRID_CLASSES.index(cls_name)
     
     # Find all indices for this class
     indices = [i for i, (_, label) in enumerate(val_dataset.samples) if label == cls_idx]
+    if not indices:
+        print(f"Skipping {cls_name}, no samples found.")
+        continue
+        
     random_idx = random.choice(indices)
     
     img_tensor, label = val_dataset[random_idx]
@@ -67,7 +70,6 @@ for row, cls_name in enumerate(classes_to_plot):
     rgb_img = np.clip(rgb_img, 0, 1)
     
     # Generate CAM
-    # We pass None for targets so it uses the highest scoring category
     grayscale_cam = cam(input_tensor=input_tensor, targets=None)[0, :]
     
     # Overlay
@@ -82,6 +84,7 @@ for row, cls_name in enumerate(classes_to_plot):
     axes[row, 1].axis('off')
 
 plt.tight_layout()
-os.makedirs("outputs/gradcam", exist_ok=True)
-plt.savefig("outputs/gradcam/gradcam_results.png", dpi=150)
-print("Saved outputs/gradcam/gradcam_results.png")
+os.makedirs("outputs/gradcam_hybrid11", exist_ok=True)
+save_path = "outputs/gradcam_hybrid11/hybrid11_gradcam_analysis.png"
+plt.savefig(save_path, dpi=150)
+print(f"Saved {save_path}")

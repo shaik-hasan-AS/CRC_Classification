@@ -46,8 +46,9 @@ def compute_metrics(all_preds, all_labels, class_names=None):
 
 
 def print_classification_report(all_preds, all_labels, class_names):
+    labels = list(range(len(class_names)))
     print(classification_report(all_labels, all_preds,
-                                 target_names=class_names, digits=4))
+                                 labels=labels, target_names=class_names, digits=4, zero_division=0))
 
 
 # ── Checkpoint Manager ────────────────────────────────────────────────────────

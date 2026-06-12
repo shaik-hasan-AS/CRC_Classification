@@ -20,7 +20,7 @@ import seaborn as sns
 from torch.cuda.amp import autocast
 from sklearn.metrics import confusion_matrix
 
-from data.dataset import get_crossval_loader, get_nonorm_loader, CRC_CLASSES
+from data.dataset import get_crossval_loader, get_nonorm_loader, CRC_CLASSES, HYBRID_CLASSES
 from models.medlite_crc import build_model, count_parameters
 from utils.metrics import compute_metrics, print_classification_report, load_checkpoint
 
@@ -133,29 +133,31 @@ def main(args):
     eff_stats = efficiency_report(model, device)
 
     results = {"checkpoint": args.checkpoint, "efficiency": eff_stats, "splits": {}}
+    all_metrics = results["splits"]
+    target_classes = HYBRID_CLASSES if cfg["data"].get("is_hybrid", False) else CRC_CLASSES
 
-    # CRC-VAL-HE-7K (cross-patient)
+    # 1. CRC-VAL-HE-7K
     cross_val_loader = get_crossval_loader(cfg)
     if cross_val_loader:
         metrics, preds, labels = run_eval(
-            model, cross_val_loader, device, "CRC-VAL-HE-7K (cross-patient)", CRC_CLASSES, use_tta=args.tta
+            model, cross_val_loader, device, "CRC-VAL-HE-7K (cross-patient)", target_classes, use_tta=args.tta
         )
-        results["splits"]["crc_val"] = metrics
+        all_metrics["crc_val_7k"] = metrics
         plot_confusion_matrix(
-            preds, labels, CRC_CLASSES,
-            save_path=f"{cfg['outputs']['gradcam_dir']}/../cm_crc_val.png"
+            preds, labels, target_classes,
+            save_path=Path(cfg["outputs"].get("gradcam_dir", "outputs/eval")) / "cm_crc_val_7k.png"
         )
 
-    # NCT-CRC-HE-100K-NONORM (cross-stain)
+    # 2. NCT-CRC-HE-100K-NONORM
     nonorm_loader = get_nonorm_loader(cfg)
     if nonorm_loader:
         metrics, preds, labels = run_eval(
-            model, nonorm_loader, device, "NCT-CRC-HE-100K-NONORM (cross-stain)", CRC_CLASSES, use_tta=args.tta
+            model, nonorm_loader, device, "NCT-CRC-HE-100K-NONORM (cross-stain)", target_classes, use_tta=args.tta
         )
-        results["splits"]["nonorm"] = metrics
+        all_metrics["nonorm"] = metrics
         plot_confusion_matrix(
-            preds, labels, CRC_CLASSES,
-            save_path=f"{cfg['outputs']['gradcam_dir']}/../cm_nonorm.png"
+            preds, labels, target_classes,
+            save_path=Path(cfg["outputs"].get("gradcam_dir", "outputs/eval")) / "cm_nonorm.png"
         )
 
 

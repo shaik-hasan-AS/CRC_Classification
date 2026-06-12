@@ -1,0 +1,80 @@
+project:
+  name: "MedLite-CRC-STARC9"
+  description: "Training MedLite-CRC on the massive STARC-9 dataset to achieve universal domain generalization"
+  seed: 42
+
+data:
+  nct_crc_train_dir: "data/STARC-9-10percent/train"
+  nct_crc_val_dir: "data/STARC-9-10percent/val"
+  nct_crc_nonorm_dir: ""
+  image_size: 224
+  num_classes: 9
+  num_workers: 4
+  pin_memory: true
+
+  # The exact same 9 classes mapped from the STARC-9 preparation script
+  classes:
+    - ADI   # Adipose
+    - BACK  # Background (mapped from BLD)
+    - DEB   # Debris (mapped from NCS)
+    - LYM   # Lymphocytes
+    - MUC   # Mucus
+    - MUS   # Smooth Muscle
+    - NORM  # Normal Colon Mucosa (mapped from NOR)
+    - STR   # Cancer-Associated Stroma (mapped from FCT)
+    - TUM   # Colorectal Adenocarcinoma Epithelium
+
+  augmentation:
+    use_foreground_masking: false # DISABLED: Scale is the regularizer, this destroys LYM
+    mask_threshold: 0.85
+    grayscale_prob: 0.0          # DISABLED: Keep color for biological accuracy
+    use_stain_augment: true      
+    stain_probability: 0.8       
+    stain_sigma1: 0.3
+    stain_sigma2: 0.3
+    color_jitter: true
+    color_jitter_brightness: 0.3
+    color_jitter_contrast: 0.3
+    color_jitter_saturation: 0.2
+    color_jitter_hue: 0.1
+    random_flip: true
+    random_rotation: true       # 90/180/270 degrees
+    # Keeping the original normalizations for consistency
+    normalize_mean: [0.7406, 0.5331, 0.7059]   
+    normalize_std:  [0.1651, 0.2174, 0.1574]   
+
+training:
+  epochs: 15                    # 15 epochs is enough for STARC-9 because it's massive
+  batch_size: 64
+  val_batch_size: 128
+  optimizer: "adam"
+  lr: 0.001
+  weight_decay: 0.0001
+  scheduler: "cosine"          
+  warmup_epochs: 2
+  early_stopping_patience: 20
+  grad_clip: 1.0
+  mixed_precision: true         # AMP for RTX 4060
+  
+  loss: "ce"                    # Standard Cross-Entropy loss
+  focal_gamma: 2.0
+  use_class_weights: true       
+  use_confusion_penalty: false  
+
+model:
+  name: "MedLiteCRC"
+  base_channels: 32             # Maintaining the V1 lightweight architecture
+  attention_reduction: 16       
+  dropout: 0.4
+
+wandb:
+  enabled: true
+  project: "MedLite-CRC-STARC9"
+  entity: ""                    
+  log_freq: 50                  
+
+outputs:
+  checkpoint_dir: "outputs/checkpoints_starc9"
+  log_dir: "outputs/logs_starc9"
+  gradcam_dir: "outputs/gradcam_starc9"
+  save_top_k: 3                 

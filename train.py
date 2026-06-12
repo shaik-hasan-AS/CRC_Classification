@@ -22,7 +22,7 @@ from torch.cuda.amp import GradScaler, autocast
 
 import wandb
 
-from data.dataset import get_train_val_loaders, get_crossval_loader, CRC_CLASSES
+from data.dataset import get_train_val_loaders, get_crossval_loader, CRC_CLASSES, HYBRID_CLASSES
 from models.medlite_crc import build_model, count_parameters
 from utils.metrics import (
     compute_metrics, print_classification_report,
@@ -229,7 +229,8 @@ def train_one_epoch(model, loader, criterion, optimizer, scaler, device, cfg, ep
                 wandb.log({"train/step_loss": loss_meter.avg,
                            "epoch": epoch, "step": step})
 
-    metrics = compute_metrics(all_preds, all_labels, CRC_CLASSES)
+    target_classes = HYBRID_CLASSES if cfg["data"].get("is_hybrid", False) else CRC_CLASSES
+    metrics = compute_metrics(all_preds, all_labels, target_classes)
     metrics["loss"] = round(loss_meter.avg, 5)
     return metrics
 
@@ -253,12 +254,13 @@ def evaluate(model, loader, criterion, device, cfg, split_name="val"):
         all_preds.extend(preds.cpu().numpy())
         all_labels.extend(labels.cpu().numpy())
 
-    metrics = compute_metrics(all_preds, all_labels, CRC_CLASSES)
+    target_classes = HYBRID_CLASSES if cfg["data"].get("is_hybrid", False) else CRC_CLASSES
+    metrics = compute_metrics(all_preds, all_labels, target_classes)
     metrics["loss"] = round(loss_meter.avg, 5)
 
     if split_name == "cross_val":
         print(f"\n[{split_name.upper()}] Detailed Report:")
-        print_classification_report(all_preds, all_labels, CRC_CLASSES)
+        print_classification_report(all_preds, all_labels, target_classes)
 
     return metrics
 
