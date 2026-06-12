@@ -8,7 +8,7 @@ data:
   nct_crc_val_dir: data/CRC-5000/val
   nct_crc_nonorm_dir: ''
   image_size: 224
-  num_classes: 7
+  num_classes: 9
   num_workers: 4
   pin_memory: true
   classes:
@@ -16,6 +16,8 @@ data:
   - BACK
   - DEB
   - LYM
+  - MUC
+  - MUS
   - NORM
   - STR
   - TUM
@@ -56,7 +58,7 @@ training:
   mixed_precision: true
   loss: ce
   focal_gamma: 2.0
-  use_class_weights: true
+  use_class_weights: false
   use_confusion_penalty: false
 model:
   name: ResNet50
