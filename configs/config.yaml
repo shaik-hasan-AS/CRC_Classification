@@ -44,7 +44,7 @@ data:
     normalize_std:  [0.1651, 0.2174, 0.1574]   # CRC-specific std
 
 training:
-  epochs: 15
+  epochs: 200
   batch_size: 64
   val_batch_size: 128
   optimizer: "adam"

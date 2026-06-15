@@ -59,7 +59,6 @@ with torch.no_grad():
         for i in range(len(labels)):
             true_label = labels[i].item()
             pred_label = preds[i].item()
-            
             if true_label == str_idx and pred_label == mus_idx:
                 str_mus_confusions.append(imgs[i].cpu())
             elif true_label == mus_idx and pred_label == str_idx:
