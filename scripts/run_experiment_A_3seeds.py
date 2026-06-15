@@ -24,10 +24,8 @@ def run_seed(seed, run_idx):
     cfg["outputs"]["checkpoint_dir"] = f"outputs/checkpoints_seed{seed}"
     cfg["outputs"]["log_dir"] = f"outputs/logs_seed{seed}"
     
-    # Disable wandb to prevent spamming the dashboard (optional, but cleaner)
-    if "wandb" in cfg:
-        cfg["wandb"]["enabled"] = False
-        
+    # Wandb will remain enabled if it is enabled in the base config
+    
     temp_config = f"configs/config_seed{seed}.yaml"
     with open(temp_config, "w") as f:
         yaml.dump(cfg, f)
