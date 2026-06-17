@@ -51,7 +51,7 @@ When domain-shift is isolated (evaluating on the 100K validation split), MedLite
 | Model / Paper Type | Parameters (M) | Model Size (MB) | Peak Accuracy (%) |
 |--------------------|----------------|-----------------|-------------------|
 | **MedLite-CRC (INT8, Ours)** | **0.49** | **0.75** | **99.46%** |
-| Recent SOTA Lightweight CNN | 4.41 | 16.90 | 99.00% |
+| Li et al. (2025) Lightweight CNN | 4.41 | 16.90 | 99.00% |
 | Swin-Transformer (Heavy SOTA) | 28.0+ | 100.0+ | ~99.50% |
 
 ### Baseline Comparisons (STARC-9)

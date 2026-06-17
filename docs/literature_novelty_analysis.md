@@ -6,7 +6,7 @@ This document outlines the honest, scientifically rigorous comparison between Me
 
 MedLite-CRC fundamentally pushes the boundary of extreme parameter efficiency. 
 
-*   **SOTA Lightweight Benchmark:** The most recent notable "SOTA Lightweight CNN" published specifically for this dataset reported a peak test accuracy of **99.0%**, requiring **4.41 Million parameters** and **16.9 MB** of disk space.
+*   **SOTA Lightweight Benchmark:** The recent lightweight CNN proposed by Li, Goh, and Jhanjhi (2025) specifically for this dataset reported a peak test accuracy of **99.0%**, requiring **4.41 Million parameters** and **16.9 MB** of disk space.
 *   **MedLite-CRC Efficiency:** Achieves a higher in-distribution accuracy (**99.46%**) using only **0.49 Million parameters** and **0.75 MB** of disk space (INT8 quantization). The model is nearly 10x smaller than current lightweight standards while maintaining superior in-distribution morphological detection.
 *   **Domain Bias Mitigation:** Recent literature (2023-2024) warns that models hitting >99% often "cheat" by learning JPEG compression artifacts or scanner-specific color biases (domain shift) rather than actual tissue morphology. MedLite-CRC mathematically avoids this pitfall through its `Structure-Forcing Pipeline` (grayscale dropout and heavy stain augmentation), which was empirically verified via Grad-CAM alignment scores (e.g., 97.6% structural alignment on lymphocytes).
 
@@ -24,7 +24,7 @@ When standard, widely accepted architectures (ResNet-50, EfficientNet-B0) are fo
 | Model Architecture | Training Paradigm | Params (M) | Model Size | In-Dist Accuracy | Cross-Patient (7K) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **MedLite-CRC (Ours, INT8)** | **From Scratch** | **0.49** | **0.75 MB** | **99.46%** | **94.05%** |
-| Recent Custom Lightweight CNN | From Scratch | 4.41 | 16.9 MB | 99.00% | *Not Reported* |
+| Li et al. (2025) Lightweight CNN | From Scratch | 4.41 | 16.9 MB | 99.00% | *Not Reported* |
 | MobileNetV3-Large | From Scratch | ~5.40 | ~20.0 MB | 99.10% | ~94.80% |
 | EfficientNet-B0 | From Scratch | 4.02 | 16.3 MB | ~99.40% | ~94.81% |
 | ResNet-50 (Heavyweight baseline) | From Scratch | 23.53 | 94.4 MB | ~99.60% | 94.33% |
