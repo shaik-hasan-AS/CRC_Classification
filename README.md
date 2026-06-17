@@ -16,8 +16,11 @@ This research demonstrates a paradigm shift: Cross-dataset generalization in his
 2. **Robust Per-Cohort Superiority**: 
    - Achieves **99.46% in-distribution peak accuracy**, matching Swin-Transformer level performance without ImageNet bias.
    - Averages **94.05% ± 0.46% cross-patient accuracy** on the completely independent `CRC-VAL-HE-7K` dataset across 3 strict statistical seeds, mathematically tying ResNet-50 while being 50x smaller.
-3. **Architectural Innovations**: 
-   - Utilizes a parallel `MultiScaleBranch` (3x3, 5x5, 7x7 depthwise separable convolutions) to capture the subtle macro-texture differences between biologically similar fibrous tissues (e.g., Stroma vs. Smooth Muscle).
+3. **Architectural Innovations**: Generic lightweight models were designed for natural images. MedLite-CRC is designed ground-up for the blurry, multi-scaled, color-variant world of histopathology with 4 core novelties:
+   - **Learnable Stain Normalization**: An integrated affine layer at the network input that acts as an active, trainable normalizer to neutralize scanner color-shifts before convolution.
+   - **Parallel Multi-Scale Receptive Fields (`MultiScaleBranch`)**: Splits the feature map into three parallel depthwise paths (3x3, 5x5, 7x7) to simultaneously capture fine nuclear boundaries, mid-scale glands, and macro-tissue organization.
+   - **Depthwise Separable Residuals (`DWResBlock`)**: Strips standard ResNet blocks down to pure depthwise convolutions with `ReLU6`, achieving massive receptive fields while staying under 0.5M parameters.
+   - **Late-Stage Channel Attention (`SEBlock`)**: A Squeeze-and-Excitation mechanism placed right before the classifier to explicitly suppress background scanner noise and amplify channels containing structural cellular geometry.
 4. **Clinical Interpretability**: 
    - Integrated GradCAM pipeline to ensure the model focuses on valid cellular morphology rather than background scanner artifacts.
 
