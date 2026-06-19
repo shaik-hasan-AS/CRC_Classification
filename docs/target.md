@@ -152,8 +152,8 @@ Trained MedLite-CRC + Baselines on an 80/20 split of CRC-5000. This proves the a
 ### [COMPLETED] BLOCKER 3: Statistical Validation
 Ran Experiment A with 3 different random seeds. The model achieves 94.05% ± 0.46% cross-patient and 99.46% peak in-distribution accuracy.
 
-### BLOCKER 4: Grad-CAM on Failure Cases
-Currently Grad-CAM was only run on the high-performing CRC-VAL-HE-7K dataset (93.5% acc). Must also run on a failing scenario for contrast. This shows the model's attention mechanism honestly.
+### [COMPLETED] BLOCKER 4: Grad-CAM on Failure Cases
+Ran Grad-CAM specifically on the misclassified images (e.g., Stroma confused for Smooth Muscle). This honest contrast analysis proved that even when the model fails, its spatial attention is biologically sound (it still highlights the correct fibrous tissue) — the failure is purely a limitation of distinguishing wavy vs parallel macro-textures, not a catastrophic failure of attention.
 
 ---
 
@@ -183,7 +183,7 @@ Currently Grad-CAM was only run on the high-performing CRC-VAL-HE-7K dataset (93
 - [x] **[COMPLETED]** Complete Experiment C (CRC-5000): Benchmarking MedLite + Baselines.
 - [x] **[COMPLETED]** Run Experiment A with 3 seeds, report mean ± std.
 - [x] **[MEDIUM]** Run Grad-CAM on a failure-case dataset for honest contrast analysis.
-- [ ] **[LOW]** Begin manuscript draft (Abstract, Introduction, Methodology) based on the "Data Scale is the Regularizer" narrative.
+- [ ] **[HIGH]** Begin manuscript draft (Abstract, Introduction, Methodology) based on the "Data Scale is the Regularizer" narrative.
 
 ---
 
