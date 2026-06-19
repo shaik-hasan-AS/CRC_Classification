@@ -77,14 +77,22 @@ These are not just experiments — they are the *scientific narrative* of the pa
 ### Experiment A: NCT-CRC-HE-100K → CRC-VAL-HE-7K
 | Metric | Target | Final Achieved | Status |
 |---|---|---|---|
-| Peak Accuracy (In-Distribution) | ≥ 99% | **99.46%** | ✅ Exceeded |
+| Peak Accuracy (In-Distribution 3-seed) | ≥ 99% | **99.48% ± 0.04%** | ✅ Exceeded |
 | Accuracy (cross-patient 3-seed) | ≥ 93% | **94.05% ± 0.46%** | ✅ Exceeded |
 | Macro-F1 (3-seed) | ≥ 0.92 | **0.9238** | ✅ Exceeded |
 | Parameters | < 5M | **0.491M** | ✅ Under budget |
 | CPU Inference | < 50 ms | **1.94 ms** (INT8) | ✅ Under budget |
 | FLOPs | < 1 GFLOPs | **0.726 GFLOPs** | ✅ Under budget |
 
-**Per-Class Accuracy Breakdown (Seed 123 - 94.71% overall):**
+**3-Seed Statistical Validation Breakdown:**
+| Seed | In-Distribution Peak (100K Val) | Cross-Patient Acc (7K Test) | Cross-Patient Macro-F1 |
+|---|---|---|---|
+| **Seed 42** | 99.52% | 93.76% | 0.9214 |
+| **Seed 123** | 99.44% | 94.71% | 0.9321 |
+| **Seed 999** | 99.49% | 93.69% | 0.9179 |
+| **Average** | **99.48% ± 0.04%** | **94.05% ± 0.46%** | **0.9238 ± 0.0060** |
+
+**Per-Class Accuracy Breakdown (Seed 123 - 94.71% cross-patient):**
 The model is exceptionally strong at identifying clinically critical tissues (Tumor, Lymphocytes, Normal Mucosa). The lowest performing classes are Smooth Muscle (MUS) and Stroma (STR). This is a biologically expected confusion matrix as both are fibrous, eosinophilic connective tissues that even expert pathologists struggle to differentiate without special stains.
 
 | Tissue Class | Precision | Recall (Accuracy) | F1-Score | Support (Images) |
