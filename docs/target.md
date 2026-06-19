@@ -84,6 +84,21 @@ These are not just experiments — they are the *scientific narrative* of the pa
 | CPU Inference | < 50 ms | **1.94 ms** (INT8) | ✅ Under budget |
 | FLOPs | < 1 GFLOPs | **0.726 GFLOPs** | ✅ Under budget |
 
+**Per-Class Accuracy Breakdown (Seed 123 - 94.71% overall):**
+The model is exceptionally strong at identifying clinically critical tissues (Tumor, Lymphocytes, Normal Mucosa). The lowest performing classes are Smooth Muscle (MUS) and Stroma (STR). This is a biologically expected confusion matrix as both are fibrous, eosinophilic connective tissues that even expert pathologists struggle to differentiate without special stains.
+
+| Tissue Class | Precision | Recall (Accuracy) | F1-Score | Support (Images) |
+| :--- | :--- | :--- | :--- | :--- |
+| **BACKGROUND (BACK)** | 99.65% | **100.00%** | 0.9982 | 847 |
+| **LYMPHOCYTES (LYM)** | 98.90% | **99.53%** | 0.9921 | 634 |
+| **DEBRIS (DEB)** | 96.84% | **99.41%** | 0.9811 | 339 |
+| **TUMOR (TUM)** | 97.09% | **97.57%** | 0.9733 | 1233 |
+| **NORMAL (NORM)** | 96.00% | **97.17%** | 0.9658 | 741 |
+| **ADIPOSE (ADI)** | 98.92% | **95.96%** | 0.9742 | 1338 |
+| **MUCUS (MUC)** | 96.75% | **94.78%** | 0.9575 | 1035 |
+| **STROMA (STR)** | 69.48% | **82.19%** | 0.7530 | 421 |
+| **SMOOTH MUSCLE (MUS)** | 82.75% | **76.18%** | 0.7933 | 592 |
+
 ### Experiment B: STARC-9 (10% Subset) → STARC-9 Val
 | Metric | Target | Best Achieved | Status |
 |---|---|---|---|
