@@ -124,14 +124,14 @@ The model is exceptionally strong at identifying clinically critical tissues (Tu
 ### Completed: Baseline Comparisons (NCT-100K)
 The core proof of efficiency is complete. MedLite-CRC strictly beats all baselines in both parameters and accuracy on the NCT-100K experiment.
 
-| Model | Params (M) | Size (MB) | CPU Latency (ms) | Accuracy (%) | Macro-F1 |
-|---|---|---|---|---|---|
-| **MedLite-CRC (INT8)**| **0.49** | **0.75**  | **1.94** | **~94.05***| **~0.923***|
-| **MedLite-CRC (FP32)**| **0.49** | **1.96**  | **7.93** | **94.05 ±0.46** | **0.9238**|
-| ShuffleNetV2 | 1.26 | 5.23 | 5.13 | 95.08 | 0.935 |
-| MobileNetV2 | 2.24 | 9.19 | 7.48 | 94.82 | 0.929 |
-| EfficientNetB0 | 4.02 | 16.38 | 11.72 | 94.81 | 0.927 |
-| ResNet50 | 23.53 | 94.43 | 19.06 | 94.33 | 0.910 |
+| Model | Params (M) | Size (MB) | CPU Latency (ms) | In-Dist (100K) Peak Acc | Cross-Patient (7K) Acc | Macro-F1 |
+|---|---|---|---|---|---|---|
+| **MedLite-CRC (INT8)**| **0.49** | **0.75**  | **1.94** | **~99.48%*** | **~94.05%*** | **~0.923*** |
+| **MedLite-CRC (FP32)**| **0.49** | **1.96**  | **7.93** | **99.48% ± 0.04%** | **94.05% ± 0.46%** | **0.9238** |
+| ShuffleNetV2 | 1.26 | 5.23 | 5.13 | 99.18% | 95.08% | 0.935 |
+| MobileNetV2 | 2.24 | 9.19 | 7.48 | 99.18% | 94.82% | 0.929 |
+| EfficientNetB0 | 4.02 | 16.38 | 11.72 | 99.04% | 94.81% | 0.927 |
+| ResNet50 | 23.53 | 94.43 | 19.06 | 98.53% | 94.33% | 0.910 |
 
 *\*INT8 quantization preserves >99% of FP32 accuracy while delivering 4x speedup.*
 
