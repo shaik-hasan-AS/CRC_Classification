@@ -159,13 +159,21 @@ class MedLiteCRC(nn.Module):
         dropout       : classifier dropout rate (default: 0.4)
     """
 
-    def __init__(self, num_classes=9, base_channels=32, reduction=16, dropout=0.4):
+    def __init__(self, num_classes=9, base_channels=32, reduction=16, dropout=0.4,
+                 use_stain_norm=True, use_multiscale=True, use_se_block=True):
         super().__init__()
+
+        self.use_stain_norm = use_stain_norm
+        self.use_multiscale = use_multiscale
+        self.use_se_block = use_se_block
 
         C = base_channels  # 32
 
         # ── 1. Learnable Stain Normalisation
-        self.stain_norm = LearnableStainNorm(num_channels=3)
+        if self.use_stain_norm:
+            self.stain_norm = LearnableStainNorm(num_channels=3)
+        else:
+            self.stain_norm = nn.Identity()
 
         # ── 2. Stem Block
         self.stem = nn.Sequential(
@@ -175,9 +183,12 @@ class MedLiteCRC(nn.Module):
         )
 
         # ── 3. Multi-Scale Feature Extraction
-        self.multi_scale = MultiScaleBranch(
-            in_ch=C, branch_ch=C * 2, out_ch=C * 4   # 32 → 64 per branch → 128 out
-        )
+        if self.use_multiscale:
+            self.multi_scale = MultiScaleBranch(
+                in_ch=C, branch_ch=C * 2, out_ch=C * 4   # 32 → 64 per branch → 128 out
+            )
+        else:
+            self.multi_scale = DepthwiseSeparableConv(in_ch=C, out_ch=C * 4, kernel=3)
         self.pool1 = nn.MaxPool2d(2, 2)   # 112→56
 
         # ── 4. Depthwise Residual Blocks
@@ -188,7 +199,10 @@ class MedLiteCRC(nn.Module):
         )
 
         # ── 5. Channel Attention
-        self.se = SEBlock(C * 8, reduction=reduction)
+        if self.use_se_block:
+            self.se = SEBlock(C * 8, reduction=reduction)
+        else:
+            self.se = nn.Identity()
 
         # ── 6. Final pooling
         self.pool2 = nn.Sequential(
@@ -252,10 +266,13 @@ def build_model(cfg) -> nn.Module:
 
     if model_name == "MedLiteCRC":
         return MedLiteCRC(
-            num_classes   = num_classes,
-            base_channels = model_cfg.get("base_channels", 48),
-            reduction     = model_cfg.get("attention_reduction", 16),
-            dropout       = model_cfg.get("dropout", 0.4),
+            num_classes     = num_classes,
+            base_channels   = model_cfg.get("base_channels", 48),
+            reduction       = model_cfg.get("attention_reduction", 16),
+            dropout         = model_cfg.get("dropout", 0.4),
+            use_stain_norm  = model_cfg.get("use_stain_norm", True),
+            use_multiscale  = model_cfg.get("use_multiscale", True),
+            use_se_block    = model_cfg.get("use_se_block", True),
         )
 
     # Baselines

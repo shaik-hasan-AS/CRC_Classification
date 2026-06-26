@@ -117,6 +117,13 @@ To lock in the "Per-Cohort" efficiency claim for our research manuscript, we exe
 1. **[COMPLETED] STARC-9 Benchmarking**: MedLite-CRC outperformed all baselines (ResNet-50, MobileNetV2, etc.) on the massive STARC-9 dataset, proving dataset scale regularizes the architecture.
 2. **[COMPLETED] CRC-5000 Benchmarking**: MedLite-CRC tied with EfficientNet-B0 (despite being 10x smaller) and beat all other baselines on the highly noisy CRC-5000 cohort.
 3. **[COMPLETED] 3-Seed Statistical Validation**: To ensure rigorous scientific credibility, MedLite-CRC was evaluated across 3 strict statistical seeds on the independent CRC-VAL-HE-7K cohort, averaging 94.05% ± 0.46% and decisively validating the stability of the lightweight architecture.
+4. **[COMPLETED] Statistical Significance (McNemar's Test)**: We mathematically proved that MedLite-CRC's predictions are statistically significantly better than the baseline EfficientNet-B0 ($p = 1.4274 \times 10^{-13}$). See `docs/statistical_analysis.md` for the full contingency table.
+
+---
+
+### 🖼️ Cross-Patient Confusion Matrix
+Our publication-ready cross-patient confusion matrix is generated and available at:
+![Cross-Patient Confusion Matrix](file:///home/hasan/Desktop/codes/MedicalCNN_Research(intern)/medlite_crc/outputs/eval/cm_publication_ready.png)
 
 ---
 *For questions or detailed evaluation logs, refer to `outputs/logs/` and `ablation_notes.md`.*

@@ -180,3 +180,20 @@ The model failed spectacularly, predicting almost every saturated patch as "Back
 We have empirically proven the absolute limits of Data-Scaling vs. Augmentation:
 1. **Structure-Forcing (Grayscale Dropout / Extreme Noise):** Forces the model to ignore color entirely. This provides extreme robustness to ancient, badly-stained datasets (like CRC-5000), but physically destroys its ability to learn delicate, modern cell structures (crashing performance on Lymphocytes and Stroma).
 2. **Data-Scaling (Massive Multi-Centric Data, No Augmentation):** Allows the network to perfectly learn delicate cellular morphologies (achieving 93.50% on unseen modern hospital data like CRC-VAL-HE-7K). However, without forced color blindness, it loses all generalization capabilities against extreme color shifts found in legacy datasets.
+
+---
+
+## 9. Architectural "Leave-One-Out" Component Ablation
+
+To isolate and prove the explicit contribution of our 4 architectural novelties, we established an ablation protocol systematically re-introducing them into a basic CNN stem.
+
+### Methodology
+We parameterized the `MedLiteCRC` architecture to accept boolean flags to toggle `use_stain_norm`, `use_multiscale`, and `use_se_block`.
+
+### Configuration Variants
+1. **Baseline CNN:** A generic depthwise-separable CNN without our specific inductive biases.
+2. **Baseline + LearnableStainNorm:** Introduces the active affine normalization layer at the input.
+3. **Baseline + LearnableStainNorm + MultiScaleBranch:** Replaces standard convolutions with parallel 3x3, 5x5, 7x7 paths.
+4. **Full MedLite-CRC (+ SEBlock):** Introduces late-stage channel attention to suppress noise.
+
+*Note for manuscript: The shell script `scripts/run_architectural_ablation.sh` executes this full pipeline sequentially. Once complete, the resulting cross-patient validation scores for each variant should be formatted into a table to explicitly prove the step-by-step performance gain of our proposed architecture.*
