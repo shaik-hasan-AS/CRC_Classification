@@ -103,6 +103,54 @@ Our rigorous ablation studies provide crucial insights for the computational pat
 
 ---
 
+## 🛠️ Quick Start
+
+### 1. Installation
+Clone the repository and install the dependencies:
+```bash
+git clone https://github.com/shaik-hasan-AS/CRC_Classification.git
+cd CRC_Classification
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Dataset Preparation
+We provide scripts to automatically download and structure the NCT-CRC-HE-100K and CRC-VAL-HE-7K datasets:
+```bash
+python scripts/download_data.py
+```
+
+### 3. Pre-trained Weights
+The compiled, ready-to-deploy INT8 quantized weights are available in `outputs/medlite_int8.pt`, along with the FP32 weights `outputs/medlite_fp32.pt`.
+
+### 4. Evaluation
+To evaluate the pre-trained MedLite-CRC on the validation cohort, run:
+```bash
+python evaluate.py --config configs/config.yaml --checkpoint outputs/medlite_fp32.pt
+```
+
+### 5. Training
+To train the model from scratch on the 100K dataset:
+```bash
+python train.py --config configs/config.yaml
+```
+
+---
+
+## 📝 Citation
+If you find this code or our weights useful in your research, please cite:
+```bibtex
+@misc{hasan2026medlite,
+  title={MedLite-CRC: Dataset Scale as a Regularizer for Ultra-Lightweight Colorectal Cancer Histopathology Classification},
+  author={Hasan, Shaik},
+  howpublished={\url{https://github.com/shaik-hasan-AS/CRC_Classification}},
+  year={2026}
+}
+```
+
+---
+
 ## 🚀 Repository Structure
 
 ```text
