@@ -42,7 +42,7 @@ To prove our model's robustness isn't a fluke isolated to the NCT-100K dataset, 
 
 ### B. CRC-5000 (The Noisy Clinical Test)
 *   **The Competition:** A standard 5,000-image benchmark dataset where literature frequently reports 96%-99% accuracy, but *only* by utilizing heavy ImageNet transfer learning and complex ensemble methods.
-*   **MedLite-CRC:** When trained strictly from scratch on an 80/20 split, standard lightweight models completely collapse due to the dataset's noise and small scale (MobileNet: 89.00%, ShuffleNet: 87.14%). However, MedLite-CRC mathematically tied the 10x larger EfficientNet-B0 at **92.00%**, proving our `MultiScaleBranch` and `LearnableStainNorm` make the model highly resilient to low-data, noisy environments where generic lightweight CNNs fail.
+*   **MedLite-CRC:** When trained strictly from scratch on an 80/20 split, standard lightweight models completely collapse due to the dataset's noise and small scale (MobileNet: 89.00%, ShuffleNet: 87.14%). However, MedLite-CRC mathematically tied the 10x larger EfficientNet-B0 at **92.00%**, proving our `MultiScaleBranch` and `LearnableStainNorm` (acting as a simple, highly-efficient learned input color adaptation layer) make the model highly resilient to low-data, noisy environments where generic lightweight CNNs fail. 
 
 ---
 
@@ -50,14 +50,16 @@ To prove our model's robustness isn't a fluke isolated to the NCT-100K dataset, 
 
 You must proactively address this in your paper before reviewers bring it up.
 
-### Raw Cross-Patient Accuracy vs ImageNet
+### A. Raw Cross-Patient Accuracy vs ImageNet Pre-training
 *   **The Competition:** Heavyweight Vision Transformers (ViTs) like DINO/iBOT and standard ImageNet-pretrained ResNets easily hit **97% to 99%** on the cross-patient 7K dataset and CRC-5000.
 *   **MedLite-CRC:** Averages **94.05%** on the 7K cross-patient set. In a pure accuracy contest, we lose.
+*   **Defense:** Every architecture achieving >97% cross-dataset accuracy relies on heavy transfer learning (ImageNet pre-training) and massive architectures (100+ MB Vision Transformers). While highly accurate, relying on weights pre-optimized to extract edges from dogs and cars is biologically unsound for histopathology, and deploying a 100+ MB model is impossible for the $15 edge devices we are targeting for rural clinics. Our goal was parameter-efficiency. We proved that our 0.75 MB model mathematically matches a 94 MB ResNet-50 when both are trained purely from scratch.
 
-### The Rebuttal / Defense Strategy
-If challenged by a reviewer regarding this performance gap, your defense is:
+### B. Accuracy Gap vs. ShuffleNetV2
+*   **The Competition:** ShuffleNetV2 achieves a slightly higher cross-patient accuracy of **95.08%** (compared to MedLite-CRC's 94.05%) and a lower CPU latency (5.13 ms vs 7.93 ms).
+*   **Defense:** ShuffleNetV2 is a highly optimized architecture, but it requires **1.26 Million parameters** (over 2.5x larger than MedLite-CRC's 0.49 Million parameters) and has a disk footprint of **5.23 MB** compared to MedLite-CRC's **2.0 MB** (FP32) and **0.75 MB** (INT8 quantized, which is 7x smaller). For extreme edge deployment on memory-constrained microcontrollers or ultra-low-cost medical diagnostic nodes where cache memory and RAM are highly restricted, MedLite-CRC offers a significantly lower memory footprint and occupies a unique optimal spot on the Pareto efficiency frontier.
 
-> *"Every architecture achieving >97% cross-dataset accuracy relies on heavy transfer learning (ImageNet pre-training) and massive architectures (100+ MB Vision Transformers). While highly accurate, relying on weights pre-optimized to extract edges from dogs and cars is biologically unsound for histopathology, and deploying a 100+ MB model is impossible for the $15 edge devices we are targeting for rural clinics. Our goal was parameter-efficiency. We proved that our 0.75 MB model mathematically matches a 94 MB ResNet-50 when both are trained purely from scratch, fundamentally shifting the boundary of edge-deployable pathology."*
+We have generated a Pareto efficiency plot visualising this trade-off at `outputs/eval/pareto_efficiency.png` (Accuracy vs. Model Complexity). It visually proves that MedLite-CRC and ShuffleNetV2 define the optimal Pareto frontier, while MobileNetV2, EfficientNet-B0, and ResNet-50 are strictly dominated sub-optimal choices when training from scratch.
 
 ---
 

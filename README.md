@@ -17,7 +17,7 @@ This research demonstrates a paradigm shift: Cross-dataset generalization in his
    - Achieves **99.46% in-distribution peak accuracy**, matching Swin-Transformer level performance without ImageNet bias.
    - Averages **94.05% ± 0.46% cross-patient accuracy** on the completely independent `CRC-VAL-HE-7K` dataset across 3 strict statistical seeds, mathematically tying ResNet-50 while being 50x smaller.
 3. **Architectural Innovations**: Generic lightweight models were designed for natural images. MedLite-CRC is designed ground-up for the blurry, multi-scaled, color-variant world of histopathology with 4 core novelties:
-   - **Learnable Stain Normalization**: An integrated affine layer at the network input that acts as an active, trainable normalizer to neutralize scanner color-shifts before convolution.
+   - **Learnable Stain Adaptation (Affine Normalization)**: An integrated, parameter-efficient affine layer at the network input that acts as a trainable color adapter to neutralize scanner color-shifts before convolution.
    - **Parallel Multi-Scale Receptive Fields (`MultiScaleBranch`)**: Splits the feature map into three parallel depthwise paths (3x3, 5x5, 7x7) to simultaneously capture fine nuclear boundaries, mid-scale glands, and macro-tissue organization.
    - **Depthwise Separable Residuals (`DWResBlock`)**: Strips standard ResNet blocks down to pure depthwise convolutions with `ReLU6`, achieving massive receptive fields while staying under 0.5M parameters.
    - **Late-Stage Channel Attention (`SEBlock`)**: A Squeeze-and-Excitation mechanism placed right before the classifier to explicitly suppress background scanner noise and amplify channels containing structural cellular geometry.
@@ -47,6 +47,11 @@ Evaluated strictly on the unseen DACHS cohort to measure true out-of-domain robu
 | MobileNetV2           | 2.24           | 9.19      | 7.48         | 94.82        | 0.929    |
 | EfficientNetB0        | 4.02           | 16.38     | 11.72        | 94.81        | 0.927    |
 | ResNet50              | 23.53          | 94.43     | 19.06        | 94.33        | 0.910    |
+
+#### Pareto Efficiency Frontier (Accuracy vs. Model Size)
+The following Pareto plot shows how MedLite-CRC (Ours) achieves a highly competitive trade-off between model parameters and accuracy compared to baselines trained strictly from scratch:
+
+![Pareto Efficiency Plot](/home/hasan/Desktop/codes/MedicalCNN_Research(intern)/medlite_crc/outputs/eval/pareto_efficiency.png)
 
 ### External Literature State-of-the-Art (SOTA) Comparison
 When evaluating against current literature for colorectal cancer histopathology, MedLite-CRC demonstrates significant novelty in the efficiency-vs-accuracy tradeoff. Typical "lightweight" models in recent literature range from **1.1M to 4.5M parameters**. By heavily constraining the architecture to **0.49M parameters** with specialized priors, we achieve a highly publishable novelty.

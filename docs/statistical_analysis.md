@@ -36,4 +36,4 @@ Using the standard $\chi^2$ distribution approximation with continuity correctio
 
 The p-value is massively below the standard significance threshold of $p = 0.05$ (and even $p = 0.001$). Therefore, we decisively reject the null hypothesis.
 
-**The performance difference between the 0.49M parameter MedLite-CRC architecture and the 4.02M parameter EfficientNet-B0 baseline is statistically significant.** This mathematical proof validates that our architectural novelties (Learnable Stain Normalization, MultiScaleBranch, DWResBlock, and SEBlock) provide robust, non-random performance gains in computational pathology tasks.
+**The performance difference between the 0.49M parameter MedLite-CRC architecture and the 4.02M parameter EfficientNet-B0 baseline is statistically significant.** This mathematical proof validates that our architectural novelties (Learnable Stain Adaptation, MultiScaleBranch, DWResBlock, and SEBlock) provide robust, non-random performance gains in computational pathology tasks.

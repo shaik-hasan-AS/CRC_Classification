@@ -41,21 +41,21 @@ echo "Starting Ablation Training Pipeline..."
 echo "---------------------------------------------------------"
 echo "Running Ablation 1/4: Baseline CNN"
 echo "---------------------------------------------------------"
-# python train.py --config configs/ablation/config_1_baseline.yaml
+python train.py --config configs/ablation/config_1_baseline.yaml
 
 echo "---------------------------------------------------------"
 echo "Running Ablation 2/4: + LearnableStainNorm"
 echo "---------------------------------------------------------"
-# python train.py --config configs/ablation/config_2_stainnorm.yaml
+python train.py --config configs/ablation/config_2_stainnorm.yaml
 
 echo "---------------------------------------------------------"
 echo "Running Ablation 3/4: + MultiScaleBranch"
 echo "---------------------------------------------------------"
-# python train.py --config configs/ablation/config_3_multiscale.yaml
+python train.py --config configs/ablation/config_3_multiscale.yaml
 
 echo "---------------------------------------------------------"
 echo "Running Ablation 4/4: Full MedLite-CRC"
 echo "---------------------------------------------------------"
-# python train.py --config configs/ablation/config_4_full.yaml
+python train.py --config configs/ablation/config_4_full.yaml
 
-echo "Done! (Uncomment the 'python train.py' lines to execute)"
+echo "Done!"
