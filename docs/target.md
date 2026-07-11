@@ -14,7 +14,7 @@ Standard high-performing CNNs (ResNet, EfficientNet) achieve >99% accuracy on be
 **The Research Gap (What makes this publishable):**
 Cross-dataset generalization in CRC histopathology is fundamentally limited by scanner domain shift — a problem we empirically proved across 5 rigorous ablation experiments. The correct scientific approach is not to chase a single universal model, but to build an architecture so efficient and well-regularized that it achieves *near-SOTA accuracy on any given cohort's own held-out data*, at a fraction of the compute cost.
 
-**The Claim:** MedLite-CRC (0.49M params) matches or exceeds MobileNetV2, EfficientNet-B0, and ResNet-18 on within-cohort classification accuracy — while being 4-48x more parameter-efficient, occupying only 2 MB of disk space, and architecturally justified by a systematic ablation study.
+**The Claim:** MedLite-CRC (0.48M params) matches or exceeds MobileNetV2, EfficientNet-B0, and ResNet-18 on within-cohort classification accuracy — while being 4-48x more parameter-efficient, occupying only 2 MB of disk space, and architecturally justified by a systematic ablation study.
 
 ---
 
@@ -108,7 +108,7 @@ To isolate and prove the explicit contribution of our proposed architectural mod
 | Peak Accuracy (In-Distribution 3-seed) | ≥ 99% | **99.48% ± 0.04%** | ✅ Exceeded |
 | Accuracy (cross-patient 3-seed) | ≥ 93% | **94.05% ± 0.46%** | ✅ Exceeded |
 | Macro-F1 (3-seed) | ≥ 0.92 | **0.9238** | ✅ Exceeded |
-| Parameters | < 5M | **0.491M** | ✅ Under budget |
+| Parameters | < 5M | **0.48M** | ✅ Under budget |
 | CPU Inference | < 50 ms | **1.94 ms** (INT8) | ✅ Under budget |
 | FLOPs | < 1 GFLOPs | **0.726 GFLOPs** | ✅ Under budget |
 
@@ -170,7 +170,7 @@ Trained MedLite-CRC + Baselines from scratch on a mathematically fair 10% strati
 
 | Model | Params (M) | Accuracy (%) |
 |---|---|---|
-| **MedLite-CRC (Ours)**| **0.49** | **99.85** |
+| **MedLite-CRC (Ours)**| **0.48** | **99.85** |
 | EfficientNetB0 | 4.02 | 99.68 |
 | ShuffleNetV2 | 1.26 | 99.68 |
 | MobileNetV2 | 2.24 | 99.63 |
@@ -181,8 +181,8 @@ Trained MedLite-CRC + Baselines on an 80/20 split of CRC-5000. This proves the a
 
 | Model | Params (M) | Accuracy (%) |
 |---|---|---|
-| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.49** | **93.94** ✅ |
-| **MedLite-CRC (Ours, standard)**| **0.49** | **92.00** |
+| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **93.94** ✅ |
+| **MedLite-CRC (Ours, standard)**| **0.48** | **92.00** |
 | EfficientNetB0 | 4.02 | 92.00 |
 | ResNet50 | 23.53 | 89.43 |
 | MobileNetV2 | 2.24 | 89.00 |
@@ -216,7 +216,7 @@ Ran Grad-CAM specifically on the misclassified images (e.g., Stroma confused for
 
 ## 8. Actionable Next Steps (Priority Order)
 
-- [x] **[COMPLETED]** Lock in MedLite-CRC V1 architecture (0.49M params).
+- [x] **[COMPLETED]** Lock in MedLite-CRC V1 architecture (0.48M params).
 - [x] **[COMPLETED]** Generate baseline benchmarks for NCT-100K.
 - [x] **[COMPLETED]** Complete Experiment B (STARC-9): Benchmarking MedLite + Baselines.
 - [x] **[COMPLETED]** Complete Experiment C (CRC-5000): Benchmarking MedLite + Baselines.

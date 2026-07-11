@@ -22,7 +22,7 @@ Unlike standard datasets (e.g., ImageNet with cars and dogs), histopathology ima
 ## 2. V1 vs V2 Architectural Scaling
 
 ### The Hypothesis
-To surpass MobileNetV2 (95.56%), we hypothesized that increasing the channel capacity of our network would allow it to extract more complex morphological features. We upgraded MedLite-CRC from **32 channels (0.49M params, V1)** to **48 channels with SiLU activations (1.08M params, V2)**.
+To surpass MobileNetV2 (95.56%), we hypothesized that increasing the channel capacity of our network would allow it to extract more complex morphological features. We upgraded MedLite-CRC from **32 channels (0.48M params, V1)** to **48 channels with SiLU activations (1.08M params, V2)**.
 
 ### The Result (Negative)
 While V2 achieved a near-perfect **99.98% training accuracy**, its generalization completely collapsed on the cross-patient `CRC-VAL-HE-7K` dataset, dropping to **91.94%**.
@@ -30,7 +30,7 @@ While V2 achieved a near-perfect **99.98% training accuracy**, its generalizatio
 ### The Scientific Conclusion
 The V2 model possessed too much capacity and severely **overfit to the source domain**. Rather than learning true cellular structures, the over-parameterized network began memorizing hospital-specific artifacts (e.g., scanner color profiles, subtle stain variations) present in the training set. 
 
-**Conclusion:** The strict parameter constraint of the **V1 architecture (0.49M params) acts as a crucial "natural regularizer"**. By limiting the network's capacity, we force it to learn only the most robust, cross-domain cellular morphological features, making V1 significantly superior for generalization.
+**Conclusion:** The strict parameter constraint of the **V1 architecture (0.48M params) acts as a crucial "natural regularizer"**. By limiting the network's capacity, we force it to learn only the most robust, cross-domain cellular morphological features, making V1 significantly superior for generalization.
 
 ---
 
@@ -138,7 +138,7 @@ Critically, the model catastrophically failed on specific tissue types:
 Resolve the fatal domain shift between NCT-CRC-HE-100K and STARC-9 by combining them into a single 11-Class taxonomy (splitting conflicting labels like Stanford-Normal and Blood). Train without destructive augmentations to see if sheer dataset scale acts as the ultimate regularizer.
 
 **Methodology:**
-*   **Model:** MedLite-CRC (V1, 0.491M params)
+*   **Model:** MedLite-CRC (V1, 0.48M params)
 *   **Dataset:** `HybridCRCDataset` merging 100K (Germany) + STARC-9 (Stanford) entirely in RAM. Total: ~730,000 images.
 *   **Augmentations:** Mild standard augmentations (Stain, Color Jitter, Flips). No Foreground Masking. No Grayscale dropout.
 *   **Taxonomy:** 11 Classes (`ADI`, `BACK`, `BLD`, `DEB`, `LYM`, `MUC`, `MUS`, `NORM`, `NOR_STANFORD`, `STR`, `TUM`).
