@@ -13,14 +13,23 @@ import numpy as np
 def main():
     # Data for the models (accuracy, params, latency, disk size)
     models = {
-        "MedLite-CRC (Ours)": {
-            "params": 0.49,
-            "accuracy": 94.05,
+        "MedLite-CRC (Standard)": {
+            "params": 0.48,
+            "accuracy": 94.62,
             "latency": 7.93,
-            "size": 2.0,
+            "size": 2.02,
             "color": "#1f77b4",
             "marker": "*",
             "size_multiplier": 300,
+        },
+        "MedLite-CRC (MobileNetV2 KD)": {
+            "params": 0.48,
+            "accuracy": 96.02,
+            "latency": 7.93,
+            "size": 2.02,
+            "color": "#e377c2",
+            "marker": "P",
+            "size_multiplier": 350,
         },
         "ShuffleNetV2": {
             "params": 1.26,
@@ -66,7 +75,7 @@ def main():
     plt.rcParams["axes.edgecolor"] = "#cccccc"
     plt.rcParams["axes.linewidth"] = 0.8
 
-    fig, ax = plt.subplots(figsize=(8, 6), dpi=150)
+    fig, ax = plt.subplots(figsize=(9, 7), dpi=150)
     
     # Enable grid lines with soft coloring
     ax.grid(True, linestyle="--", alpha=0.5, color="#dddddd")
@@ -89,7 +98,8 @@ def main():
         
         # Add labels near points
         xytext_offsets = {
-            "MedLite-CRC (Ours)": (10, -5),
+            "MedLite-CRC (Standard)": (10, -18),
+            "MedLite-CRC (MobileNetV2 KD)": (10, 5),
             "ShuffleNetV2": (10, 5),
             "MobileNetV2": (10, -12),
             "EfficientNetB0": (10, 5),
@@ -98,9 +108,13 @@ def main():
         
         offset = xytext_offsets.get(name, (10, 0))
         
-        label_text = f"{name}\n({data['params']}M params, {data['accuracy']:.2f}%)"
-        if name == "MedLite-CRC (Ours)":
-            label_text = r"$\mathbf{" + name.replace(" (Ours)", "") + "}$" + "\n(Ours: 0.49M, 94.05%)"
+        if "MedLite-CRC" in name:
+            if "KD" in name:
+                label_text = r"$\mathbf{MedLite-CRC\ (KD)}$" + f"\n(Ours: {data['params']}M, {data['accuracy']:.2f}%)"
+            else:
+                label_text = r"$\mathbf{MedLite-CRC\ (Standard)}$" + f"\n(Ours: {data['params']}M, {data['accuracy']:.2f}%)"
+        else:
+            label_text = f"{name}\n({data['params']}M params, {data['accuracy']:.2f}%)"
             
         ax.annotate(
             label_text,
@@ -110,15 +124,28 @@ def main():
             ha="left" if offset[0] > 0 else "right",
             va="center",
             fontsize=9,
-            fontweight="bold" if name == "MedLite-CRC (Ours)" else "normal",
+            fontweight="bold" if "MedLite-CRC" in name else "normal",
             bbox=dict(boxstyle="round,pad=0.2", fc="white", alpha=0.6, ec="none", zorder=2)
         )
 
-    # Draw Pareto frontier line
-    # The frontier is defined by MedLite-CRC (0.49M, 94.05%) and ShuffleNetV2 (1.26M, 95.08%)
-    frontier_x = [models["MedLite-CRC (Ours)"]["params"], models["ShuffleNetV2"]["params"]]
-    frontier_y = [models["MedLite-CRC (Ours)"]["accuracy"], models["ShuffleNetV2"]["accuracy"]]
-    ax.plot(frontier_x, frontier_y, linestyle=":", color="#333333", linewidth=1.5, zorder=1, label="Pareto Frontier")
+    # Draw Standard Pareto frontier line (connecting standard model to ShuffleNetV2)
+    frontier_x = [models["MedLite-CRC (Standard)"]["params"], models["ShuffleNetV2"]["params"]]
+    frontier_y = [models["MedLite-CRC (Standard)"]["accuracy"], models["ShuffleNetV2"]["accuracy"]]
+    ax.plot(frontier_x, frontier_y, linestyle="--", color="#666666", linewidth=1.5, zorder=1, label="Standard Pareto Frontier")
+
+    # Highlight KD breakthrough (vertical shift)
+    ax.annotate(
+        "", 
+        xy=(models["MedLite-CRC (MobileNetV2 KD)"]["params"], models["MedLite-CRC (MobileNetV2 KD)"]["accuracy"] - 0.1),
+        xytext=(models["MedLite-CRC (Standard)"]["params"], models["MedLite-CRC (Standard)"]["accuracy"] + 0.1),
+        arrowprops=dict(arrowstyle="->", color="#e377c2", lw=2, ls=":")
+    )
+    ax.text(
+        models["MedLite-CRC (Standard)"]["params"] + 0.25, 
+        (models["MedLite-CRC (Standard)"]["accuracy"] + models["MedLite-CRC (MobileNetV2 KD)"]["accuracy"]) / 2, 
+        "+1.40% Accuracy Gain via KD", 
+        color="#e377c2", fontsize=9, fontweight="bold", va="center"
+    )
 
     # Set axes labels and title
     ax.set_xlabel("Model Parameters (Millions)", fontsize=11, fontweight="bold", labelpad=8)
@@ -127,7 +154,7 @@ def main():
     
     # Adjust axes limits to frame well
     ax.set_xlim(-1, 26)
-    ax.set_ylim(93.5, 95.5)
+    ax.set_ylim(93.5, 96.5)
 
     # Clean spine lines
     ax.spines["top"].set_visible(False)

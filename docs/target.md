@@ -222,7 +222,7 @@ Ran Grad-CAM specifically on the misclassified images (e.g., Stroma confused for
 - [x] **[COMPLETED]** Complete Experiment C (CRC-5000): Benchmarking MedLite + Baselines.
 - [x] **[COMPLETED]** Run Experiment A with 3 seeds, report mean ± std.
 - [x] **[MEDIUM]** Run Grad-CAM on a failure-case dataset for honest contrast analysis.
-- [ ] **[HIGH]** Begin manuscript draft (Abstract, Introduction, Methodology) based on the "Data Scale is the Regularizer" narrative.
+- [x] **[COMPLETED]** Begin manuscript draft (Abstract, Introduction, Methodology) based on the "Data Scale is the Regularizer" narrative.
 
 ---
 
