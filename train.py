@@ -303,10 +303,25 @@ def train(cfg_path: str, resume: str = None, finetune: str = None):
     # ── Teacher Model (Knowledge Distillation) ───────────────────────────────
     teacher_model = None
     if cfg["training"].get("use_kd", False):
-        print("\n[KD] Loading Teacher Model (MobileNetV2)...")
-        teacher_model = models.mobilenet_v2(weights=None)
-        # Modify classifier to output 9 classes
-        teacher_model.classifier[1] = nn.Linear(teacher_model.last_channel, cfg["data"]["num_classes"])
+        teacher_name = cfg["training"].get("teacher_name", "MobileNetV2")
+        print(f"\n[KD] Loading Teacher Model ({teacher_name})...")
+        num_classes = cfg["data"]["num_classes"]
+        
+        if teacher_name == "MobileNetV2":
+            teacher_model = models.mobilenet_v2(weights=None)
+            teacher_model.classifier[1] = nn.Linear(teacher_model.last_channel, num_classes)
+        elif teacher_name == "EfficientNetB0":
+            teacher_model = models.efficientnet_b0(weights=None)
+            teacher_model.classifier[1] = nn.Linear(teacher_model.classifier[1].in_features, num_classes)
+        elif teacher_name == "ShuffleNetV2":
+            teacher_model = models.shufflenet_v2_x1_0(weights=None)
+            teacher_model.fc = nn.Linear(teacher_model.fc.in_features, num_classes)
+        elif teacher_name == "ResNet50":
+            teacher_model = models.resnet50(weights=None)
+            teacher_model.fc = nn.Linear(teacher_model.fc.in_features, num_classes)
+        else:
+            raise ValueError(f"Unknown teacher model name: {teacher_name}")
+            
         teacher_ckpt = cfg["training"].get("teacher_checkpoint")
         if teacher_ckpt:
             load_checkpoint(teacher_ckpt, teacher_model)

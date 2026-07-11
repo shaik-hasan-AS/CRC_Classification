@@ -1,0 +1,92 @@
+project:
+  name: "MedLite-CRC-KD-MobileNet"
+  description: "Knowledge Distillation from MobileNetV2 (94.82% OOD) to MedLite-CRC Ablation3 (no SE block)"
+  seed: 42
+
+data:
+  nct_crc_train_dir: "data/NCT-CRC-HE-100K"
+  nct_crc_val_dir:   "data/CRC-VAL-HE-7K"
+  nct_crc_nonorm_dir: "data/NCT-CRC-HE-100K-NONORM"
+  image_size: 224
+  num_classes: 9
+  num_workers: 4
+  pin_memory: true
+
+  classes:
+    - ADI
+    - BACK
+    - DEB
+    - LYM
+    - MUC
+    - MUS
+    - NORM
+    - STR
+    - TUM
+
+  augmentation:
+    use_foreground_masking: true
+    mask_threshold: 0.85
+    grayscale_prob: 0.3
+    use_stain_augment: true
+    stain_probability: 0.8
+    stain_sigma1: 0.3
+    stain_sigma2: 0.3
+    color_jitter: true
+    color_jitter_brightness: 0.3
+    color_jitter_contrast: 0.3
+    color_jitter_saturation: 0.2
+    color_jitter_hue: 0.1
+    random_flip: true
+    random_rotation: true
+    normalize_mean: [0.7406, 0.5331, 0.7059]
+    normalize_std:  [0.1651, 0.2174, 0.1574]
+
+training:
+  epochs: 60
+  batch_size: 64
+  val_batch_size: 128
+  optimizer: "adamw"
+  lr: 0.001
+  weight_decay: 0.0001
+  scheduler: "cosine"
+  warmup_epochs: 3
+  early_stopping_patience: 15
+  grad_clip: 1.0
+  mixed_precision: true
+
+  loss: "ce"
+  label_smoothing: 0.1
+  use_class_weights: true
+  use_confusion_penalty: false
+  crossval_eval_freq: 5
+
+  # ── Knowledge Distillation: MobileNetV2 Teacher ──
+  # MobileNetV2 is domain-aligned (same dataset, 94.82% OOD) → better soft labels
+  # than EfficientNet-B0. Lower temperature (3.0) since teacher is smaller/sharper.
+  use_kd: true
+  teacher_name: "MobileNetV2"
+  teacher_checkpoint: "outputs/checkpoints_mobilenetv2/ckpt_epoch057_acc0.9918.pt"
+  kd_temperature: 3.0     # lower than EffNet (4.0) — MobileNet has sharper distributions
+  kd_alpha: 0.4           # 60% hard labels, 40% soft → let ground truth dominate more
+
+model:
+  name: "MedLiteCRC"
+  base_channels: 32
+  attention_reduction: 16
+  dropout: 0.4
+  use_stain_norm: true
+  stain_norm_space: "rgb"
+  use_multiscale: true
+  use_se_block: false      # SE block removed — proven to hurt OOD generalization
+
+wandb:
+  enabled: true
+  project: "MedLite-CRC"
+  entity: ""
+  log_freq: 50
+
+outputs:
+  checkpoint_dir: "outputs/checkpoints_kd_mobilenet"
+  log_dir:        "outputs/logs_kd_mobilenet"
+  gradcam_dir:    "outputs/gradcam"
+  save_top_k: 3

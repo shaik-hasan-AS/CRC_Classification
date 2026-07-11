@@ -72,6 +72,8 @@ def run_eval(model, loader, device, split_name, class_names, use_tta=False):
 
 
 def plot_confusion_matrix(preds, labels, class_names, save_path):
+    save_path = Path(save_path)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
     cm = confusion_matrix(labels, preds, normalize="true")
     fig, ax = plt.subplots(figsize=(10, 8))
     sns.heatmap(
