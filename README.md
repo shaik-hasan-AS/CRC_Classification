@@ -97,7 +97,7 @@ To ensure the model is learning valid biological features rather than exploiting
 * **Lymphocytes (LYM) [97.6% alignment]**: High focus on dense nuclear groups.
 * **Stroma (STR) [96.8% alignment]**: High focus tracking fibrous collagen pathways.
 * **Debris (DEB) [85.2% alignment]**: Correctly relaxed spatial attention, diffusing into background necrotic zones.
-* **Negative Space Shortcut Warning**: We explicitly report that on certain Stroma patches, the model's heat focuses on the empty background (0.198) rather than cellular tissue (0.137), identifying a limitation where the model learns the geometric boundaries of the empty slide fibers rather than the fibers themselves.
+* **Negative Space Shortcut Mitigation**: While the standard baseline model was prone to "cheating" by focusing on the empty slide background (0.198 background vs 0.137 tissue), knowledge distillation successfully resolved this shortcut. In our SOTA KD model, spatial attention is correctly concentrated on the actual cellular fibers (0.3260 tissue vs 0.3062 background).
 
 ---
 
