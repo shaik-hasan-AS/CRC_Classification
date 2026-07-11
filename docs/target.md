@@ -49,10 +49,10 @@ A novel lightweight CNN designed ground-up for medical histopathology texture.
 | **Classifier Head** | GAP → FC → BN → Dropout(0.4) → FC | Regularized for small datasets |
 
 **Key Stats:**
-- Parameters: **0.491M** (vs 3.4M MobileNetV2, 5.3M EfficientNet-B0, 11.7M ResNet-18)
-- Model Size: **2.05 MB**
+- Parameters: **0.48M** (vs 2.24M MobileNetV2, 4.02M EfficientNet-B0, 23.53M ResNet-50)
+- Model Size: **2.02 MB** (FP32) / **0.75 MB** (INT8)
 - FLOPs: **0.726 GFLOPs**
-- CPU Inference: **12.90 ms/image** (Batch Size = 1)
+- CPU Inference: **1.94 ms/image** (INT8) / **7.93 ms/image** (FP32) (Batch Size = 1)
 
 ---
 
