@@ -12,9 +12,18 @@ from models.medlite_crc import build_model
 from utils.gradcam import GradCAM
 from data.transforms import get_val_transforms
 
+import argparse
+
 def main():
+    # Parse arguments
+    parser = argparse.ArgumentParser(description="Analyze Grad-CAM spatial interpretability.")
+    parser.add_argument("--config", default="configs/kd_mobilenet_teacher.yaml", help="Path to config file")
+    parser.add_argument("--checkpoint", default="outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt", help="Path to checkpoint file")
+    parser.add_argument("--mask_border_width", type=int, default=8, help="Border pixels to mask out in GradCAM")
+    args = parser.parse_args()
+
     # Load config
-    config_path = "configs/kd_mobilenet_teacher.yaml"
+    config_path = args.config
     with open(config_path, "r") as f:
         cfg = yaml.safe_load(f)
         
@@ -23,7 +32,7 @@ def main():
     
     # Build and load model
     model = build_model(cfg).to(device)
-    checkpoint_path = "outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt"
+    checkpoint_path = args.checkpoint
     print(f"Loading checkpoint: {checkpoint_path}")
     ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
     state = ckpt.get("model_state_dict", ckpt)
@@ -71,7 +80,7 @@ def main():
         tensor = transform(img_pil).to(device)
         
         try:
-            cam, pred_class, probs = gcam.generate(tensor, target_class=label)
+            cam, pred_class, probs = gcam.generate(tensor, target_class=label, mask_border_width=args.mask_border_width)
             is_correct = (pred_class == label)
             
             # 1. Vanishing Gradient

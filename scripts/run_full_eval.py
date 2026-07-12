@@ -19,6 +19,7 @@ import sys
 import glob
 import time
 import random
+import argparse
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -34,6 +35,14 @@ from models.medlite_crc import MedLiteCRC, build_model, count_parameters
 from data.dataset import get_crossval_loader, CRC_CLASSES
 import torchvision.models as tv_models
 import torchvision.datasets as tv_datasets
+
+# ── Parse command-line arguments ────────────────────────────────────────────────
+parser = argparse.ArgumentParser(description="Evaluate MedLite-CRC models.")
+parser.add_argument("--config", default="configs/kd_mobilenet_teacher.yaml", help="Path to KD config")
+parser.add_argument("--checkpoint", default="outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt", help="Path to SOTA checkpoint")
+parser.add_argument("--padding_mode", default=None, help="Padding mode for MedLiteCRC ('zeros' or 'reflect')")
+parser.add_argument("--mask_border_width", type=int, default=8, help="Border pixels to mask out in GradCAM")
+args = parser.parse_args()
 
 # ── statsmodels for McNemar ────────────────────────────────────────────────────
 try:
@@ -57,10 +66,10 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"\n[DEVICE] {DEVICE}\n")
 
 # ── Shared config / loader ─────────────────────────────────────────────────────
-KD_CFG_PATH       = "configs/kd_mobilenet_teacher.yaml"
+KD_CFG_PATH       = args.config
 BASE_CFG_PATH     = "configs/config.yaml"
 
-SOTA_CKPT         = "outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt"
+SOTA_CKPT         = args.checkpoint
 EFFNET_CKPT       = "outputs/checkpoints_efficientnetb0/ckpt_epoch036_acc0.9904.pt"  # best effnet
 
 ABLATION_CKPTS = {
@@ -71,10 +80,10 @@ ABLATION_CKPTS = {
 }
 
 ABLATION_FLAGS = {
-    "Ablation 1 (Baseline CNN)":               dict(use_stain_norm=False, use_multiscale=False, use_se_block=False),
-    "Ablation 2 (+ StainNorm)":                dict(use_stain_norm=True,  use_multiscale=False, use_se_block=False),
-    "Ablation 3 (+ MultiScale) ← FINAL":      dict(use_stain_norm=True,  use_multiscale=True,  use_se_block=False),
-    "Ablation 4 (+ SEBlock — Negative)":       dict(use_stain_norm=True,  use_multiscale=True,  use_se_block=True),
+    "Ablation 1 (Baseline CNN)":               dict(use_stain_norm=False, use_multiscale=False, use_se_block=False, padding_mode="zeros"),
+    "Ablation 2 (+ StainNorm)":                dict(use_stain_norm=True,  use_multiscale=False, use_se_block=False, padding_mode="zeros"),
+    "Ablation 3 (+ MultiScale) ← FINAL":      dict(use_stain_norm=True,  use_multiscale=True,  use_se_block=False, padding_mode="zeros"),
+    "Ablation 4 (+ SEBlock — Negative)":       dict(use_stain_norm=True,  use_multiscale=True,  use_se_block=True, padding_mode="zeros"),
 }
 
 
@@ -126,10 +135,13 @@ cfg_kd["data"]["num_workers"] = 0
 
 loader_7k = get_crossval_loader(cfg_kd)
 
+sota_padding_mode = args.padding_mode if args.padding_mode is not None else cfg_kd.get("model", {}).get("padding_mode", "zeros")
+print(f"Constructing SOTA model with padding_mode={sota_padding_mode}")
+
 sota_model = MedLiteCRC(
     num_classes=9, base_channels=32, dropout=0.4,
     use_stain_norm=True, use_multiscale=True, use_se_block=False,
-    stain_norm_space="rgb",
+    stain_norm_space="rgb", padding_mode=sota_padding_mode,
 ).to(DEVICE)
 
 if not Path(SOTA_CKPT).exists():
@@ -280,7 +292,7 @@ else:
         img_resized = img_pil.resize((224, 224))
         tensor = transform(img_pil).to(DEVICE)
         try:
-            cam, pred_class, _ = gcam.generate(tensor, target_class=label)
+            cam, pred_class, _ = gcam.generate(tensor, target_class=label, mask_border_width=args.mask_border_width)
             is_correct = (pred_class == label)
             sum_cam = cam.sum()
             if sum_cam < 1e-8:

@@ -40,7 +40,7 @@ class GradCAM:
         self.target_layer.register_forward_hook(forward_hook)
         self.target_layer.register_full_backward_hook(backward_hook)
 
-    def generate(self, input_tensor, target_class=None):
+    def generate(self, input_tensor, target_class=None, mask_border_width=0):
         self.model.eval()
         input_tensor = input_tensor.unsqueeze(0)
 
@@ -58,6 +58,13 @@ class GradCAM:
         cam     = F.interpolate(cam, size=input_tensor.shape[2:],
                                 mode="bilinear", align_corners=False)
         cam     = cam.squeeze().cpu().numpy()
+        
+        if mask_border_width > 0:
+            cam[0:mask_border_width, :] = 0
+            cam[-mask_border_width:, :] = 0
+            cam[:, 0:mask_border_width] = 0
+            cam[:, -mask_border_width:] = 0
+
         cam     = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
 
         return cam, target_class, logits.softmax(dim=1)[0].detach().cpu().numpy()

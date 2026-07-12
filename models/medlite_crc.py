@@ -18,11 +18,11 @@ import torch.nn.functional as F
 
 # ── Utility Blocks ─────────────────────────────────────────────────────────────
 
-def conv_bn_relu6(in_ch, out_ch, kernel=3, stride=1, padding=1, groups=1):
+def conv_bn_relu6(in_ch, out_ch, kernel=3, stride=1, padding=1, groups=1, padding_mode='zeros'):
     """Conv + BatchNorm + ReLU6 (Swish) for smoother gradients."""
     return nn.Sequential(
         nn.Conv2d(in_ch, out_ch, kernel, stride=stride,
-                  padding=padding, groups=groups, bias=False),
+                  padding=padding, groups=groups, bias=False, padding_mode=padding_mode),
         nn.BatchNorm2d(out_ch),
         nn.ReLU6(inplace=True),
     )
@@ -31,12 +31,12 @@ def conv_bn_relu6(in_ch, out_ch, kernel=3, stride=1, padding=1, groups=1):
 class DepthwiseSeparableConv(nn.Module):
     """Depthwise Separable Convolution: DW conv + PW conv."""
 
-    def __init__(self, in_ch, out_ch, kernel=3, stride=1):
+    def __init__(self, in_ch, out_ch, kernel=3, stride=1, padding_mode='zeros'):
         super().__init__()
         pad = kernel // 2
         self.dw = conv_bn_relu6(in_ch, in_ch, kernel=kernel,
-                                stride=stride, padding=pad, groups=in_ch)
-        self.pw = conv_bn_relu6(in_ch, out_ch, kernel=1, padding=0)
+                                stride=stride, padding=pad, groups=in_ch, padding_mode=padding_mode)
+        self.pw = conv_bn_relu6(in_ch, out_ch, kernel=1, padding=0, padding_mode='zeros')
 
     def forward(self, x):
         return self.pw(self.dw(x))
@@ -156,12 +156,12 @@ class MultiScaleBranch(nn.Module):
     Concatenated and fused with a 1×1 pointwise conv.
     """
 
-    def __init__(self, in_ch, branch_ch, out_ch):
+    def __init__(self, in_ch, branch_ch, out_ch, padding_mode='zeros'):
         super().__init__()
-        self.branch3 = DepthwiseSeparableConv(in_ch, branch_ch, kernel=3)
-        self.branch5 = DepthwiseSeparableConv(in_ch, branch_ch, kernel=5)
-        self.branch7 = DepthwiseSeparableConv(in_ch, branch_ch, kernel=7)
-        self.fuse    = conv_bn_relu6(branch_ch * 3, out_ch, kernel=1, padding=0)
+        self.branch3 = DepthwiseSeparableConv(in_ch, branch_ch, kernel=3, padding_mode=padding_mode)
+        self.branch5 = DepthwiseSeparableConv(in_ch, branch_ch, kernel=5, padding_mode=padding_mode)
+        self.branch7 = DepthwiseSeparableConv(in_ch, branch_ch, kernel=7, padding_mode=padding_mode)
+        self.fuse    = conv_bn_relu6(branch_ch * 3, out_ch, kernel=1, padding=0, padding_mode='zeros')
 
     def forward(self, x):
         b3 = self.branch3(x)
@@ -180,17 +180,17 @@ class DWResBlock(nn.Module):
     Downsampling via stride=2 on first DW conv.
     """
 
-    def __init__(self, in_ch, out_ch, stride=1):
+    def __init__(self, in_ch, out_ch, stride=1, padding_mode='zeros'):
         super().__init__()
-        self.conv1 = DepthwiseSeparableConv(in_ch, out_ch, stride=stride)
-        self.conv2 = DepthwiseSeparableConv(out_ch, out_ch)
+        self.conv1 = DepthwiseSeparableConv(in_ch, out_ch, stride=stride, padding_mode=padding_mode)
+        self.conv2 = DepthwiseSeparableConv(out_ch, out_ch, padding_mode=padding_mode)
         self.bn    = nn.BatchNorm2d(out_ch)
 
         # Projection shortcut if dimensions change
         self.shortcut = nn.Sequential()
         if stride != 1 or in_ch != out_ch:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_ch, out_ch, 1, stride=stride, bias=False),
+                nn.Conv2d(in_ch, out_ch, 1, stride=stride, bias=False, padding_mode='zeros'),
                 nn.BatchNorm2d(out_ch),
             )
 
@@ -254,7 +254,7 @@ class MedLiteCRC(nn.Module):
 
     def __init__(self, num_classes=9, base_channels=32, reduction=16, dropout=0.4,
                  use_stain_norm=True, use_multiscale=True, use_se_block=False,
-                 stain_norm_space="rgb"):
+                 stain_norm_space="rgb", padding_mode="zeros"):
         super().__init__()
 
         self.use_stain_norm = use_stain_norm
@@ -273,25 +273,25 @@ class MedLiteCRC(nn.Module):
 
         # ── 2. Stem Block
         self.stem = nn.Sequential(
-            conv_bn_relu6(3, C, kernel=3, stride=2, padding=1),       # 224→112
+            conv_bn_relu6(3, C, kernel=3, stride=2, padding=1, padding_mode=padding_mode),       # 224→112
             conv_bn_relu6(C, C, kernel=3, stride=1, padding=1,
-                          groups=C),                                    # DW conv
+                          groups=C, padding_mode=padding_mode),                                    # DW conv
         )
 
         # ── 3. Multi-Scale Feature Extraction
         if self.use_multiscale:
             self.multi_scale = MultiScaleBranch(
-                in_ch=C, branch_ch=C * 2, out_ch=C * 4   # 32 → 64 per branch → 128 out
+                in_ch=C, branch_ch=C * 2, out_ch=C * 4, padding_mode=padding_mode   # 32 → 64 per branch → 128 out
             )
         else:
-            self.multi_scale = DepthwiseSeparableConv(in_ch=C, out_ch=C * 4, kernel=3)
+            self.multi_scale = DepthwiseSeparableConv(in_ch=C, out_ch=C * 4, kernel=3, padding_mode=padding_mode)
         self.pool1 = nn.MaxPool2d(2, 2)   # 112→56
 
         # ── 4. Depthwise Residual Blocks
         self.res_blocks = nn.Sequential(
-            DWResBlock(C * 4, C * 4, stride=1),         # 56×56, 128ch
-            DWResBlock(C * 4, C * 8, stride=2),         # 56→28, 256ch
-            DWResBlock(C * 8, C * 8, stride=2),         # 28→14, 256ch
+            DWResBlock(C * 4, C * 4, stride=1, padding_mode=padding_mode),         # 56×56, 128ch
+            DWResBlock(C * 4, C * 8, stride=2, padding_mode=padding_mode),         # 56→28, 256ch
+            DWResBlock(C * 8, C * 8, stride=2, padding_mode=padding_mode),         # 28→14, 256ch
         )
 
         # ── 5. Channel Attention
@@ -370,6 +370,7 @@ def build_model(cfg) -> nn.Module:
             use_multiscale   = model_cfg.get("use_multiscale", True),
             use_se_block     = model_cfg.get("use_se_block", False),
             stain_norm_space = model_cfg.get("stain_norm_space", "rgb"),
+            padding_mode     = model_cfg.get("padding_mode", "zeros"),
         )
 
     # Baselines

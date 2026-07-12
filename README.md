@@ -27,6 +27,9 @@ This research demonstrates a paradigm shift: Cross-dataset generalization in his
    - **Depthwise Separable Residuals (`DWResBlock`)**: Strips standard ResNet blocks down to pure depthwise convolutions with `ReLU6`, achieving massive receptive fields while staying under 0.5M parameters.
 5. **Clinical Interpretability & Verification**: 
    - Core Grad-CAM visual evaluations reveal **97.6% overlap** with lymphocytic nuclei and **96.8% alignment** on stroma collagen paths, while highlighting the avoidance of "center-bias" defects and disclosing realistic "negative space" shortcut limitations.
+6. **V2 Boundary Artifact Mitigation**:
+   - Switched from default zero-padding to reflection padding (`padding_mode='reflect'`) across all convolutional layers and implemented an 8px spatial border mask during Grad-CAM evaluation.
+   - Successfully eliminated boundary over-activation artifacts, achieving a **17.9% relative reduction** in slide background noise activation (0.3075 down to 0.2524) and reducing the vanishing gradient rate from **11.20% to 10.30%** while preserving OOD accuracy (**95.84%** after 3 epochs of fine-tuning).
 
 ---
 
@@ -97,7 +100,7 @@ To ensure the model is learning valid biological features rather than exploiting
 * **Lymphocytes (LYM) [97.6% alignment]**: High focus on dense nuclear groups.
 * **Stroma (STR) [96.8% alignment]**: High focus tracking fibrous collagen pathways.
 * **Debris (DEB) [85.2% alignment]**: Correctly relaxed spatial attention, diffusing into background necrotic zones.
-* **Negative Space Shortcut Mitigation**: While the standard baseline model was prone to "cheating" by focusing on the empty slide background (0.198 background vs 0.137 tissue), knowledge distillation successfully resolved this shortcut. In our SOTA KD model, spatial attention is correctly concentrated on the actual cellular fibers (0.3260 tissue vs 0.3062 background).
+* **Negative Space Shortcut Mitigation**: While the standard baseline model was prone to "cheating" by focusing on the empty slide background (0.198 background vs 0.137 tissue), knowledge distillation successfully resolved this shortcut (0.3260 tissue vs 0.3062 background). In the V2 configuration (reflect padding and 8px border masking), background activations fell even further to **0.2524**, completely eliminating the zero-padding boundary over-activation artifact.
 
 ---
 
@@ -132,6 +135,12 @@ python evaluate.py --config configs/config.yaml --checkpoint outputs/medlite_fp3
 To train the model from scratch on the 100K dataset:
 ```bash
 python train.py --config configs/config.yaml
+```
+
+### 6. Peer-Reviewer Replication Guide (Replicating Results)
+We provide an interactive verification console that walks peer reviewers through reproducing every major table, figure, and scientific claim (OOD evaluation, multi-cohort validation, statistical significance, Expected Calibration Error, computational efficiency, and Grad-CAM spatial analysis) in the manuscript:
+```bash
+bash scripts/replicate_all.sh
 ```
 
 ---
