@@ -1,0 +1,8 @@
+MedLite-CRC V2 (MobileNetV2 KD SOTA) - 3 Seed Validation
+======================================================================
+Seed 42: Accuracy = 95.78%, Macro-F1 = 0.9453
+Seed 123: Accuracy = 95.96%, Macro-F1 = 0.9472
+Seed 999: Accuracy = 95.46%, Macro-F1 = 0.9408
+----------------------------------------------------------------------
+FINAL ACCURACY: 95.73% ± 0.21%
+FINAL MACRO-F1: 0.9444 ± 0.0027

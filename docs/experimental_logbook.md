@@ -182,3 +182,29 @@ This logbook serves as the single source of truth for all quantitative metrics, 
   - MedLite Incorrect / EffNet Correct: 64
 - **Chi-Square Statistic ($\chi^2$):** 967.730
 - **P-Value:** $1.86 \times 10^{-212}$ (Highly significant difference in favor of MedLite-CRC's architectural robustness to border artifacts)
+
+---
+
+## 🎲 6. Multi-Seed Robustness & Statistical Validation
+
+*Comparing Baseline from-scratch models vs. V2 SOTA KD models across 3 random seeds (42, 123, 999) on the CRC-VAL-HE-7K test set.*
+
+### A. Baseline Model (From-Scratch / Ablation 3 / No KD)
+- **Seed 42:** Accuracy = 93.76%, Macro-F1 = 0.9214
+- **Seed 123:** Accuracy = 94.71%, Macro-F1 = 0.9321
+- **Seed 999:** Accuracy = 93.69%, Macro-F1 = 0.9179
+- **Summary statistics:**
+  - **Mean Accuracy:** **94.05%** (± 0.46%)
+  - **Mean Macro-F1:** **0.9238** (± 0.0060)
+
+### B. V2 SOTA Model (MobileNetV2 KD + Reflect Padding + 8px Border Mask)
+- **Seed 42:** Accuracy = 95.78%, Macro-F1 = 0.9453
+- **Seed 123:** Accuracy = 95.96%, Macro-F1 = 0.9472
+- **Seed 999:** Accuracy = 95.46%, Macro-F1 = 0.9408
+- **Summary statistics:**
+  - **Mean Accuracy:** **95.73%** (± 0.21%)
+  - **Mean Macro-F1:** **0.9444** (± 0.0027)
+
+> [!NOTE]
+> The V2 SOTA model not only increases out-of-distribution performance by **1.68% (absolute)**, but also halves the variance across random initializations (standard deviation drops from **0.46%** to **0.21%**), demonstrating superior convergence stability under knowledge distillation.
+
