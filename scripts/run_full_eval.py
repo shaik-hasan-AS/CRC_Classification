@@ -70,7 +70,7 @@ KD_CFG_PATH       = args.config
 BASE_CFG_PATH     = "configs/config.yaml"
 
 SOTA_CKPT         = args.checkpoint
-EFFNET_CKPT       = "outputs/checkpoints_efficientnetb0/ckpt_epoch036_acc0.9904.pt"  # best effnet
+EFFNET_CKPT       = "outputs/checkpoints_efficientnetb0/ckpt_epoch053_acc0.9904.pt"  # best effnet
 
 ABLATION_CKPTS = {
     "Ablation 1 (Baseline CNN)":               "outputs/checkpoints_ablation_baseline/ckpt_epoch185_acc0.9954.pt",

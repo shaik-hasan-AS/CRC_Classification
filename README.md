@@ -1,6 +1,6 @@
 # MedLite-CRC: A Lightweight, Edge-Deployable CNN for Colorectal Cancer Histopathology
 
-[![SOTA Accuracy](https://img.shields.io/badge/SOTA-96.02%25-brightgreen.svg)](#🔬-key-scientific-highlights)
+[![SOTA Accuracy](https://img.shields.io/badge/SOTA-95.97%25-brightgreen.svg)](#🔬-key-scientific-highlights)
 [![Model Size](https://img.shields.io/badge/Model%20Size-2.02MB-blue.svg)](#🔬-key-scientific-highlights)
 [![Quantized Size](https://img.shields.io/badge/Quantized%20Size-0.75MB-blue.svg)](#🔬-key-scientific-highlights)
 
@@ -18,7 +18,7 @@ This research demonstrates a paradigm shift: Cross-dataset generalization in his
    - **Computations**: 0.72 GFLOPs
    - **Latency**: 1.94 ms/image (INT8 CPU) / 7.93 ms/image (FP32 CPU)
 2. **SOTA Generalization Breakthrough via Aligned KD**: 
-   - Achieves a verified **96.02% cross-patient accuracy** on the completely independent `CRC-VAL-HE-7K` cohort when distilled from a structurally aligned MobileNetV2 teacher model—outperforming the teacher itself (94.82%) by **+1.20%** absolute and the SOTA ShuffleNetV2 baseline (95.08%) by **+0.94%** absolute.
+   - Achieves a verified **95.97% cross-patient accuracy** on the completely independent `CRC-VAL-HE-7K` cohort when distilled from a structurally aligned MobileNetV2 teacher model—outperforming the teacher itself (94.82%) by **+1.15%** absolute and the SOTA ShuffleNetV2 baseline (95.08%) by **+0.89%** absolute.
 3. **Rigorous Statistical Validation**: 
    - A formal McNemar’s test comparing our SOTA KD student against the EfficientNet-B0 baseline yields a highly significant chi-squared statistic ($\chi^2 \approx 1011.74$) and a p-value of **$5.03 \times 10^{-222}$**, mathematically proving our performance gains.
 4. **Architectural Innovations**: 
@@ -40,7 +40,7 @@ The model was trained on the `NCT-CRC-HE-100K` cohort and evaluated on the stric
 | Metric | Target | MedLite-CRC (Standard) | MedLite-CRC (MobileNetV2 KD) |
 |--------|--------|----------------|----------------|
 | **In-Distribution Peak Accuracy** | > 99.0% | **99.48%** | **99.46%** |
-| **Cross-Patient Accuracy (OOD)**| > 93.0% | **94.62%** | **96.02%** ✅ |
+| **Cross-Patient Accuracy (OOD)**| > 93.0% | **94.62%** | **95.97%** ✅ |
 | **CPU Latency (INT8)** | < 50.0 ms | **1.94 ms** | **1.94 ms** |
 | **Total Parameters** | < 5.0 M | **0.48 M** | **0.48 M** |
 
@@ -49,7 +49,7 @@ Evaluated strictly on the unseen DACHS cohort to measure true out-of-domain robu
 
 | Model | Params (M) | Size (MB) | CPU Latency (ms)* | In-Dist Val Acc | OOD Test Acc | Macro-F1 (OOD) | Wtd-F1 (OOD) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **96.02%** ✅ | **0.9484** | **0.9605** |
+| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **95.97%** ✅ | **0.9476** | **0.9600** |
 | **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.46% | 94.62% | 0.9325 | 0.9465 |
 | **MedLite-CRC (Ours, FP32)** | **0.48** | **2.02** | **7.93** | 99.48% | 94.62% | 0.9325 | 0.9465 |
 | ShuffleNetV2 | 1.26 | 5.23 | 5.13 | 99.18% | 95.08% | 0.9351 | 0.9507 |

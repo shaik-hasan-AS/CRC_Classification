@@ -12,7 +12,7 @@ This script:
   5. Recalculates ECE after temperature scaling.
   6. Plots a comparative reliability diagram (Before vs After calibration).
 
-SOTA checkpoint (MobileNetV2 KD student, 96.02% OOD):
+SOTA checkpoint (MobileNetV2 KD student, 95.97% OOD):
     python scripts/calibration_analysis.py \
         --checkpoint outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt \
         --config configs/kd_mobilenet_teacher.yaml \

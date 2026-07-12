@@ -58,7 +58,7 @@ When trained strictly from scratch (without ImageNet pre-training) on NCT-100K a
 To prove that the performance gains of MedLite-CRC (KD Student) are statistically significant and not due to random initialization, we performed a McNemar's test against the 8× larger EfficientNet-B0 baseline on the 7,180-image `CRC-VAL-HE-7K` cohort.
 
 ### 3.1 Primary Analysis: Optimal Configurations
-We compare the models under their respective optimal configurations (MedLite-CRC KD with masking at 96.02% accuracy vs. EfficientNet-B0 unmasked at 94.81% accuracy):
+We compare the models under their respective configurations (MedLite-CRC KD at 95.97% accuracy vs. EfficientNet-B0 unmasked at 94.81% accuracy):
 
 | | EfficientNet-B0 Correct | EfficientNet-B0 Incorrect |
 | :--- | :---: | :---: |
