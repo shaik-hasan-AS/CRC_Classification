@@ -27,7 +27,7 @@ Each dataset is treated as an independent clinical cohort. We train a dedicated 
 | Experiment | Train Set | Test Set | Classes | Status |
 |---|---|---|---|---|
 | **A** | NCT-CRC-HE-100K | CRC-VAL-HE-7K (cross-patient) | 9 | ✅ **94.05% ± 0.46%** (Peak: **94.62%** standard, **96.02%** w/ MobileNetV2 KD ✅) |
-| **B** | STARC-9 (10% stratified) | STARC-9 (val split, 54K images) | 9 | ✅ **99.79%** |
+| **B** | STARC-9 (10% stratified) | STARC-9 (val split, 54K images) | 9 | ✅ **99.79%** (standard), **99.75%** (w/ MobileNetV2 KD) |
 | **C** | CRC-5000 (80% split) | CRC-5000 (20% holdout) | 7 | ✅ **92.00%** (Peak: **93.94%** w/ MobileNetV2 KD ✅) |
 
 
@@ -138,7 +138,7 @@ The model is exceptionally strong at identifying clinically critical tissues (Tu
 ### Experiment B: STARC-9 (10% Subset) → STARC-9 Val
 | Metric | Target | Best Achieved | Status |
 |---|---|---|---|
-| Accuracy (internal val) | ≥ 99% | **99.79%** | ✅ Exceeded |
+| Accuracy (internal val) | ≥ 99% | **99.79%** (standard), **99.75%** (KD) | ✅ Exceeded |
 
 ### Experiment C: CRC-5000 (80%) → CRC-5000 Holdout
 | Metric | Target | Best Achieved | Status |
@@ -170,7 +170,8 @@ Trained MedLite-CRC + Baselines from scratch on a mathematically fair 10% strati
 
 | Model | Params (M) | Accuracy (%) |
 |---|---|---|
-| **MedLite-CRC (Ours)**| **0.48** | **99.79** |
+| **MedLite-CRC (Ours, standard)**| **0.48** | **99.79** |
+| **MedLite-CRC (Ours, MobileNetV2 KD)**| **0.48** | **99.75** |
 | EfficientNetB0 | 4.02 | 99.68 |
 | ShuffleNetV2 | 1.26 | 99.68 |
 | MobileNetV2 | 2.24 | 99.63 |

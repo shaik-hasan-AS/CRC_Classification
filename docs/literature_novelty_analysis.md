@@ -67,7 +67,7 @@ You must proactively address this in your paper before reviewers bring it up.
 
 | Model Architecture | Params (M) | In-Dist 100K | Cross-Patient 7K | STARC-9 | CRC-5000 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **99.46%** | **96.02%** ✅ | **99.79%** | **93.94%** ✅ |
+| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **99.46%** | **96.02%** ✅ | **99.75%** | **93.94%** ✅ |
 | **MedLite-CRC (Ours, standard)** | **0.48** | **99.48%** | **94.62%** | **99.79%** | **92.00%** |
 | Li et al. (2025) CNN | 4.41 | 99.00% | - | - | - |
 | MobileNetV2 | 2.24 | 99.18% | 94.82% | 99.63% | 89.00% |

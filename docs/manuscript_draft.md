@@ -204,7 +204,8 @@ Our architecture achieves a higher peak accuracy (99.48% vs 99.00%) while being 
 To establish generalizability, we benchmarked MedLite-CRC and our baselines on STARC-9 and CRC-5000. All models were trained from scratch.
 
 *   **STARC-9 (Stanford multi-centric cohort):**
-    -   **MedLite-CRC (Ours): 99.79%**
+    -   **MedLite-CRC (Ours, standard): 99.79%**
+    -   **MedLite-CRC (Ours, MobileNetV2 KD): 99.75%**
     -   EfficientNet-B0: 99.68%
     -   ShuffleNetV2: 99.68%
     -   MobileNetV2: 99.63%
@@ -217,7 +218,7 @@ To establish generalizability, we benchmarked MedLite-CRC and our baselines on S
     -   MobileNetV2: 89.00%
     -   ShuffleNetV2: 87.14%
 
-On the massive STARC-9 cohort, our 0.48M parameter model outperforms all heavier baselines, including ResNet-50. On the noisy CRC-5000 cohort, generic lightweight models (MobileNet, ShuffleNet) collapsed due to overfitting to noise, while MedLite-CRC tied with the 10× larger EfficientNet-B0 at 92.00%. By further applying our MobileNetV2 Knowledge Distillation (KD) framework, MedLite-CRC achieves a new SOTA accuracy of **93.94%** on the CRC-5000 cohort, surpassing the teacher model itself (89.00%) by +4.94% absolute and the EfficientNet-B0 baseline by +1.94% absolute. This confirms that the regularization benefits of structurally aligned histopathology KD generalize robustly to noisy datasets with severe compression artifacts.
+On the massive STARC-9 cohort, our 0.48M parameter model outperforms all heavier baselines, including ResNet-50. On the noisy CRC-5000 cohort, generic lightweight models (MobileNet, ShuffleNet) collapsed due to overfitting to noise, while MedLite-CRC tied with the 10× larger EfficientNet-B0 at 92.00%. By further applying our MobileNetV2 Knowledge Distillation (KD) framework, MedLite-CRC achieves a new SOTA accuracy of **93.94%** on the CRC-5000 cohort, surpassing the teacher model itself (89.00%) by +4.94% absolute and the EfficientNet-B0 baseline by +1.94% absolute. On the saturated STARC-9 cohort, applying MobileNetV2 KD achieves **99.75%**, which is virtually identical to our standard from-scratch accuracy (99.79%), verifying that KD is redundant when the dataset scale is sufficiently large to act as a natural regularizer. This confirms that the regularization benefits of structurally aligned histopathology KD generalize robustly to noisy datasets with severe compression artifacts.
 
 ### 5.6 Expected Calibration Error & Confidence Calibration
 In clinical deployment, a deep learning model's confidence must reflect its true predictive accuracy to support reliable decision-making. We evaluated the confidence calibration of MedLite-CRC (Ablation 3 configuration) on the out-of-distribution `CRC-VAL-HE-7K` cohort before and after temperature scaling. 
