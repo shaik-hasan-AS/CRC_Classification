@@ -12,7 +12,7 @@ To overcome domain shift and scanner-specific biases (e.g., JPEG artifacts and H
 
 We evaluate MedLite-CRC across three distinct datasets: NCT-CRC-HE-100K, STARC-9, and CRC-5000. Under standard training conditions, MedLite-CRC achieves a peak in-distribution accuracy of **99.48%** and an out-of-distribution, cross-patient validation accuracy of **94.65%** on the unseen CRC-VAL-HE-7K cohort. By introducing a Knowledge Distillation (KD) framework with a structurally aligned MobileNetV2 teacher model, MedLite-CRC generalizes exceptionally well, achieving a verified out-of-distribution accuracy of **96.00%** on the best checkpoint—outperforming the teacher itself (94.82%) by **+1.18%** absolute and the state-of-the-art ShuffleNetV2 baseline (95.08%) by **+0.92%** absolute, while requiring up to 48× fewer parameters than ResNet-50.
 
-Furthermore, we benchmark our architecture on the massive 630,000-image STARC-9 dataset (NeurIPS 2025), achieving **99.85%** accuracy, proving that dataset scale acts as a natural regularizer for highly constrained networks. 
+Furthermore, we benchmark our architecture on the massive 630,000-image STARC-9 dataset (NeurIPS 2025), achieving **99.79%** accuracy, proving that dataset scale acts as a natural regularizer for highly constrained networks. 
 
 Finally, we perform a rigorous statistical validation using McNemar's test ($p = 1.78 \times 10^{-218}$) and conduct a quantitative spatial Grad-CAM analysis to inspect potential model shortcuts. Our interpretability study reveals the "Attention Paradox": while Squeeze-and-Excitation attention blocks improve training convergence, they overfit to scanner-specific staining channels, degrading cross-site generalization by 0.83%. Consequently, we establish the attention-free MedLite-CRC as the optimal architecture for robust cross-site clinical deployment.
 
@@ -204,7 +204,7 @@ Our architecture achieves a higher peak accuracy (99.48% vs 99.00%) while being 
 To establish generalizability, we benchmarked MedLite-CRC and our baselines on STARC-9 and CRC-5000. All models were trained from scratch.
 
 *   **STARC-9 (Stanford multi-centric cohort):**
-    -   **MedLite-CRC (Ours): 99.85%**
+    -   **MedLite-CRC (Ours): 99.79%**
     -   EfficientNet-B0: 99.68%
     -   ShuffleNetV2: 99.68%
     -   MobileNetV2: 99.63%
@@ -314,7 +314,7 @@ To verify the semantic layout and domain invariance of our learned representatio
 ---
 
 ## 8. Discussion & Limitations
-Our experiments demonstrate that deep learning architectures for histopathology do not require massive parameter counts to achieve high accuracy. By restricting our parameter capacity to 0.48M, MedLite-CRC acts as a regularizer, forcing the network to learn generic, scale-invariant morphological features. This is confirmed by our superior performance on the massive multi-centric STARC-9 dataset (99.85%) and the noisy CRC-5000 cohort (92.00%).
+Our experiments demonstrate that deep learning architectures for histopathology do not require massive parameter counts to achieve high accuracy. By restricting our parameter capacity to 0.48M, MedLite-CRC acts as a regularizer, forcing the network to learn generic, scale-invariant morphological features. This is confirmed by our superior performance on the massive multi-centric STARC-9 dataset (99.79%) and the noisy CRC-5000 cohort (92.00%).
 
 ### 8.1 Carbon Footprint & Computational Efficiency Analysis
 To quantify the environmental and financial benefits of MedLite-CRC for large-scale histopathological screening, we conducted a comprehensive computational efficiency and carbon footprint analysis. Calculations assume a national grid carbon intensity average of $0.82 \text{ kg CO}_2/\text{kWh}$ (representative of developing countries where edge deployment is most valuable). Training energy was measured on a workstation utilizing an RTX 4060 GPU ($85\text{W}$ TDP + $50\text{W}$ system overhead), and inference was benchmarked on a standard edge-spec CPU ($28\text{W}$ TDP).

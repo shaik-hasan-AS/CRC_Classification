@@ -119,7 +119,7 @@ The Structure-Forcing Pipeline successfully forced the network to learn morpholo
 We trained our architecture on the massive, multi-centric STARC-9 dataset (630,000 images) to definitively solve the domain-shift problem. Because we previously found success using the "Structure-Forcing Pipeline" (Foreground Noise Masking + Grayscale Dropout) to prevent the model from cheating on small datasets, we applied this same extreme augmentation pipeline to the massive STARC-9 training run. We hypothesized this would create the ultimate, structurally-focused universal foundation model.
 
 ### The Result (Mixed/Negative)
-The model achieved a stunning **99.85% validation accuracy** on the internal STARC-9 holdout set. 
+The model achieved a stunning **99.79% validation accuracy** on the internal STARC-9 holdout set. 
 However, when we evaluated it on the external `CRC-VAL-HE-7K` dataset, the overall accuracy plummeted to **70.89%**. 
 Critically, the model catastrophically failed on specific tissue types:
 *   **Lymphocytes (LYM):** 2.8% Recall

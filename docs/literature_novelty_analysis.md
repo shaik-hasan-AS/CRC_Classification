@@ -38,7 +38,7 @@ To prove our model's robustness isn't a fluke isolated to the NCT-100K dataset, 
 
 ### A. STARC-9 (The Massive Scale Test)
 *   **The Competition:** Introduced at NeurIPS 2025, STARC-9 is a massive 630,000-image dataset designed to test morphological diversity. Literature typically relies on massive foundation models to process datasets of this scale. 
-*   **MedLite-CRC:** We evaluated MedLite-CRC against baselines on a 10% stratified subset. MedLite-CRC achieved **99.85%** accuracy on the 54,000-image holdout, mathematically *outperforming* massive models like ResNet-50 (99.60%) trained under the exact same "from-scratch" conditions. This proves that at massive dataset scales, our 0.48M constrained architecture acts as a natural regularizer against overfitting.
+*   **MedLite-CRC:** We evaluated MedLite-CRC against baselines on a 10% stratified subset. MedLite-CRC achieved **99.79%** accuracy on the 54,000-image holdout, mathematically *outperforming* massive models like ResNet-50 (99.60%) trained under the exact same "from-scratch" conditions. This proves that at massive dataset scales, our 0.48M constrained architecture acts as a natural regularizer against overfitting.
 
 ### B. CRC-5000 (The Noisy Clinical Test)
 *   **The Competition:** A standard 5,000-image benchmark dataset where literature frequently reports 96%-99% accuracy, but *only* by utilizing heavy ImageNet transfer learning and complex ensemble methods.
@@ -67,8 +67,8 @@ You must proactively address this in your paper before reviewers bring it up.
 
 | Model Architecture | Params (M) | In-Dist 100K | Cross-Patient 7K | STARC-9 | CRC-5000 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **99.46%** | **96.02%** ✅ | **99.85%** | **93.94%** ✅ |
-| **MedLite-CRC (Ours, standard)** | **0.48** | **99.48%** | **94.62%** | **99.85%** | **92.00%** |
+| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **99.46%** | **96.02%** ✅ | **99.79%** | **93.94%** ✅ |
+| **MedLite-CRC (Ours, standard)** | **0.48** | **99.48%** | **94.62%** | **99.79%** | **92.00%** |
 | Li et al. (2025) CNN | 4.41 | 99.00% | - | - | - |
 | MobileNetV2 | 2.24 | 99.18% | 94.82% | 99.63% | 89.00% |
 | EfficientNet-B0 | 4.02 | 99.04% | 94.81% | 99.68% | 92.00% |
