@@ -220,8 +220,11 @@ This table compares the parameter footprint and out-of-distribution test accurac
 | **Kather et al. (2019)** *PLOS Medicine* [1] | VGG19 (ImageNet Pre-trained) | 143.6M | 548.0 MB | **94.30%** |
 | **Li et al. (2025)** *Frontiers in Oncology* [2] | Custom Lightweight CNN | 4.41M | 16.9 MB | *Not Evaluated* (99.00% In-Dist) |
 | **Ignatov & Malivenko (2024)** *ECCV* [3] | EfficientNet-B0 Baseline | 4.02M | 16.0 MB | **97.70%** (With bias exposure) |
+| **Uddin et al. (2023)** *BSPC* [8] | CRCCN-Net | Lightweight CNN | - | **96.26%** (In-Distribution) |
 | **Common Pathology Baselines** [4] | ResNet-50 | 23.53M | 94.43 MB | **94.33%** |
+| **Common Pathology Baselines** [4] | DenseNet-121 | 6.96M | 33.00 MB | **96.52%** |
 | **Common Pathology Baselines** [4] | MobileNetV2 | 2.24M | 9.19 MB | **94.82%** |
+| **Common Pathology Baselines** [4] | MobileNetV3-Small | 1.52M | 5.40 MB | **94.10%** |
 | **Standard Swin Transformer** [5] | Swin-T | 28.3M | 114.0 MB | **96.30%** |
 | **MedLite-CRC V2 (Ours - Standard)** | MedLite-CRC (Scratch) | **0.48M** | 2.02 MB | **94.62%** |
 | **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **0.75 MB (INT8)** | **95.73% ± 0.21%** |
@@ -232,6 +235,7 @@ Comparative performance on the legacy CRC-5000 multi-class cohort:
 | Study & Citation | Classification Approach | Feature Space | Accuracy (CRC-5000) |
 | :--- | :--- | :---: | :---: |
 | **Kather et al. (2016)** *Scientific Reports* [6] | Texture Features + SVM | LBP & Gabor | **87.40%** |
+| **Uddin et al. (2023)** *BSPC* [8] | CRCCN-Net | Learned Lightweight | **93.50%** |
 | **Pathology Benchmarks** [4] | MobileNetV2 (ImageNet Pre-trained) | CNN Features | **89.00%** |
 | **Pathology Benchmarks** [4] | ResNet-50 (ImageNet Pre-trained) | CNN Features | **89.43%** |
 | **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC (Distilled) | Learned Histology | **93.94%** |
@@ -258,6 +262,8 @@ Comparative validation on the high-scale Stanford Colorectal Cancer (STARC-9) co
 *   **[5] Standard Swin Transformer.** Representative Swin-T results reported on public benchmark evaluations.
 *   **[6] Kather, J. N., Weis, C. A., Bianconi, F., et al. (2016).** Multi-class texture analysis in colorectal cancer histology. *Scientific Reports*, 6, 27988.
 *   **[7] Subramanian, B., Jeyaraj, R., Peterson, M. N., et al. (2025).** STARC-9: A Large-scale Dataset for Multi-Class Tissue Classification for CRC Histopathology. *Neural Information Processing Systems (NeurIPS) Datasets and Benchmarks Track*.
+*   **[8] Uddin, A. H., Chen, Y. L., Ku, C. S., Por, L. Y., et al. (2023).** CRCCN-Net: Automated framework for classification of colorectal tissue using histopathological images. *Biomedical Signal Processing and Control*, 79, 104172.
+
 
 
 
