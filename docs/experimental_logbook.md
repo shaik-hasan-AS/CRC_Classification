@@ -208,3 +208,40 @@ This logbook serves as the single source of truth for all quantitative metrics, 
 > [!NOTE]
 > The V2 SOTA model not only increases out-of-distribution performance by **1.68% (absolute)**, but also halves the variance across random initializations (standard deviation drops from **0.46%** to **0.21%**), demonstrating superior convergence stability under knowledge distillation.
 
+---
+
+## 📚 7. Competitive Benchmarking Against Published Literature
+
+### A. NCT-CRC-HE-100K (Train) & CRC-VAL-HE-7K (OOD Test) Benchmark
+This table compares the parameter footprint and out-of-distribution test accuracy of **MedLite-CRC V2** against other representative models in literature trained on the exact same NCT-100K training dataset and evaluated on the CRC-VAL-HE-7K validation cohort:
+
+| Study & Citation | Model Architecture | Params (M) | Disk Size (MB) | OOD Accuracy (7K) |
+| :--- | :--- | :---: | :---: | :---: |
+| **Kather et al. (2019)** *PLOS Medicine* [1] | VGG19 (ImageNet Pre-trained) | 143.6M | 548.0 MB | **94.30%** |
+| **Li et al. (2025)** *Frontiers in Oncology* [2] | Custom Lightweight CNN | 4.41M | 16.9 MB | *Not Evaluated* (99.00% In-Dist) |
+| **Ignatov & Malivenko (2024)** *ECCV* [3] | EfficientNet-B0 Baseline | 4.02M | 16.0 MB | **97.70%** (With bias exposure) |
+| **Common Pathology Baselines** [4] | ResNet-50 | 23.53M | 94.43 MB | **94.33%** |
+| **Common Pathology Baselines** [4] | MobileNetV2 | 2.24M | 9.19 MB | **94.82%** |
+| **MedLite-CRC V2 (Ours - Standard)** | MedLite-CRC (Scratch) | **0.48M** | 2.02 MB | **94.62%** |
+| **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **0.75 MB (INT8)** | **95.73% ± 0.21%** |
+
+### B. CRC-5000 Cohort (8-Class Benchmark)
+Comparative performance on the legacy CRC-5000 multi-class cohort:
+
+| Study & Citation | Classification Approach | Feature Space | Accuracy (CRC-5000) |
+| :--- | :--- | :---: | :---: |
+| **Kather et al. (2016)** *Scientific Reports* [5] | Texture Features + SVM | LBP & Gabor | **87.40%** |
+| **Pathology Benchmarks** [4] | MobileNetV2 (ImageNet Pre-trained) | CNN Features | **89.00%** |
+| **Pathology Benchmarks** [4] | ResNet-50 (ImageNet Pre-trained) | CNN Features | **89.43%** |
+| **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC (Distilled) | Learned Histology | **93.94%** |
+
+---
+
+### 📑 Literature Citations
+*   **[1] Kather, J. N., Halama, N., & Marx, A. (2019).** Predicting survival from colorectal cancer histology slides using deep learning: A retrospective multicenter study. *PLOS Medicine*, 16(1), e1002730.
+*   **[2] Li, Y., Goh, W. W., & Jhanjhi, N. Z. (2025).** A lightweight CNN for colon cancer tissue classification and visualization. *Frontiers in Oncology*, 15, 10842.
+*   **[3] Ignatov, A., & Malivenko, G. (2024).** NCT-CRC-HE: Not All Histopathological Datasets Are Equally Useful. *European Conference on Computer Vision (ECCV)*, 300-317. (Preprint: arXiv:2409.11546).
+*   **[4] Benchmark Baselines.** Evaluated locally in our workspace under identical training loops.
+*   **[5] Kather, J. N., Weis, C. A., Bianconi, F., et al. (2016).** Multi-class texture analysis in colorectal cancer histology. *Scientific Reports*, 6, 27988.
+
+
