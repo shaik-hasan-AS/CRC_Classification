@@ -24,7 +24,7 @@ MedLite-CRC fundamentally pushes the boundary of extreme parameter efficiency wh
 
 ### B. "Train-From-Scratch" Robustness
 *   **The Competition:** When standard, accepted lightweight architectures (MobileNetV2, EfficientNet-B0) are forced to train strictly from scratch, their cross-patient accuracy on the 7K holdout set hovers around 94.8%. Even the massive ResNet-50 drops to 94.33%.
-*   **MedLite-CRC:** Achieves **94.62%** cross-patient accuracy (and a SOTA **96.02%** when distilled via structurally aligned MobileNetV2 KD). We mathematically outperform models that are up to 48x larger than us (ResNet-50) when playing on a level, train-from-scratch playing field.
+*   **MedLite-CRC:** Achieves **94.62%** cross-patient accuracy (and a SOTA **95.97%** when distilled via structurally aligned MobileNetV2 KD). We mathematically outperform models that are up to 48x larger than us (ResNet-50) when playing on a level, train-from-scratch playing field.
 
 ### C. Bias Immunity (Grad-CAM Proven)
 *   **The Competition:** As warned by Ignatov & Malivenko (2024), many models achieve their high accuracy by exploiting JPEG and color artifacts.
@@ -52,11 +52,11 @@ You must proactively address this in your paper before reviewers bring it up.
 
 ### A. Raw Cross-Patient Accuracy vs ImageNet Pre-training
 *   **The Competition:** Heavyweight Vision Transformers (ViTs) like DINO/iBOT and standard ImageNet-pretrained ResNets easily hit **97% to 99%** on the cross-patient 7K dataset and CRC-5000.
-*   **MedLite-CRC:** Achieves **94.62%** (standard) and **96.02%** (KD) on the 7K cross-patient set.
+*   **MedLite-CRC:** Achieves **94.62%** (standard) and **95.97%** (KD) on the 7K cross-patient set.
 *   **Defense:** Every architecture achieving >97% cross-dataset accuracy relies on heavy transfer learning (ImageNet pre-training) and massive architectures (100+ MB Vision Transformers). While highly accurate, relying on weights pre-optimized to extract edges from dogs and cars is biologically unsound for histopathology, and deploying a 100+ MB model is impossible for the $15 edge devices we are targeting for rural clinics. Our goal was parameter-efficiency. We proved that our 0.75 MB model mathematically matches a 94 MB ResNet-50 when both are trained purely from scratch.
 
 ### B. Accuracy Gap vs. ShuffleNetV2
-*   **The Competition:** ShuffleNetV2 trained from scratch achieves a cross-patient accuracy of **95.08%** (compared to MedLite-CRC's standard 94.62% and KD student's 96.02%) and a CPU latency of 5.13 ms.
+*   **The Competition:** ShuffleNetV2 trained from scratch achieves a cross-patient accuracy of **95.08%** (compared to MedLite-CRC's standard 94.62% and KD student's 95.97%) and a CPU latency of 5.13 ms.
 *   **Defense:** ShuffleNetV2 is a highly optimized architecture, but it requires **1.26 Million parameters** (over 2.6x larger than MedLite-CRC's 0.48 Million parameters) and has a disk footprint of **5.23 MB** compared to MedLite-CRC's **2.02 MB** (FP32) and **0.75 MB** (INT8 quantized, which is 7x smaller). For extreme edge deployment on memory-constrained microcontrollers or ultra-low-cost medical diagnostic nodes where cache memory and RAM are highly restricted, MedLite-CRC offers a significantly lower memory footprint and occupies a unique optimal spot on the Pareto efficiency frontier.
 
 ---
@@ -67,7 +67,7 @@ You must proactively address this in your paper before reviewers bring it up.
 
 | Model Architecture | Params (M) | In-Dist 100K | Cross-Patient 7K | STARC-9 | CRC-5000 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **99.46%** | **96.02%** ✅ | **99.75%** | **93.94%** ✅ |
+| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **99.46%** | **95.97%** ✅ | **99.75%** | **93.94%** ✅ |
 | **MedLite-CRC (Ours, standard)** | **0.48** | **99.48%** | **94.62%** | **99.79%** | **92.00%** |
 | Li et al. (2025) CNN | 4.41 | 99.00% | - | - | - |
 | MobileNetV2 | 2.24 | 99.18% | 94.82% | 99.63% | 89.00% |

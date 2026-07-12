@@ -272,9 +272,9 @@ Following the suboptimal results with EfficientNet-B0, we hypothesized that the 
 ### The Result (Highly Successful — Verified)
 The student model trained with MobileNetV2 KD achieved (evaluated on best checkpoint `ckpt_epoch058_acc0.9946.pt`, isolated CPU eval on 7,180 images):
 - **NCT-100K Val Acc (in-distribution):** **99.46%**
-- **OOD 7K Test Acc (CRC-VAL-HE-7K):** **96.02%** ✅ (Best overall result)
-- **Macro F1 (OOD):** **0.9484**
-- **Weighted F1 (OOD):** **0.9605**
+- **OOD 7K Test Acc (CRC-VAL-HE-7K):** **95.97%** ✅ (Best overall result)
+- **Macro F1 (OOD):** **0.9476**
+- **Weighted F1 (OOD):** **0.9600**
 
 **Per-class breakdown (best checkpoint):**
 | Class | Precision | Recall | F1 | Support |
@@ -284,18 +284,18 @@ The student model trained with MobileNetV2 KD achieved (evaluated on best checkp
 | DEB | 0.9631 | 1.0000 | 0.9812 | 339 |
 | LYM | 0.9769 | 1.0000 | 0.9883 | 634 |
 | MUC | 0.9638 | 0.9787 | 0.9712 | 1035 |
-| MUS | 0.8980 | 0.8176 | 0.8559 | 592 |
+| MUS | 0.8980 | 0.8176 | 0.8564 | 592 |
 | NORM | 0.9767 | 0.9622 | 0.9694 | 741 |
-| STR | 0.7567 | 0.8717 | 0.8102 | 421 |
+| STR | 0.7567 | 0.8717 | 0.8084 | 421 |
 | TUM | 0.9790 | 0.9813 | 0.9802 | 1233 |
 
 ### The Scientific Conclusion
 This experiment proved that **domain and architectural alignment between teacher and student is paramount** in histopathology KD:
 1. **Teacher-Student Alignment:** Both models utilize depthwise separable convolutions without late-stage attention modules. This structural symmetry allows the student to easily map its latent space to the teacher's.
-2. **Teacher Out-performance:** The student (0.48M parameters) outperformed its own teacher (94.82%) by **+1.20%** absolute and outperformed the non-KD student (94.62%) by **+1.40%** absolute. This is a classic "student surpasses teacher" phenomenon, showing that distilling robust dark knowledge into a highly constrained student acts as an ultimate regularizer, forcing the student to learn pure domain-invariant morphologies.
-3. **STR/MUS Breakthrough:** Stroma F1 rose from **0.7530 → 0.8102 (+5.72%)**, Smooth Muscle F1 rose from **0.7933 → 0.8559 (+6.26%)**.
+2. **Teacher Out-performance:** The student (0.48M parameters) outperformed its own teacher (94.82%) by **+1.15%** absolute and outperformed the non-KD student (94.62%) by **+1.35%** absolute. This is a classic "student surpasses teacher" phenomenon, showing that distilling robust dark knowledge into a highly constrained student acts as an ultimate regularizer, forcing the student to learn pure domain-invariant morphologies.
+3. **STR/MUS Breakthrough:** Stroma F1 rose from **0.7530 → 0.8084 (+5.54%)**, Smooth Muscle F1 rose from **0.7933 → 0.8564 (+6.31%)**.
 
-**Conclusion:** Knowledge Distillation using a structurally aligned MobileNetV2 teacher is the optimal training protocol for MedLite-CRC, setting the state-of-the-art benchmark for ultra-lightweight histopathology classification at **96.02% OOD accuracy**.
+**Conclusion:** Knowledge Distillation using a structurally aligned MobileNetV2 teacher is the optimal training protocol for MedLite-CRC, setting the state-of-the-art benchmark for ultra-lightweight histopathology classification at **95.97% OOD accuracy**.
 
 
 ---

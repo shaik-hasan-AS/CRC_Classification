@@ -3,8 +3,8 @@
 venv/
 env/
 
-# Datasets
-data/
+data/*/
+!data/**/*.py
 *.zip
 
 # Outputs, Logs, Checkpoints

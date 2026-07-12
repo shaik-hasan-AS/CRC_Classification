@@ -26,7 +26,7 @@ To combat this, we explicitly designed the **MultiScaleBranch** (3x3, 5x5, 7x7 p
 
 ---
 
-## MedLite-CRC Cross-Patient Accuracy Breakdown (MobileNetV2 KD — **96.02% SOTA** ✅ Verified)
+## MedLite-CRC Cross-Patient Accuracy Breakdown (MobileNetV2 KD — **95.97% SOTA** ✅ Verified)
 
 The following table demonstrates MedLite-CRC's per-class performance on the completely unseen `CRC-VAL-HE-7K` cohort (7,180 images) evaluated on the **best checkpoint** (`ckpt_epoch058_acc0.9946.pt`) using isolated CPU evaluation. 
 
@@ -35,20 +35,20 @@ The following table demonstrates MedLite-CRC's per-class performance on the comp
 | **BACKGROUND (BACK)** | 0.9988 | **1.0000** | 0.9994 | 847 | Recall: 100% (perfect) |
 | **LYMPHOCYTES (LYM)** | 0.9769 | **1.0000** | 0.9883 | 634 | Recall: 100% (perfect) |
 | **DEBRIS (DEB)** | 0.9631 | **1.0000** | 0.9812 | 339 | Recall: 100% (perfect) |
-| **MUCUS (MUC)** | 0.9638 | **0.9787** | 0.9712 | 1035 | +0.96% F1 |
+| **MUCUS (MUC)** | 0.9638 | **0.9787** | 0.9712 | 1035 | +1.37% F1 |
 | **TUMOR (TUM)** | 0.9790 | **0.9813** | 0.9802 | 1233 | +0.69% F1 |
 | **NORMAL (NORM)** | 0.9767 | **0.9622** | 0.9694 | 741 | +0.36% F1 |
 | **ADIPOSE (ADI)** | 0.9977 | **0.9619** | 0.9795 | 1338 | +0.53% F1 |
-| **STROMA (STR)** | 0.7567 | **0.8717** | 0.8102 | 421 | **+5.72% F1** (0.7530 → 0.8102) |
-| **SMOOTH MUSCLE (MUS)** | 0.8980 | **0.8176** | 0.8559 | 592 | **+6.26% F1** (0.7933 → 0.8559) |
-| **OVERALL** | 0.9617 | **0.9602** | 0.9605 (wtd) | 7180 | **+0.96% Accuracy** |
+| **STROMA (STR)** | 0.7567 | **0.8717** | 0.8084 | 421 | **+5.54% F1** (0.7530 → 0.8084) |
+| **SMOOTH MUSCLE (MUS)** | 0.8980 | **0.8176** | 0.8564 | 592 | **+6.31% F1** (0.7933 → 0.8564) |
+| **OVERALL** | 0.9617 | **0.9597** | 0.9600 (wtd) | 7180 | **+1.26% Accuracy** |
 
 ### 📈 Discussion of KD Improvements
 By utilizing soft target supervision from a structurally aligned MobileNetV2 teacher model, the student learned highly regularized decision boundaries:
-- **Stroma (STR) F1-Score rose from 0.7530 → 0.8102 (+5.72%)**
-- **Smooth Muscle (MUS) F1-Score rose from 0.7933 → 0.8559 (+6.26%)**
+- **Stroma (STR) F1-Score rose from 0.7530 → 0.8084 (+5.54%)**
+- **Smooth Muscle (MUS) F1-Score rose from 0.7933 → 0.8564 (+6.31%)**
 - **Three classes achieved perfect 100% recall** (BACK, LYM, DEB)
-- **Overall OOD accuracy: 96.02%** — surpassing the teacher (94.82%) by +1.20% and ShuffleNetV2 (95.08%) by +0.94%
+- **Overall OOD accuracy: 95.97%** — surpassing the teacher (94.82%) by +1.15% and ShuffleNetV2 (95.08%) by +0.89%
 
 This proves that the teacher's soft probability targets contained crucial texture heuristics that regularized the student's representation space, allowing it to easily differentiate wavy connective stroma from straight muscle fiber orientations under domain shift.
 

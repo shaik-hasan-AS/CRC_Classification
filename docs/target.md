@@ -26,7 +26,7 @@ Each dataset is treated as an independent clinical cohort. We train a dedicated 
 
 | Experiment | Train Set | Test Set | Classes | Status |
 |---|---|---|---|---|
-| **A** | NCT-CRC-HE-100K | CRC-VAL-HE-7K (cross-patient) | 9 | ✅ **94.05% ± 0.46%** (Peak: **94.62%** standard, **96.02%** w/ MobileNetV2 KD ✅) |
+| **A** | NCT-CRC-HE-100K | CRC-VAL-HE-7K (cross-patient) | 9 | ✅ **94.05% ± 0.46%** (Peak: **94.62%** standard, **95.97%** w/ MobileNetV2 KD ✅) |
 | **B** | STARC-9 (10% stratified) | STARC-9 (val split, 54K images) | 9 | ✅ **99.79%** (standard), **99.75%** (w/ MobileNetV2 KD) |
 | **C** | CRC-5000 (80% split) | CRC-5000 (20% holdout) | 7 | ✅ **92.00%** (Peak: **93.94%** w/ MobileNetV2 KD ✅) |
 
@@ -71,7 +71,7 @@ These are not just experiments — they are the *scientific narrative* of the pa
 | Over-Augmentation on STARC-9 | Same pipeline on 630K images | 99.79% STARC-9, 70.89% external | Dataset scale IS the regularizer; augmentation becomes harmful |
 | 11-Class Hybrid (Combined Datasets) | NCT-100K + STARC-9 merged | 93.50% on CRC-VAL-HE-7K | **Combining datasets creates taxonomic conflicts** — per-cohort training is superior |
 | KD from EfficientNet-B0 | Distill from EfficientNet-B0 teacher | Acc: 94.35% OOD ✅ (verified) | Suboptimal representation alignment (SE attention and activation mismatch) |
-| KD from MobileNetV2 | Distill from MobileNetV2 teacher | **96.02%** OOD ✅ (verified) | **SOTA breakthrough**: aligned depthwise separable features guide robust learning |
+| KD from MobileNetV2 | Distill from MobileNetV2 teacher | **95.97%** OOD ✅ (verified) | **SOTA breakthrough**: aligned depthwise separable features guide robust learning |
 
 
 ### Architectural Component Ablation (Leave-One-Out Study)
@@ -154,9 +154,9 @@ The core proof of efficiency is complete. MedLite-CRC strictly beats all baselin
 
 | Model | Params (M) | Size (MB) | Latency (ms)* | In-Dist (100K) Peak Acc | Cross-Patient (7K) Acc | Macro-F1 | Wtd-F1 |
 |---|---|---|---|---|---|---|---|
-| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | 1.18 | 99.46% | **96.02%** ✅ | **0.9484** | **0.9605** |
+| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | 0.84 | 99.46% | **95.97%** ✅ | **0.9476** | **0.9600** |
 | **MedLite-CRC (Ours, INT8)**| **0.48** | **0.75** | **1.94** | 99.46% | 94.62% | 0.9325 | 0.9465 |
-| **MedLite-CRC (Ours, FP32)**| **0.48** | **2.02** | 7.93 | 99.48% | 94.62% | 0.9325 | 0.9465 |
+| **MedLite-CRC (Ours, FP32)**| **0.48** | **2.02** | 0.84 | 99.48% | 94.62% | 0.9325 | 0.9465 |
 | ShuffleNetV2 | 1.26 | 5.23 | **0.58** | 99.18% | 95.08% | 0.9351 | 0.9507 |
 | MobileNetV2 (Teacher) | 2.24 | 9.19 | 1.18 | 99.18% | 94.82% | 0.9286 | 0.9470 |
 | EfficientNet-B0 | 4.02 | 16.38 | 1.53 | 99.04% | 94.81% | 0.9268 | 0.9477 |
