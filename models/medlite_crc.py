@@ -3,9 +3,12 @@ models/medlite_crc.py
 
 MedLite-CRC: Novel lightweight CNN for stain-robust colon histopathology classification.
 
-Architecture:
+Final Architecture (attention-free, Ablation 3):
   Input → StainNormLayer → Stem → MultiScaleBranches → DWResBlocks × 3
-        → ChannelAttention (SE) → GAP → Classifier Head
+        → GAP → Classifier Head
+
+Note: The SEBlock is retained in this file ONLY for ablation study reproducibility
+(Ablation 4). It is NOT part of the final deployed architecture.
 """
 
 import torch
@@ -204,8 +207,13 @@ class DWResBlock(nn.Module):
 class SEBlock(nn.Module):
     """
     Squeeze-and-Excitation block for channel attention.
-    Focuses the model on informative feature channels (e.g., nuclear features
-    vs background noise in histopathology).
+
+    *** ABLATION STUDY ONLY ***
+    This block is retained solely for Ablation 4 reproducibility.
+    Empirical results show that SE channel-reweighting overfits to source-scanner
+    noise profiles, degrading OOD generalization by -0.82% (93.80% vs 94.62%).
+    The final deployed MedLite-CRC architecture does NOT include this block.
+    See: docs/ablation_notes.md §9.3, docs/manuscript_draft.md §6.3.
     """
 
     def __init__(self, channels, reduction=16):
@@ -245,7 +253,7 @@ class MedLiteCRC(nn.Module):
     """
 
     def __init__(self, num_classes=9, base_channels=32, reduction=16, dropout=0.4,
-                 use_stain_norm=True, use_multiscale=True, use_se_block=True,
+                 use_stain_norm=True, use_multiscale=True, use_se_block=False,
                  stain_norm_space="rgb"):
         super().__init__()
 

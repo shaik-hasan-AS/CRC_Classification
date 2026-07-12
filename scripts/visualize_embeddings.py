@@ -14,9 +14,9 @@ Produces two plots:
 If class clusters are tight AND scanner colors are MIXED within each cluster,
 the model has learned scanner-invariant morphological features.
 
-Usage:
+SOTA checkpoint (MobileNetV2 KD student, 96.02% OOD):
     python scripts/visualize_embeddings.py \\
-        --checkpoint outputs/checkpoints_ablation_multiscale/ckpt_epoch195_acc0.9946.pt \\
+        --checkpoint outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt \\
         --n_samples 800 \\
         --output_dir assets/
 """

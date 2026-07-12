@@ -11,15 +11,15 @@ from models.medlite_crc import build_model
 from utils.metrics import compute_metrics
 
 # Load config
-with open("configs/config.yaml", "r") as f:
+with open("configs/kd_mobilenet_teacher.yaml", "r") as f:
     cfg = yaml.safe_load(f)
 
 device = torch.device("cpu") # Quantization is meant for CPU inference
 print(f"Using device: {device}")
 
-# Load the best 175 epoch model
+# Load the best KD student model
 model = build_model(cfg)
-ckpt = torch.load("outputs/checkpoints/ckpt_epoch175_acc0.9984.pt", map_location="cpu", weights_only=False)
+ckpt = torch.load("outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt", map_location="cpu", weights_only=False)
 if "model_state_dict" in ckpt:
     model.load_state_dict(ckpt["model_state_dict"])
 else:

@@ -13,21 +13,21 @@ We tested the final SOTA MobileNetV2 KD student model checkpoint (`ckpt_epoch058
 
 ## 1. Focused Receptive Field (Localized Central Attention)
 We calculated the weighted center-of-mass for the Grad-CAM activations across random validation samples.
-* **Finding:** The average activation distance from the image center measured **`21.84 pixels`** (out of a maximum possible radial distance of ~158.4 pixels).
+* **Finding:** The average activation distance from the image center measured **`21.69 pixels`** (out of a maximum possible radial distance of ~158.4 pixels).
 * **Conclusion:** Unlike the baseline model which displayed a highly scattered activation profile (~100 pixels from center), the KD-distilled student model exhibits a highly focused, localized central attention pattern. Knowledge distillation from the structurally aligned teacher model has successfully forced the lightweight student to zoom in on central diagnostic features (such as tumor nests or glandular structures) rather than dispersing its capacity on peripheral details.
 
 ---
 
 ## 2. Successful Mitigation of the "Negative Space" Shortcut
 We algorithmically segmented the histopathology images into "tissue" vs "empty white space" based on pixel brightness (average channel intensity > 0.85), and mapped the Grad-CAM activations onto these masks.
-* **Finding:** In Stroma (STR) samples, the average Grad-CAM activation on the actual cellular tissue was **`0.3260`**, which is higher than the activation on the empty white slide background (**`0.3062`**).
+* **Finding:** In Stroma (STR) samples, the average Grad-CAM activation on the actual cellular tissue was **`0.3265`**, which is higher than the activation on the empty white slide background (**`0.3073`**).
 * **Conclusion:** This is a major scientific improvement over the baseline model. While the standard baseline model "cheated" by placing higher attention on the empty background space (`0.198` background vs `0.137` tissue), knowledge distillation has successfully steered the network's attention back onto the physical biological fibers. This eliminates the negative space shortcut and makes the SOTA model significantly more robust to variations in slide section thickness and whitespace ratio.
 
 ---
 
 ## 3. High-Confidence Feature Collapse (Vanishing Gradient)
 During automated evaluation, the Grad-CAM array occasionally returned perfectly empty `[0, 0, 0...]` matrices for correct predictions, causing a zero-division error in our weighted analysis.
-* **Finding:** For **`11.00%`** of all correct, highly-confident predictions, there were literally zero localizable gradients/activations in the final convolutional block.
+* **Finding:** For **`11.10%`** of all correct, highly-confident predictions, there were literally zero localizable gradients/activations in the final convolutional block.
 * **Conclusion:** For approximately 11% of inputs, the model bypasses final-block localizable features entirely, relying instead on global representations or early-layer texture shortcuts to make its decision. This represents a fundamental limitation of post-hoc spatial interpretability methods (like Grad-CAM) on highly optimized, compressed models.
 
-**Ultimate Takeaway:** While the SOTA MedLite-CRC (KD) model achieves an outstanding **96.02%** cross-patient validation accuracy, mathematical interpretability reveals that knowledge distillation has not only boosted performance but also resolved structural flaws like the "negative space shortcut." However, researchers must remain cautious of high-confidence feature collapse (seen in 11.0% of predictions) where spatial interpretability maps disappear completely.
+**Ultimate Takeaway:** While the SOTA MedLite-CRC (KD) model achieves an outstanding **96.00%** cross-patient validation accuracy, mathematical interpretability reveals that knowledge distillation has not only boosted performance but also resolved structural flaws like the "negative space shortcut." However, researchers must remain cautious of high-confidence feature collapse (seen in 11.1% of predictions) where spatial interpretability maps disappear completely.

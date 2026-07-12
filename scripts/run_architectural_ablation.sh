@@ -29,7 +29,7 @@ sed -e 's/name: "MedLiteCRC"/name: "MedLiteCRC"\n  use_stain_norm: true\n  use_m
     -e 's/log_dir: "outputs\/logs"/log_dir: "outputs\/logs_ablation_multiscale"/g' \
     configs/ablation/base_config.yaml > configs/ablation/config_3_multiscale.yaml
 
-echo "Setting up Ablation 4: Full MedLite-CRC (+ SEBlock)..."
+echo "Setting up Ablation 4: + SEBlock (Negative Finding — not the final architecture)..."
 sed -e 's/name: "MedLiteCRC"/name: "MedLiteCRC"\n  use_stain_norm: true\n  use_multiscale: true\n  use_se_block: true/g' \
     -e 's/checkpoint_dir: "outputs\/checkpoints"/checkpoint_dir: "outputs\/checkpoints_ablation_full"/g' \
     -e 's/log_dir: "outputs\/logs"/log_dir: "outputs\/logs_ablation_full"/g' \
@@ -54,7 +54,7 @@ echo "---------------------------------------------------------"
 python train.py --config configs/ablation/config_3_multiscale.yaml
 
 echo "---------------------------------------------------------"
-echo "Running Ablation 4/4: Full MedLite-CRC"
+echo "Running Ablation 4/4: + SEBlock (Negative Finding)"
 echo "---------------------------------------------------------"
 python train.py --config configs/ablation/config_4_full.yaml
 

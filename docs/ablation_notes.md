@@ -194,10 +194,10 @@ We parameterized the `MedLiteCRC` architecture to accept boolean flags to toggle
 
 | Model Configuration | Parameters | GFLOPs | Size (disk) | Latency | Accuracy | Macro F1 | Weighted F1 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Ablation 1 (Baseline CNN)** | 0.453M | 0.349 | 1.89 MB | **0.664 ms** | 94.23% | 0.9280 | 0.9428 |
-| **Ablation 2 (+ Stain Adaptation)** | 0.453M | 0.349 | 1.89 MB | **0.658 ms** | **94.64%** | 0.9323 | **0.9469** |
-| **Ablation 3 (+ MultiScaleBranch)** | 0.482M | 0.726 | 2.02 MB | 0.845 ms | 94.62% | **0.9325** | 0.9465 |
-| **Ablation 4 (Full MedLite-CRC)** | **0.490M** | **0.726** | **2.05 MB** | 0.788 ms | 93.80% | 0.9229 | 0.9394 |
+| **Ablation 1 (Baseline CNN)** | 0.453M | 0.349 | 1.89 MB | **0.664 ms** | 94.05% | 0.9257 | 0.9410 |
+| **Ablation 2 (+ Stain Adaptation)** | 0.453M | 0.349 | 1.89 MB | **0.658 ms** | **94.64%** | 0.9319 | **0.9468** |
+| **Ablation 3 (+ MultiScaleBranch) ← Final Architecture** | 0.482M | 0.726 | 2.02 MB | 0.845 ms | 94.65% | **0.9327** | 0.9469 |
+| **Ablation 4 (+ SEBlock — Negative Finding)** | **0.490M** | **0.726** | **2.05 MB** | 0.788 ms | 93.82% | 0.9233 | 0.9396 |
 
 ### Scientific Interpretation of Results
 

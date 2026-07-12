@@ -29,7 +29,7 @@ def main():
             "se_block": False,
         },
         {
-            "name": "Full MedLite-CRC (+ SEBlock)",
+            "name": "Ablation 4: + SEBlock (Negative Finding)",
             "stain_norm": True,
             "multiscale": True,
             "se_block": True,

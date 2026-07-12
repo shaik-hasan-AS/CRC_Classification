@@ -1,6 +1,12 @@
+# ============================================================
+# Ablation 4: + SEBlock (NEGATIVE FINDING)
+# This config is for ablation study reproducibility ONLY.
+# The SEBlock degrades OOD accuracy by -0.82% vs Ablation 3.
+# The final deployed MedLite-CRC architecture uses config_3_multiscale.yaml.
+# ============================================================
 project:
   name: "MedLite-CRC"
-  description: "Lightweight stain-robust CNN for colon histopathology classification"
+  description: "Ablation 4: + SEBlock (Negative Finding — not final architecture)"
   seed: 42
 
 data:
@@ -66,7 +72,7 @@ model:
   name: "MedLiteCRC"
   use_stain_norm: true
   use_multiscale: true
-  use_se_block: true
+  use_se_block: true  # ABLATION 4 ONLY — final architecture uses false (see config_3_multiscale.yaml)
   base_channels: 32
   attention_reduction: 16       # SE block reduction ratio
   dropout: 0.4

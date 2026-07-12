@@ -12,7 +12,9 @@ from data.dataset import get_crossval_loader
 from utils.metrics import compute_metrics
 
 def main():
-    config_path = "configs/kd_efficientnet_teacher.yaml"
+    # SOTA: MobileNetV2 KD student (96.02% OOD, ckpt_epoch058_acc0.9946.pt)
+    # Do NOT change to kd_efficientnet — that is the suboptimal result (94.35% OOD)
+    config_path = "configs/kd_mobilenet_teacher.yaml"
     with open(config_path, "r") as f:
         cfg = yaml.safe_load(f)
         
@@ -22,11 +24,12 @@ def main():
     # Build model
     model = build_model(cfg)
     
-    # Load best checkpoint dynamically
+    # Load best checkpoint dynamically from MobileNetV2 KD directory
     import glob
-    ckpt_list = glob.glob("outputs/checkpoints_kd_efficientnet/ckpt_epoch*.pt")
+    ckpt_list = glob.glob("outputs/checkpoints_kd_mobilenet/ckpt_epoch*.pt")
     if not ckpt_list:
-        print("Error: No checkpoints found in outputs/checkpoints_kd_efficientnet/")
+        print("Error: No checkpoints found in outputs/checkpoints_kd_mobilenet/")
+        print("Expected SOTA checkpoint: outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt")
         return
     ckpt_path = max(ckpt_list, key=os.path.getmtime)
     print(f"Loading weights from {ckpt_path}")

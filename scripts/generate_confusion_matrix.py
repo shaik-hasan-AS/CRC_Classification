@@ -152,7 +152,16 @@ def main(args):
         return
 
     print(f"Loading MedLite-CRC from {args.checkpoint}")
-    cfg['model'] = {'name': 'MedLiteCRC', 'base_channels': 32, 'attention_reduction': 16, 'dropout': 0.4}
+    # Explicitly set final architecture flags — use_se_block MUST be False (Ablation 3 = final model)
+    cfg['model'] = {
+        'name': 'MedLiteCRC',
+        'base_channels': 32,
+        'attention_reduction': 16,
+        'dropout': 0.4,
+        'use_stain_norm': True,
+        'use_multiscale': True,
+        'use_se_block': False,   # Final architecture — SEBlock permanently removed (see ablation §9.3)
+    }
     model = build_model(cfg).to(device)
     load_checkpoint(args.checkpoint, model)
     
