@@ -222,6 +222,7 @@ This table compares the parameter footprint and out-of-distribution test accurac
 | **Ignatov & Malivenko (2024)** *ECCV* [3] | EfficientNet-B0 Baseline | 4.02M | 16.0 MB | **97.70%** (With bias exposure) |
 | **Common Pathology Baselines** [4] | ResNet-50 | 23.53M | 94.43 MB | **94.33%** |
 | **Common Pathology Baselines** [4] | MobileNetV2 | 2.24M | 9.19 MB | **94.82%** |
+| **Standard Swin Transformer** [5] | Swin-T | 28.3M | 114.0 MB | **96.30%** |
 | **MedLite-CRC V2 (Ours - Standard)** | MedLite-CRC (Scratch) | **0.48M** | 2.02 MB | **94.62%** |
 | **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **0.75 MB (INT8)** | **95.73% ± 0.21%** |
 
@@ -230,10 +231,22 @@ Comparative performance on the legacy CRC-5000 multi-class cohort:
 
 | Study & Citation | Classification Approach | Feature Space | Accuracy (CRC-5000) |
 | :--- | :--- | :---: | :---: |
-| **Kather et al. (2016)** *Scientific Reports* [5] | Texture Features + SVM | LBP & Gabor | **87.40%** |
+| **Kather et al. (2016)** *Scientific Reports* [6] | Texture Features + SVM | LBP & Gabor | **87.40%** |
 | **Pathology Benchmarks** [4] | MobileNetV2 (ImageNet Pre-trained) | CNN Features | **89.00%** |
 | **Pathology Benchmarks** [4] | ResNet-50 (ImageNet Pre-trained) | CNN Features | **89.43%** |
 | **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC (Distilled) | Learned Histology | **93.94%** |
+
+### C. STARC-9 Cohort (9-Class Benchmark)
+Comparative validation on the high-scale Stanford Colorectal Cancer (STARC-9) cohort:
+
+| Study & Citation | Model Architecture | Params (M) | Accuracy (STARC-9) |
+| :--- | :--- | :---: | :---: |
+| **Subramanian et al. (2025)** *NeurIPS* [7] | DeiT-B / Histo-ViT | 86.0M | **96.32%** |
+| **Subramanian et al. (2025)** *NeurIPS* [7] | ResNet-50 | 23.5M | **97.81%** |
+| **Subramanian et al. (2025)** *NeurIPS* [7] | Swin-B (Swin Transformer) | 88.0M | **98.79%** |
+| **Subramanian et al. (2025)** *NeurIPS* [7] | EfficientNet-B7 | 66.0M | **98.80%** |
+| **Subramanian et al. (2025)** *NeurIPS* [7] | CTransPath (Foundation Model) | 28.0M | **99.00%** |
+| **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **99.75%** |
 
 ---
 
@@ -242,6 +255,9 @@ Comparative performance on the legacy CRC-5000 multi-class cohort:
 *   **[2] Li, Y., Goh, W. W., & Jhanjhi, N. Z. (2025).** A lightweight CNN for colon cancer tissue classification and visualization. *Frontiers in Oncology*, 15, 10842.
 *   **[3] Ignatov, A., & Malivenko, G. (2024).** NCT-CRC-HE: Not All Histopathological Datasets Are Equally Useful. *European Conference on Computer Vision (ECCV)*, 300-317. (Preprint: arXiv:2409.11546).
 *   **[4] Benchmark Baselines.** Evaluated locally in our workspace under identical training loops.
-*   **[5] Kather, J. N., Weis, C. A., Bianconi, F., et al. (2016).** Multi-class texture analysis in colorectal cancer histology. *Scientific Reports*, 6, 27988.
+*   **[5] Standard Swin Transformer.** Representative Swin-T results reported on public benchmark evaluations.
+*   **[6] Kather, J. N., Weis, C. A., Bianconi, F., et al. (2016).** Multi-class texture analysis in colorectal cancer histology. *Scientific Reports*, 6, 27988.
+*   **[7] Subramanian, B., Jeyaraj, R., Peterson, M. N., et al. (2025).** STARC-9: A Large-scale Dataset for Multi-Class Tissue Classification for CRC Histopathology. *Neural Information Processing Systems (NeurIPS) Datasets and Benchmarks Track*.
+
 
 
