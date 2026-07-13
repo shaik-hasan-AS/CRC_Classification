@@ -3,30 +3,30 @@ This gallery showcases sample patch-level and biopsy-level images for all pathol
 ## NCT-CRC-HE-100K (Germany, Multicentric Train/Val)
 | Class | Sample Image |
 | :--- | :--- |
-| **ADI** | ![ADI](../assets/nct100k_adi.tif) |
-| **BACK** | ![BACK](../assets/nct100k_back.tif) |
-| **DEB** | ![DEB](../assets/nct100k_deb.tif) |
-| **LYM** | ![LYM](../assets/nct100k_lym.tif) |
-| **MUC** | ![MUC](../assets/nct100k_muc.tif) |
-| **MUS** | ![MUS](../assets/nct100k_mus.tif) |
-| **NORM** | ![NORM](../assets/nct100k_norm.tif) |
-| **STR** | ![STR](../assets/nct100k_str.tif) |
-| **TUM** | ![TUM](../assets/nct100k_tum.tif) |
+| **ADI** | ![ADI](../assets/nct100k_adi.png) |
+| **BACK** | ![BACK](../assets/nct100k_back.png) |
+| **DEB** | ![DEB](../assets/nct100k_deb.png) |
+| **LYM** | ![LYM](../assets/nct100k_lym.png) |
+| **MUC** | ![MUC](../assets/nct100k_muc.png) |
+| **MUS** | ![MUS](../assets/nct100k_mus.png) |
+| **NORM** | ![NORM](../assets/nct100k_norm.png) |
+| **STR** | ![STR](../assets/nct100k_str.png) |
+| **TUM** | ![TUM](../assets/nct100k_tum.png) |
 
 ---
 
 ## CRC-VAL-HE-7K (Germany, Out-of-Distribution Test)
 | Class | Sample Image |
 | :--- | :--- |
-| **ADI** | ![ADI](../assets/val7k_adi.tif) |
-| **BACK** | ![BACK](../assets/val7k_back.tif) |
-| **DEB** | ![DEB](../assets/val7k_deb.tif) |
-| **LYM** | ![LYM](../assets/val7k_lym.tif) |
-| **MUC** | ![MUC](../assets/val7k_muc.tif) |
-| **MUS** | ![MUS](../assets/val7k_mus.tif) |
-| **NORM** | ![NORM](../assets/val7k_norm.tif) |
-| **STR** | ![STR](../assets/val7k_str.tif) |
-| **TUM** | ![TUM](../assets/val7k_tum.tif) |
+| **ADI** | ![ADI](../assets/val7k_adi.png) |
+| **BACK** | ![BACK](../assets/val7k_back.png) |
+| **DEB** | ![DEB](../assets/val7k_deb.png) |
+| **LYM** | ![LYM](../assets/val7k_lym.png) |
+| **MUC** | ![MUC](../assets/val7k_muc.png) |
+| **MUS** | ![MUS](../assets/val7k_mus.png) |
+| **NORM** | ![NORM](../assets/val7k_norm.png) |
+| **STR** | ![STR](../assets/val7k_str.png) |
+| **TUM** | ![TUM](../assets/val7k_tum.png) |
 
 ---
 
@@ -48,13 +48,13 @@ This gallery showcases sample patch-level and biopsy-level images for all pathol
 ## CRC-5000 (Kather et al. 2016, Legacy/Noisy)
 | Class | Sample Image |
 | :--- | :--- |
-| **ADI** | ![ADI](../assets/crc5000_adi.tif) |
-| **BACK** | ![BACK](../assets/crc5000_back.tif) |
-| **DEB** | ![DEB](../assets/crc5000_deb.tif) |
-| **LYM** | ![LYM](../assets/crc5000_lym.tif) |
-| **NORM** | ![NORM](../assets/crc5000_norm.tif) |
-| **STR** | ![STR](../assets/crc5000_str.tif) |
-| **TUM** | ![TUM](../assets/crc5000_tum.tif) |
+| **ADI** | ![ADI](../assets/crc5000_adi.png) |
+| **BACK** | ![BACK](../assets/crc5000_back.png) |
+| **DEB** | ![DEB](../assets/crc5000_deb.png) |
+| **LYM** | ![LYM](../assets/crc5000_lym.png) |
+| **NORM** | ![NORM](../assets/crc5000_norm.png) |
+| **STR** | ![STR](../assets/crc5000_str.png) |
+| **TUM** | ![TUM](../assets/crc5000_tum.png) |
 
 ---
 
