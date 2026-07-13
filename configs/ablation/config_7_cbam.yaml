@@ -1,0 +1,87 @@
+# ============================================================
+# Ablation 7: + CBAM (Channel + Spatial Attention)
+# This config runs the MedLite-CRC model with CBAM.
+# ============================================================
+project:
+  name: "MedLite-CRC"
+  description: "Ablation 7: MedLite-CRC with CBAM Attention"
+  seed: 42
+
+data:
+  nct_crc_train_dir: "data/NCT-CRC-HE-100K"
+  nct_crc_val_dir: "data/CRC-VAL-HE-7K"
+  nct_crc_nonorm_dir: "data/NCT-CRC-HE-100K-NONORM"
+  image_size: 224
+  num_classes: 9
+  num_workers: 4
+  pin_memory: true
+
+  # Class names (NCT-CRC-HE-100K)
+  classes:
+    - ADI   # Adipose
+    - BACK  # Background
+    - DEB   # Debris
+    - LYM   # Lymphocytes
+    - MUC   # Mucus
+    - MUS   # Smooth Muscle
+    - NORM  # Normal Colon Mucosa
+    - STR   # Cancer-Associated Stroma
+    - TUM   # Colorectal Adenocarcinoma Epithelium
+
+  augmentation:
+    use_foreground_masking: true
+    mask_threshold: 0.85
+    grayscale_prob: 0.3
+    use_stain_augment: true
+    stain_probability: 0.8
+    stain_sigma1: 0.3
+    stain_sigma2: 0.3
+    color_jitter: true
+    color_jitter_brightness: 0.3
+    color_jitter_contrast: 0.3
+    color_jitter_saturation: 0.2
+    color_jitter_hue: 0.1
+    random_flip: true
+    random_rotation: true
+    normalize_mean: [0.7406, 0.5331, 0.7059]
+    normalize_std:  [0.1651, 0.2174, 0.1574]
+
+training:
+  epochs: 200
+  batch_size: 64
+  val_batch_size: 128
+  optimizer: "adam"
+  lr: 0.001
+  weight_decay: 0.0001
+  scheduler: "cosine"
+  warmup_epochs: 2
+  early_stopping_patience: 20
+  grad_clip: 1.0
+  mixed_precision: true
+  
+  loss: "ce"
+  focal_gamma: 2.0
+  use_class_weights: true
+  use_confusion_penalty: false
+
+model:
+  name: "MedLiteCRC"
+  use_stain_norm: true
+  use_multiscale: true
+  use_se_block: false
+  attention_type: "cbam"
+  base_channels: 32
+  attention_reduction: 16
+  dropout: 0.4
+
+wandb:
+  enabled: false
+  project: "MedLite-CRC"
+  entity: ""
+  log_freq: 50
+
+outputs:
+  checkpoint_dir: "outputs/checkpoints_ablation_cbam"
+  log_dir: "outputs/logs_ablation_cbam"
+  gradcam_dir: "outputs/gradcam_cbam"
+  save_top_k: 3

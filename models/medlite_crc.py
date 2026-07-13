@@ -202,7 +202,7 @@ class DWResBlock(nn.Module):
         return F.relu6(out, inplace=True)
 
 
-# ── Squeeze-and-Excitation Channel Attention ──────────────────────────────────
+# ── Attention Mechanisms ──────────────────────────────────────────────────────
 
 class SEBlock(nn.Module):
     """
@@ -233,6 +233,108 @@ class SEBlock(nn.Module):
         return x * w
 
 
+class SpatialAttention(nn.Module):
+    """
+    Spatial Attention Module (SAM) from CBAM.
+    Applies average and max pooling along the channel dimension,
+    concatenates the pooled maps, and filters with a 7x7 conv.
+    """
+
+    def __init__(self, kernel_size=7):
+        super().__init__()
+        assert kernel_size in (3, 7), "kernel size must be 3 or 7"
+        padding = 3 if kernel_size == 7 else 1
+        self.conv = nn.Conv2d(2, 1, kernel_size, padding=padding, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_out = torch.mean(x, dim=1, keepdim=True)
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        y = torch.cat([avg_out, max_out], dim=1)
+        y = self.conv(y)
+        return x * self.sigmoid(y)
+
+
+class ChannelAttention(nn.Module):
+    """Channel Attention sub-module for CBAM."""
+
+    def __init__(self, channels, reduction=16):
+        super().__init__()
+        mid = max(channels // reduction, 4)
+        self.fc = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(channels, mid, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(mid, channels, bias=False)
+        )
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_out = self.fc(F.adaptive_avg_pool2d(x, 1))
+        max_out = self.fc(F.adaptive_max_pool2d(x, 1))
+        out = avg_out + max_out
+        return x * self.sigmoid(out).view(x.size(0), x.size(1), 1, 1)
+
+
+class CBAMBlock(nn.Module):
+    """
+    Convolutional Block Attention Module (CBAM) combining Channel and Spatial.
+    """
+
+    def __init__(self, channels, reduction=16, kernel_size=7):
+        super().__init__()
+        self.ca = ChannelAttention(channels, reduction)
+        self.sa = SpatialAttention(kernel_size)
+
+    def forward(self, x):
+        x = self.ca(x)
+        x = self.sa(x)
+        return x
+
+
+class CoordinateAttention(nn.Module):
+    """
+    Coordinate Attention Block for lightweight networks.
+    Saves horizontal and vertical spatial relations via 1D pooling.
+    """
+
+    def __init__(self, channels, reduction=32):
+        super().__init__()
+        self.pool_h = nn.AdaptiveAvgPool2d((None, 1))
+        self.pool_w = nn.AdaptiveAvgPool2d((1, None))
+
+        mip = max(8, channels // reduction)
+
+        self.conv1 = nn.Conv2d(channels, mip, kernel_size=1, stride=1, padding=0, bias=False)
+        self.bn1 = nn.BatchNorm2d(mip)
+        self.act = nn.ReLU6(inplace=True)
+
+        self.conv_h = nn.Conv2d(mip, channels, kernel_size=1, stride=1, padding=0, bias=False)
+        self.conv_w = nn.Conv2d(mip, channels, kernel_size=1, stride=1, padding=0, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        identity = x
+
+        n, c, h, w = x.size()
+        x_h = self.pool_h(x)
+        x_w = self.pool_w(x).permute(0, 1, 3, 2)
+
+        y = torch.cat([x_h, x_w], dim=2)
+        y = self.conv1(y)
+        y = self.bn1(y)
+        y = self.act(y)
+
+        x_h, x_w = torch.split(y, [h, w], dim=2)
+        x_w = x_w.permute(0, 1, 3, 2)
+
+        a_h = self.sigmoid(self.conv_h(x_h))
+        a_w = self.sigmoid(self.conv_w(x_w))
+
+        out = identity * a_h * a_w
+        return out
+
+
 # ── MedLite-CRC Main Architecture ─────────────────────────────────────────────
 
 class MedLiteCRC(nn.Module):
@@ -248,18 +350,24 @@ class MedLiteCRC(nn.Module):
     Args:
         num_classes   : number of output classes (default: 9 for NCT-CRC)
         base_channels : base channel width (default: 32)
-        reduction     : SE block reduction ratio (default: 16)
+        reduction     : attention block reduction ratio (default: 16)
         dropout       : classifier dropout rate (default: 0.4)
+        attention_type: attention mechanism to use: "none", "se", "cbam", "spatial", "coord"
     """
 
     def __init__(self, num_classes=9, base_channels=32, reduction=16, dropout=0.4,
                  use_stain_norm=True, use_multiscale=True, use_se_block=False,
-                 stain_norm_space="rgb", padding_mode="zeros"):
+                 attention_type="none", stain_norm_space="rgb", padding_mode="zeros"):
         super().__init__()
 
         self.use_stain_norm = use_stain_norm
         self.use_multiscale = use_multiscale
         self.use_se_block   = use_se_block
+        self.attention_type = attention_type.lower()
+
+        # Handle backward compatibility with use_se_block toggle
+        if self.use_se_block and self.attention_type == "none":
+            self.attention_type = "se"
 
         C = base_channels  # 32
 
@@ -294,11 +402,17 @@ class MedLiteCRC(nn.Module):
             DWResBlock(C * 8, C * 8, stride=2, padding_mode=padding_mode),         # 28→14, 256ch
         )
 
-        # ── 5. Channel Attention
-        if self.use_se_block:
-            self.se = SEBlock(C * 8, reduction=reduction)
+        # ── 5. Attention Block Selection
+        if self.attention_type == "se":
+            self.attn = SEBlock(C * 8, reduction=reduction)
+        elif self.attention_type == "spatial":
+            self.attn = SpatialAttention(kernel_size=7)
+        elif self.attention_type == "cbam":
+            self.attn = CBAMBlock(C * 8, reduction=reduction, kernel_size=7)
+        elif self.attention_type == "coord":
+            self.attn = CoordinateAttention(C * 8, reduction=32)
         else:
-            self.se = nn.Identity()
+            self.attn = nn.Identity()
 
         # ── 6. Final pooling
         self.pool2 = nn.Sequential(
@@ -338,7 +452,7 @@ class MedLiteCRC(nn.Module):
         x = self.multi_scale(x)
         x = self.pool1(x)
         x = self.res_blocks(x)
-        x = self.se(x)
+        x = self.attn(x)
         x = self.pool2(x)
         x = self.classifier(x)
         return x
@@ -369,6 +483,7 @@ def build_model(cfg) -> nn.Module:
             use_stain_norm   = model_cfg.get("use_stain_norm", True),
             use_multiscale   = model_cfg.get("use_multiscale", True),
             use_se_block     = model_cfg.get("use_se_block", False),
+            attention_type   = model_cfg.get("attention_type", "none"),
             stain_norm_space = model_cfg.get("stain_norm_space", "rgb"),
             padding_mode     = model_cfg.get("padding_mode", "zeros"),
         )

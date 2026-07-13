@@ -331,4 +331,38 @@ The student model trained with MobileNetV2 KD on CRC-5000 achieved:
 2. **Outperforming Large Baselines:** The student outperformed the 10× larger, unregularized EfficientNet-B0 baseline (92.00%) by **+1.94% absolute**, establishing a new SOTA classification result on the CRC-5000 cohort.
 3. **Stroma & Debris Generalization:** Classification of difficult classes like Stroma (F1: 0.8915) and Debris (F1: 0.8631) saw the most significant improvements, as the KD loss regularized the model against overfitting to pixel-level saturation noise.
 
+---
+
+## 14. Coordinate Attention and the Spatial Attention Paradox
+
+### The Hypothesis
+Following our finding that Squeeze-and-Excitation (SE) channel-attention was detrimental to cross-site generalization (Ablation 4), we hypothesized that a spatial-based attention mechanism might circumvent the stain-overfitting issues by forcing the model to focus purely on biological morphologies (like tumor nest geometry and cellular spacing) rather than color profiles. We integrated **Coordinate Attention (CA)**—which pools horizontal and vertical coordinates separately to preserve location sensitivity—to see if it could resolve Grad-CAM background noise spillover without degrading OOD accuracy.
+
+### The Result (Negative)
+The experiment failed. When trained from scratch on NCT-100K and evaluated on the out-of-distribution `CRC-VAL-HE-7K` test set, the Coordinate Attention variant achieved:
+* **OOD Test Accuracy:** **93.44%** (compared to the attention-free baseline of **94.65%** and SEBlock of **93.82%**).
+* **OOD Macro F1:** **0.9177** (compared to baseline **0.9327**).
+
+**Per-class breakdown:**
+| Class | Precision | Recall | F1 | Support |
+|:---|:---:|:---:|:---:|:---:|
+| ADI | 0.9959 | 0.9103 | 0.9512 | 1338 |
+| BACK | 0.9976 | 1.0000 | 0.9988 | 847 |
+| DEB | 0.9126 | 0.9853 | 0.9475 | 339 |
+| LYM | 0.9858 | 0.9874 | 0.9866 | 634 |
+| MUC | 0.9154 | 0.9720 | 0.9428 | 1035 |
+| MUS | 0.7763 | 0.7973 | 0.7867 | 592 |
+| NORM | 0.9508 | 0.9649 | 0.9578 | 741 |
+| STR | 0.7071 | 0.7340 | 0.7203 | 421 |
+| TUM | 0.9761 | 0.9586 | 0.9673 | 1233 |
+
+Adding Coordinate Attention caused a drop across fine-grained structural classes. Specifically, **Stroma (STR) F1-score dropped from 0.7530 down to 0.7203** (-3.27%), and **Smooth Muscle (MUS) F1 dropped from 0.7933 down to 0.7867** (-0.66%).
+
+### The Scientific Conclusion
+1. **Shortcut Learning via Spatial Heuristics:** In pathology tiles, tissue layout is orientation-invariant and arbitrary. However, Coordinate Attention constructs absolute horizontal/vertical coordinates to assign location weights. This forces the lightweight network to overfit to the scan coordinate layouts and lens artifacts of the source scanner (`NCT-CRC-HE-100K`).
+2. **Textural Information Blur:** The 1D horizontal/vertical pooling operations inside the Coordinate Attention module smooth over fine spatial variations. This effectively acts as a low-pass filter, blurring critical micro-textural details like nuclear margins and stroma collagen waves, leading to the severe drop in STR/MUS discriminative power.
+
+**Conclusion:** Both channel attention (SEBlock) and spatial attention (Coordinate Attention) introduce parametric shortcuts that overfit to scanner-specific staining and scanning heuristics. For lightweight, domain-robust clinical histopathology encoders, an **attention-free multi-scale design** remains the mathematically optimal choice.
+
+
 

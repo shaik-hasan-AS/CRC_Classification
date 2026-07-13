@@ -246,6 +246,7 @@ To systematically validate each component, we performed a leave-one-out ablation
 | **2. Baseline + Stain Adaptation** | 0.453M | 0.349 | 1.89 MB | **0.658** | **94.64%** | 0.9319 | **0.9468** |
 | **3. Baseline + Stain + MultiScale ← Final Architecture** | 0.482M | 0.726 | 2.02 MB | 0.845 | 94.65% | **0.9327** | 0.9469 |
 | **4. + SEBlock (Negative Finding)** | **0.490M** | **0.726** | **2.05 MB** | 0.788 | 93.82% | 0.9233 | 0.9396 |
+| **5. + Coordinate Attention (Negative Finding)** | 0.488M | 0.726 | 2.05 MB | 0.850 | 93.44% | 0.9177 | 0.9349 |
 
 ### 6.1 Learnable Stain Adaptation Benefit:
 Comparing Configuration 1 and 2, adding the learnable stain adaptation parameters yields the highest overall accuracy of **94.64%** (+0.41% over Baseline). Because this layer learns to map variable source colors to a standardized latent space dynamically, it significantly improves cross-site generalization with zero parameter or latency overhead during deployment.
@@ -254,11 +255,20 @@ Comparing Configuration 1 and 2, adding the learnable stain adaptation parameter
 Comparing Configuration 2 and 3, adding the parallel multi-scale branch yields the highest Macro F1 score of **0.9325** (+0.45% over Baseline). The multi-scale path extracts features simultaneously using parallel `3x3`, `5x5`, and `7x7` receptive fields, making the model highly robust to scale variations introduced by different scanner sensors.
 
 ### 6.3 The Squeeze-and-Excitation "Attention Paradox"
-Integrating late-stage Squeeze-and-Excitation (SE) attention blocks (Ablation 4) consistently degraded cross-dataset validation accuracy to **93.80%** — a significant −0.82% drop from the attention-free Ablation 3.
+Integrating late-stage Squeeze-and-Excitation (SE) attention blocks (Ablation 4) consistently degraded cross-dataset validation accuracy to **93.82%** — a significant −0.83% drop from the attention-free Ablation 3.
 
 While SE blocks improve training convergence and score highly on the source in-distribution validation split (99.52%), their channel-reweighting coefficients overfit to the specific H&E dye balances and scanner noise profiles of the source scanner (NCT-100K). When tested on a completely unseen clinical center (Mannheim cohort), these attention maps encode non-biological channel correlations, consistently degrading generalization. This highlights a critical design warning for lightweight medical CNNs: channel-attention mechanisms in small models trigger domain-specific shortcut learning that reduces robustness on unseen scanners. Consequently, the SEBlock is permanently removed from the final architecture. **MedLite-CRC's final deployed configuration corresponds exclusively to Ablation 3 (LearnableStainNorm + MultiScaleBranch + DWResBlocks), which achieves the optimal balance of parameter efficiency and cross-site generalization.**
 
-### 6.4 Additional Negative Findings
+### 6.4 The Coordinate Attention and Spatial Attention Paradox
+We also explored whether spatial-based attention could overcome the limitations of channel attention. Coordinate Attention (Ablation 5) factorizes channel attention into horizontal and vertical 1D pooling operations, encoding direction- and coordinate-aware spatial details. However, when evaluated on the out-of-distribution Mannheim test set, the Coordinate Attention model degraded accuracy further to **93.44%** (-1.21% drop from Ablation 3). 
+
+This drop is driven by two factors:
+1. **Overfitting to Absolute Scanner Layouts:** Unlike objects in natural images, histopathology tissue layout is orientation-invariant and arbitrary. Forcing location-sensitivity via absolute horizontal/vertical coordinates causes the model to memorize scanner-specific spatial noise, dye gradients, and edge heuristics of the training center.
+2. **Textural Information Loss:** The 1D pooling operations smooth out local structural variations, blurring critical high-frequency boundaries (such as fine-grained nuclear margins and stroma collagen waves). This is evidenced by a severe drop in discriminative performance on fine fibrous tissues: Stroma (STR) F1-score dropped from **0.7530 down to 0.7203**, and Smooth Muscle (MUS) F1 dropped from **0.7933 down to 0.7867**.
+
+Consequently, both channel- and spatial-attention modules are rejected in favor of the more robust attention-free multi-scale design.
+
+### 6.5 Additional Negative Findings
 We document five key design failures during development to guide future researchers:
 1.  **CutMix Failure:** We attempted to apply CutMix augmentation (alpha=1.0) to resolve Stroma vs. Smooth Muscle confusion. Cross-patient validation accuracy dropped from 94.5% to **91.09%** (Stroma F1 fell to 0.64). Histopathology tissue represents continuous sheets. Forcefully introducing hard, square artificial boundaries via CutMix causes the network to learn these sharp artificial edges as shortcuts rather than the biological texture of the actual tissue.
 2.  **V2 Architectural Scaling:** Upgrading the base channels from 32 (0.48M params, V1) to 48 (1.08M params, V2) with SiLU activations caused generalization to drop to **91.94%** (despite near-perfect training convergence of 99.98%). This confirms that over-parameterization causes the network to memorize scanner artifacts. The parameter constraint of V1 acts as a crucial "natural regularizer".
@@ -266,10 +276,11 @@ We document five key design failures during development to guide future research
 4.  **Receptive Field Expansion (Large Kernels):** Replacing the $3\times3, 5\times5, 7\times7$ multi-scale branch with larger $7\times7, 9\times9, 11\times11$ depthwise convolutions dropped cross-patient accuracy to **93.93%**. Crucially, the F1-score for Lymphocytes dropped from 0.9921 to 0.9842. The massive 11x11 filters acted as a low-pass filter that smoothed over the critical high-frequency, crisp edge details required to identify tiny lymphocytic nuclei.
 5.  **Focal Loss & Pairwise Loss Overfitting:** We implemented a Focal Loss combined with a Pairwise Confusion Penalty specifically targeting Stroma vs. Smooth Muscle logits. While this eliminated confusion on the training set (99.69% in-distribution validation accuracy), cross-patient accuracy collapsed to **94.76%** (Stroma recall plummeted to 57.48%). Modifying loss functions to target hard cases causes the network to overfit to the specific stain and texture signatures of those hard cases within the training domain.
 
-### 6.5 Knowledge Distillation and Teacher-Student Alignment
+### 6.6 Knowledge Distillation and Teacher-Student Alignment
 To investigate the impact of Knowledge Distillation (KD) on ultra-lightweight models under domain shift, we trained the MedLite-CRC student (0.48M parameters) using two different pre-trained teacher architectures:
 - **EfficientNet-B0 Teacher (4.02M parameters):** Distilling soft probability distributions from this teacher degraded out-of-distribution accuracy on `CRC-VAL-HE-7K` to a verified **94.35%** (a -0.27% reduction compared to Ablation 3 without KD). EfficientNet-B0 relies heavily on Squeeze-and-Excitation attention maps and Swish activations. This mismatch in representation style and the transfer of teacher-specific scanner bias restricted the student from learning robust morphology.
 - **MobileNetV2 Teacher (2.24M parameters):** Distilling from this teacher led to a massive generalization breakthrough, achieving a **verified 95.97% OOD accuracy** (+1.32% absolute over Ablation 3, best checkpoint). Both MobileNetV2 and our student architecture rely on attention-free, depthwise separable convolutions. This high degree of architectural alignment allowed the student to seamlessly ingest the teacher's soft boundaries. Under this aligned setup, the student outperformed its own teacher by **+1.15%** absolute on unseen domains, demonstrating that distilling structured dark knowledge into a highly parameter-constrained model acts as an ultimate regularizer. Notably, the two historically difficult classes — Stroma (STR F1: 0.7530 → 0.8084) and Smooth Muscle (MUS F1: 0.7933 → 0.8564) — saw their largest improvements under this regime.
+
 
 ---
 
