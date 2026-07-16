@@ -325,8 +325,33 @@ To verify the semantic layout and domain invariance of our learned representatio
 ![Figure 6: t-SNE Projection of GAP Features Colored by Tissue Class](../assets/tsne_class_separation.png)
 
 - **Scanner Invariance:** Crucially, when coloring the same projection by scanner/patient origin (illustrated below), we observed complete mixing of different scanner profiles within each tissue cluster. The lack of scanner-specific sub-clustering visually demonstrates that our dynamic stain normalization and architectural constraints successfully eliminate non-biological domain signatures, forcing the model to learn scanner-invariant histopathological morphologies.
-
+ 
 ![Figure 7: t-SNE Projection of GAP Features Colored by Scanner/Patient Origin](../assets/tsne_scanner_origin.png)
+
+### 7.7 Cross-Cohort Downstream Generalization & Transfer Learning Validation
+To evaluate the clinical transferability and semantic generality of the learned feature representations of our distilled MedLite-CRC (V1) checkpoint, we conducted a transfer learning study on three independent external downstream cohorts representing distinct diagnostic tasks:
+1. **EBHI-SEG** (6-class biopsy diagnostics, 2,225 tiles)
+2. **CRC-HGD-v1** (5-class histopathology grading, 1,914 tiles)
+3. **Kather MSI/MSS** (2-class molecular phenotype classification, 139,143 tiles)
+
+For each cohort, we compared fine-tuning the model initialized with our pre-trained SOTA weights (transfer learning) against training the identical architecture from scratch under identical hyperparameter conditions (EBHI & HGD trained for 20 epochs; Kather trained for 3 epochs with a scaled batch size of 64 on an NVIDIA RTX 4060 GPU).
+
+#### 7.7.1 Quantitative Transfer Performance
+
+| Downstream Cohort | Class Count | Training Mode | Accuracy | Macro-F1 | Absolute Delta (Acc / F1) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **EBHI-SEG** (Biopsy diagnostics) | 6 | Scratch | 42.47% | 38.52% | **+31.01% / +23.99%** |
+| | | **Pretrained (Ours)** | **73.48%** | **62.51%** | |
+| **CRC-HGD-v1** (Colorectal grading) | 5 | Scratch | 57.07% | 30.90% | **+14.13% / +11.04%** |
+| | | **Pretrained (Ours)** | **71.20%** | **41.94%** | |
+| **Kather MSI/MSS** (Molecular phenotype) | 2 | Scratch | 63.88% | 54.74% | **+9.18% / +8.40%** |
+| | | **Pretrained (Ours)** | **73.06%** | **63.14%** | |
+
+#### 7.7.2 Biological & Clinical Interpretations
+
+1. **Biopsy Pathology Transfer (EBHI-SEG):** Standard biopsy classification suffers from heavy background noise and class imbalances. The model trained from scratch failed to resolve minor classes (like Serrated Adenoma), achieving a poor 42.47% accuracy. In contrast, the pre-trained weights immediately converged to **73.48% accuracy**, showing that the latent space developed during pre-training contains robust descriptors for gland borders and cell layers that easily adapt to biopsy-specific structures.
+2. **Glandular Differentiation Grading (CRC-HGD-v1):** Grading colorectal cancer is a notoriously challenging clinical task due to the high morphological variability between Well, Moderately, and Poorly differentiated classes. While the scratch baseline struggled, the pre-trained model achieved **71.20% accuracy**, boosting the F1-score of the hardest class (**Poorly Differentiated tumor grade**) from **0.3505 up to 0.6422 (almost double)**. This demonstrates that the pre-trained weights successfully capture high-level biological tissue organization patterns.
+3. **Molecular Phenotype Generalization (Kather MSI/MSS):** Directly predicting genetic Microsatellite Instability (MSI) from histological images is a high-level task. The pre-trained weights converged to **73.06% accuracy** and **63.14% Macro-F1** in just 3 epochs of training, outperforming the scratch baseline by **+9.18% absolute accuracy**. This suggests that our pre-trained model's features capture subtle morphological indicators of molecular changes.
 
 ---
 

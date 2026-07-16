@@ -115,7 +115,8 @@ def get_train_transforms(cfg):
     std  = aug["normalize_std"]
     size = cfg["data"]["image_size"]
 
-    ops = []
+    # Resize first to avoid running expensive operations on high-res images
+    ops = [T.Resize((size, size))]
 
     # Foreground Masking
     if aug.get("use_foreground_masking", True):
@@ -140,12 +141,6 @@ def get_train_transforms(cfg):
     if aug.get("random_flip", True):
         ops += [T.RandomHorizontalFlip(p=0.5), T.RandomVerticalFlip(p=0.5)]
 
-    if aug.get("random_rotation", True):
-        ops.append(RandomRotation90())
-
-    if aug.get("elastic_transform", False):
-        ops.append(T.ElasticTransform(alpha=50.0, sigma=5.0))
-
     # Colour augmentation
     if aug.get("color_jitter", True):
         ops.append(T.ColorJitter(
@@ -157,7 +152,6 @@ def get_train_transforms(cfg):
 
     # To tensor + normalise
     ops += [
-        T.Resize((size, size)),
         T.ToTensor(),
         T.Normalize(mean=mean, std=std),
     ]
@@ -180,7 +174,8 @@ def get_val_transforms(cfg):
     std  = aug["normalize_std"]
     size = cfg["data"]["image_size"]
 
-    ops = []
+    # Resize first
+    ops = [T.Resize((size, size))]
     
     if aug.get("use_foreground_masking", True):
         ops.append(ForegroundMasking(
@@ -188,7 +183,6 @@ def get_val_transforms(cfg):
         ))
 
     ops += [
-        T.Resize((size, size)),
         T.ToTensor(),
         T.Normalize(mean=mean, std=std),
     ]

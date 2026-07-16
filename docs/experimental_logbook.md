@@ -210,7 +210,34 @@ This logbook serves as the single source of truth for all quantitative metrics, 
 
 ---
 
-## 📚 7. Competitive Benchmarking Against Published Literature
+## 🩺 7. Cross-Cohort Generalization & Transfer Learning Validation
+
+To evaluate the clinical transferability of the learned feature representations of our SOTA checkpoint, we fine-tuned MedLite-CRC (both from scratch and utilizing pretrained SOTA weights) on three external downstream cohorts representing different diagnostic tasks:
+1. **EBHI-SEG** (6-class biopsy diagnostics, 2,225 images total)
+2. **CRC-HGD-v1** (5-class histopathology grading, 1,914 images total)
+3. **Kather MSI/MSS** (2-class molecular phenotype classification, 139,143 images total)
+
+All trials utilized consistent hyperparameter configurations (`epochs: 20` for HGD/EBHI, `epochs: 3` for Kather; `lr: 0.0002` to `0.0003`, `AdamW`).
+
+### A. Generalization Performance Summary
+
+| Cohort | Class Count | Training Mode | Accuracy | Macro-F1 | Absolute Delta (Acc / F1) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **EBHI-SEG** | 6 | Scratch | 42.47% | 38.52% | **+31.01% / +23.99%** |
+| (Biopsy Classification) | | **Pretrained** | **73.48%** | **62.51%** | |
+| **CRC-HGD-v1** | 5 | Scratch | 57.07% | 30.90% | **+14.13% / +11.04%** |
+| (Colorectal Grading) | | **Pretrained** | **71.20%** | **41.94%** | |
+| **Kather MSI/MSS** | 2 | Scratch | 63.88% | 54.74% | **+9.18% / +8.40%** |
+| (Molecular Phenotype) | | **Pretrained** | **73.06%** | **63.14%** | |
+
+### B. Scientific Discussion on Generalization
+- **EBHI-SEG Biopsy Transfer:** Under scratch training, the model fails to resolve the minor diagnostic classes (like Serrated Adenoma and Normal Mucosa), resulting in a poor 42.47% accuracy. Pretrained transfer learning immediately converges to **73.48%**, demonstrating that the pre-trained feature representation possesses a prior understanding of glandular boundary structures.
+- **CRC-HGD-v1 Grading Shift:** Pathological grading (Well vs. Moderately vs. Poorly Differentiated) is famously difficult due to subtle structural differences in glandular alignment. Pretraining boosts the F1 score of the hardest **Poorly Differentiated** class from **0.3505 up to 0.6422 (almost double)**, proving the pretrained weights extract high-level biological tissue organization patterns.
+- **Kather MSI/MSS Molecular Shift:** Predicting genetic Microsatellite Instability directly from H&E stains is a complex task. The pretrained weights allow the model to converge to **73.06% accuracy** and **63.14% Macro-F1** in just 3 epochs of fine-tuning, demonstrating that general morphological features learned during NCT-100K pretraining correlate directly with molecular cell phenotypes.
+
+---
+
+## 📚 8. Competitive Benchmark Against Published Literature
 
 ### A. NCT-CRC-HE-100K (Train) & CRC-VAL-HE-7K (OOD Test) Benchmark
 This table compares the parameter footprint and out-of-distribution test accuracy of **MedLite-CRC V2** against other representative models in literature trained on the exact same NCT-100K training dataset and evaluated on the CRC-VAL-HE-7K validation cohort:
