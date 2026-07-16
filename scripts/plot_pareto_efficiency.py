@@ -15,7 +15,7 @@ def main():
     models = {
         "MedLite-CRC (Standard)": {
             "params": 0.48,
-            "accuracy": 94.62,
+            "accuracy": 94.65,
             "latency": 7.93,
             "size": 2.02,
             "color": "#1f77b4",
@@ -143,7 +143,7 @@ def main():
     ax.text(
         models["MedLite-CRC (Standard)"]["params"] + 0.25, 
         (models["MedLite-CRC (Standard)"]["accuracy"] + models["MedLite-CRC (MobileNetV2 KD)"]["accuracy"]) / 2, 
-        "+1.35% Accuracy Gain via KD", 
+        "+1.32% Accuracy Gain via KD", 
         color="#e377c2", fontsize=9, fontweight="bold", va="center"
     )
 

@@ -211,7 +211,7 @@ class SEBlock(nn.Module):
     *** ABLATION STUDY ONLY ***
     This block is retained solely for Ablation 4 reproducibility.
     Empirical results show that SE channel-reweighting overfits to source-scanner
-    noise profiles, degrading OOD generalization by -0.82% (93.80% vs 94.62%).
+    noise profiles, degrading OOD generalization by -0.83% (93.82% vs 94.65%).
     The final deployed MedLite-CRC architecture does NOT include this block.
     See: docs/ablation_notes.md §9.3, docs/manuscript_draft.md §6.3.
     """

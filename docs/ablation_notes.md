@@ -223,7 +223,7 @@ The first training attempt suffered from a silent input-clipping bug due to the 
 - **OOD 7K Test Acc:** **94.18%**
 - **Macro F1 (OOD):** **0.9239**
 
-While this represents a massive **4.10% absolute accuracy improvement** over the buggy implementation (90.08%), it is slightly lower than our RGB-space stain normalization (Ablation 3: **94.62%** accuracy, **0.9325** Macro F1).
+While this represents a massive **4.10% absolute accuracy improvement** over the buggy implementation (90.08%), it is slightly lower than our RGB-space stain normalization (Ablation 3: **94.65%** accuracy, **0.9327** Macro F1).
 
 ### The Scientific Conclusion
 Although HED-space normalization is biologically grounded, it restricts the learnable color transformation to linear adjustments of Hematoxylin, Eosin, and DAB density components. By contrast, the RGB-space learnable affine layer has greater mathematical freedom to perform arbitrary linear rotations and shifts across channels, allowing it to adapt to non-linear color response differences across scanners that do not strictly conform to the linear Beer-Lambert deconvolution model.
@@ -257,7 +257,7 @@ The student model trained with KD from EfficientNet-B0 achieved (7,180 image iso
 | STR | 0.6680 | 0.8171 | 0.7350 | 421 |
 | TUM | 0.9681 | 0.9830 | 0.9755 | 1233 |
 
-This represented a slight degradation compared to standard training without KD (Ablation 3: **94.62%** test accuracy, **0.9325** Macro F1).
+This represented a slight degradation compared to standard training without KD (Ablation 3: **94.65%** test accuracy, **0.9327** Macro F1).
 
 ### The Scientific Conclusion
 While KD is generally effective, the EfficientNet-B0 teacher possessed a mismatch in representation style (utilizing Squeeze-and-Excitation attention blocks and Swish activations) compared to our attention-free student network. Furthermore, any scanner-specific biases in the teacher's soft probability distributions were distilled directly into the student, reducing its capacity to generalize.
@@ -292,7 +292,7 @@ The student model trained with MobileNetV2 KD achieved (evaluated on best checkp
 ### The Scientific Conclusion
 This experiment proved that **domain and architectural alignment between teacher and student is paramount** in histopathology KD:
 1. **Teacher-Student Alignment:** Both models utilize depthwise separable convolutions without late-stage attention modules. This structural symmetry allows the student to easily map its latent space to the teacher's.
-2. **Teacher Out-performance:** The student (0.48M parameters) outperformed its own teacher (94.82%) by **+1.15%** absolute and outperformed the non-KD student (94.62%) by **+1.35%** absolute. This is a classic "student surpasses teacher" phenomenon, showing that distilling robust dark knowledge into a highly constrained student acts as an ultimate regularizer, forcing the student to learn pure domain-invariant morphologies.
+2. **Teacher Out-performance:** The student (0.48M parameters) outperformed its own teacher (94.82%) by **+1.15%** absolute and outperformed the non-KD student (94.65%) by **+1.32%** absolute. This is a classic "student surpasses teacher" phenomenon, showing that distilling robust dark knowledge into a highly constrained student acts as an ultimate regularizer, forcing the student to learn pure domain-invariant morphologies.
 3. **STR/MUS Breakthrough:** Stroma F1 rose from **0.7530 → 0.8084 (+5.54%)**, Smooth Muscle F1 rose from **0.7933 → 0.8564 (+6.31%)**.
 
 **Conclusion:** Knowledge Distillation using a structurally aligned MobileNetV2 teacher is the optimal training protocol for MedLite-CRC, setting the state-of-the-art benchmark for ultra-lightweight histopathology classification at **95.97% OOD accuracy**.

@@ -253,8 +253,8 @@ This table compares the parameter footprint and out-of-distribution test accurac
 | **Common Pathology Baselines** [4] | MobileNetV2 | 2.24M | 9.19 MB | **94.82%** |
 | **Common Pathology Baselines** [4] | MobileNetV3-Small | 1.52M | 5.40 MB | **94.10%** |
 | **Standard Swin Transformer** [5] | Swin-T | 28.3M | 114.0 MB | **96.30%** |
-| **MedLite-CRC V2 (Ours - Standard)** | MedLite-CRC (Scratch) | **0.48M** | 2.02 MB | **94.62%** |
-| **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **0.75 MB (INT8)** | **95.73% ± 0.21%** |
+| **MedLite-CRC V2 (Ours - Standard)** | MedLite-CRC (Scratch) | **0.48M** | 2.02 MB | **94.65%** |
+| **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **0.75 MB (INT8)** | **95.97% (Mean: 95.73% ± 0.21%)** |
 
 ### B. CRC-5000 Cohort (8-Class Benchmark)
 Comparative performance on the legacy CRC-5000 multi-class cohort:

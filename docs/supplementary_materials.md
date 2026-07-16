@@ -34,7 +34,7 @@ MedLite-CRC operates at the intersection of ultra-lightweight architecture desig
 ### 2.2 Train-from-Scratch Generalization
 When trained strictly from scratch (without ImageNet pre-training) on NCT-100K and evaluated on the out-of-distribution (OOD) `CRC-VAL-HE-7K` cohort:
 - Standard architectures drop in accuracy (EfficientNet-B0: 94.81%, ResNet-50: 94.33%).
-- MedLite-CRC V1 achieves **94.62%** natively, and its MobileNetV2 KD-distilled counterpart hits a SOTA **95.97%** accuracy, outperforming models up to 48× larger.
+- MedLite-CRC V1 achieves **94.65%** natively, and its MobileNetV2 KD-distilled counterpart hits a SOTA **95.97%** accuracy, outperforming models up to 48× larger.
 
 ### 2.3 Defense of Necessary Trade-offs
 - **ImageNet Pre-trained Models:** While pre-trained Vision Transformers and heavy ResNets can exceed 97% OOD accuracy, they rely on massive parameter weights (86M+ parameters) pre-optimized on natural images (cars, dogs). This makes them unsuitable for local deployment on low-cost diagnostic edge terminals in resource-limited clinics.
@@ -45,11 +45,27 @@ When trained strictly from scratch (without ImageNet pre-training) on NCT-100K a
 | Model Architecture | Params (M) | In-Dist (100K) | OOD (7K) | STARC-9 | CRC-5000 | Deployed Footprint (INT8) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **MedLite-CRC (Ours, KD)** | **0.48** | **99.46%** | **95.97%** | **99.75%** | **93.94%** | **0.75 MB** |
-| **MedLite-CRC (Ours, standard)** | **0.48** | **99.48%** | **94.62%** | **99.79%** | **92.00%** | **2.02 MB** (FP32) |
+| **MedLite-CRC (Ours, standard)** | **0.48** | **99.48%** | **94.65%** | **99.79%** | **92.00%** | **2.02 MB** (FP32) |
 | Li et al. (2025) CNN | 4.41 | 99.00% | - | - | - | 16.9 MB |
 | MobileNetV2 | 2.24 | 99.18% | 94.82% | 99.63% | 89.00% | 9.19 MB |
 | EfficientNet-B0 | 4.02 | 99.04% | 94.81% | 99.68% | 92.00% | 16.38 MB |
 | ResNet-50 | 23.53 | 98.53% | 94.33% | 99.60% | 89.43% | 94.43 MB |
+
+---
+
+### 2.5 Cross-Cohort Generalization & Downstream Transfer Validation
+To establish the clinical utility and semantic transferability of the learned MedLite-CRC feature representations, we benchmarked our pre-trained model against scratch training on three distinct external pathological cohorts:
+- **EBHI-SEG** (6-class endoscopic biopsy, 2,225 tiles)
+- **CRC-HGD-v1** (5-class differentiation grading, 1,914 tiles)
+- **Kather MSI/MSS** (2-class Microsatellite Instability molecular classification, 139,143 tiles)
+
+| Cohort | Downstream Diagnostic Task | Classes | Scratch Acc | Pre-trained Acc | Absolute Delta |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **EBHI-SEG** | Biopsy tissue classification | 6 | 42.47% | **73.48%** | **+31.01%** |
+| **CRC-HGD-v1** | Histopathology differentiation grading | 5 | 57.07% | **71.20%** | **+14.13%** |
+| **Kather MSI/MSS**| Binary molecular classification | 2 | 63.88% | **73.06%** | **+9.18%** |
+
+These results indicate that pre-training on NCT-100K under our MobileNetV2 knowledge distillation pipeline develops robust, scale-invariant priors for glandular margins, cellular arrangement, and chromatin density that transfer effectively across clinical tasks and scanner manufacturers.
 
 ---
 
@@ -95,7 +111,7 @@ To validate the specific architectural choices in MedLite-CRC, we document the n
 3. **Test-Time Augmentation (TTA) Degradation:** Applying 4-rotation TTA averaging during inference dropped accuracy to **92.70%** (specifically harming Muscle and Stroma F1-scores). The model learns directional heuristics relative to fibrous tissue orientations; averaging across arbitrary 90-degree rotations disrupts its confidence in these directional boundaries.
 4. **Receptive Field Expansion (Large Kernels):** Replacing the $3\times3, 5\times5, 7\times7$ multi-scale branch with larger $7\times7, 9\times9, 11\times11$ depthwise convolutions dropped cross-patient accuracy to **93.93%**. Crucially, the F1-score for Lymphocytes dropped from 0.9921 to 0.9842. The massive 11x11 filters acted as a low-pass filter that smoothed over the critical high-frequency, crisp edge details required to identify tiny lymphocytic nuclei.
 5. **Focal Loss & Pairwise Loss Overfitting:** Implementing a Focal Loss combined with a Pairwise Confusion Penalty specifically targeting Stroma vs. Smooth Muscle confusion eliminated training confusion (99.69% in-distribution validation accuracy), but cross-patient accuracy collapsed to **94.76%** (Stroma recall plummeted to 57.48%). Modifying loss functions to target hard cases causes the network to overfit to the specific stain and texture signatures of those hard cases within the training domain.
-6. **HED-Space Stain Normalization:** Learnable stain normalization in biologically-grounded Hematoxylin-Eosin-DAB (HED) space achieved **94.18%** OOD accuracy. While robust, this was slightly lower than RGB-space learnable affine normalization (**94.62%**). The RGB affine layer has greater mathematical freedom to perform arbitrary linear rotations and shifts across channels, allowing it to adapt to non-linear color response differences across scanners that do not strictly conform to the linear Beer-Lambert deconvolution model.
+6. **HED-Space Stain Normalization:** Learnable stain normalization in biologically-grounded Hematoxylin-Eosin-DAB (HED) space achieved **94.18%** OOD accuracy. While robust, this was slightly lower than RGB-space learnable affine normalization (**94.65%**). The RGB affine layer has greater mathematical freedom to perform arbitrary linear rotations and shifts across channels, allowing it to adapt to non-linear color response differences across scanners that do not strictly conform to the linear Beer-Lambert deconvolution model.
 
 ---
 

@@ -40,7 +40,7 @@ The model was trained on the `NCT-CRC-HE-100K` cohort and evaluated on the stric
 | Metric | Target | MedLite-CRC (Standard) | MedLite-CRC (MobileNetV2 KD) |
 |--------|--------|----------------|----------------|
 | **In-Distribution Peak Accuracy** | > 99.0% | **99.48%** | **99.46%** |
-| **Cross-Patient Accuracy (OOD)**| > 93.0% | **94.62%** | **95.97%** ✅ |
+| **Cross-Patient Accuracy (OOD)**| > 93.0% | **94.65%** | **95.97%** ✅ |
 | **CPU Latency (INT8)** | < 50.0 ms | **1.94 ms** | **1.94 ms** |
 | **Total Parameters** | < 5.0 M | **0.48 M** | **0.48 M** |
 
@@ -50,8 +50,8 @@ Evaluated strictly on the unseen DACHS cohort to measure true out-of-domain robu
 | Model | Params (M) | Size (MB) | CPU Latency (ms)* | In-Dist Val Acc | OOD Test Acc | Macro-F1 (OOD) | Wtd-F1 (OOD) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **95.97%** ✅ | **0.9476** | **0.9600** |
-| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.46% | 94.62% | 0.9325 | 0.9465 |
-| **MedLite-CRC (Ours, FP32)** | **0.48** | **2.02** | **7.93** | 99.48% | 94.62% | 0.9325 | 0.9465 |
+| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.46% | 94.65% | 0.9327 | 0.9469 |
+| **MedLite-CRC (Ours, FP32)** | **0.48** | **2.02** | **7.93** | 99.48% | 94.65% | 0.9327 | 0.9469 |
 | ShuffleNetV2 | 1.26 | 5.23 | 5.13 | 99.18% | 95.08% | 0.9351 | 0.9507 |
 | MobileNetV2 (Teacher) | 2.24 | 9.19 | 7.48 | 99.18% | 94.82% | 0.9286 | 0.9470 |
 | EfficientNet-B0 | 4.02 | 16.38 | 11.72 | 99.04% | 94.81% | 0.9268 | 0.9477 |
@@ -64,7 +64,7 @@ The following Pareto plot shows how Aligned Knowledge Distillation shifts the Pa
 
 ![Pareto Efficiency Plot](assets/pareto_efficiency.png)
 
-### Multi-Cohort Benchmarking (STARC-9 & CRC-5000)
+### Multi-Cohort & Downstream Benchmarking (STARC-9, CRC-5000, & Transfer Learning)
 
 * **STARC-9 (Stanford multi-centric cohort):**
   Trained on a 10% stratified subset (63,000 images) and tested on the 54,000 holdout to evaluate how dataset scale acts as a regularizer.
@@ -88,6 +88,15 @@ The following Pareto plot shows how Aligned Knowledge Distillation shifts the Pa
   | ResNet-50             | 23.53          | 89.43        |
   | MobileNetV2           | 2.24           | 89.00        |
   | ShuffleNetV2          | 1.26           | 87.14        |
+
+* **Cross-Cohort Generalization & Downstream Transfer (EBHI, HGD, Kather):**
+  Fine-tuned on external cohorts to evaluate feature transferability of pre-trained weights vs. training from scratch:
+
+  | Cohort | Class Count | Scratch Acc | Pretrained Acc | Absolute Delta |
+  |--------|:-----------:|:-----------:|:--------------:|:--------------:|
+  | **EBHI-SEG** (Biopsy diagnostics) | 6 | 42.47% | **73.48%** | **+31.01%** |
+  | **CRC-HGD-v1** (Tumor grading) | 5 | 57.07% | **71.20%** | **+14.13%** |
+  | **Kather MSI/MSS** (Molecular) | 2 | 63.88% | **73.06%** | **+9.18%** |
 
 ---
 
