@@ -33,7 +33,7 @@ Several peer papers (e.g., Li et al. 2025, MSRANetV2 2025) report 99%+ accuracy 
 
 ## Part 2: What We Built — The MedLite-CRC Architecture
 
-We designed **MedLite-CRC** from scratch: a CNN with exactly **0.48 Million parameters**, quantized to **0.75 MB** (INT8), running at **1.94 ms per image** on a standard CPU.
+We designed **MedLite-CRC** from scratch: a CNN with exactly **0.48 Million parameters**, quantized to **0.72 MB** (INT8), running at **1.65 ms per image** on a standard CPU.
 
 ### The Architecture (High-Level)
 
@@ -288,7 +288,7 @@ This is perhaps the most clinically significant result. We took the pre-trained 
 
 | Model | Params | CPU Latency | Training CO₂ | Inference CO₂ (per 100K images) |
 |---|:---:|:---:|:---:|:---:|
-| **MedLite-CRC (INT8, Ours)** | **0.48M** | **1.94 ms** | **221 g** | **1.33 g** |
+| **MedLite-CRC (INT8, Ours)** | **0.48M** | **1.65 ms** | **221 g** | **1.33 g** |
 | EfficientNet-B0 | 4.02M | 11.72 ms | 387 g | 7.48 g |
 | ResNet-50 | 23.53M | 19.06 ms | 636 g | 12.16 g |
 
@@ -305,6 +305,7 @@ This is perhaps the most clinically significant result. We took the pre-trained 
 | Model | Params | Size | OOD Acc | Macro-F1 |
 |---|:---:|:---:|:---:|:---:|
 | **MedLite-CRC (MobileNetV2 KD) ← SOTA** | **0.48M** | **2.02 MB** | **95.97%** | **0.9476** |
+| **MedLite-CRC (KD INT8) ← SOTA Deployable** | **0.48M** | **0.72 MB** | **95.72%** | **—** |
 | MedLite-CRC (standard) | 0.48M | 2.02 MB | 94.65% | 0.9327 |
 | MedLite-CRC (INT8 quantized) | 0.48M | **0.75 MB** | 94.65% | 0.9327 |
 | ShuffleNetV2 | 1.26M | 5.23 MB | 95.08% | 0.9351 |
@@ -526,7 +527,7 @@ The only way to beat our score without ImageNet pre-training is to use our archi
 
 ---
 
-### Paper 5 — CRCCN-Net (Uddin et al., 2023), *Biomedical Signal Processing and Control*
+### Paper 5 — CRCCN-Net (Kumar et al., 2023), *Biomedical Signal Processing and Control*
 
 **What they did:** Designed a minimal 3-block CNN (~3M params) for NCT-100K classification.
 
@@ -643,7 +644,7 @@ We are the only paper in this comparison that:
 |---|---|
 | OOD accuracy from scratch (no ImageNet) | **MedLite-CRC ✅** |
 | Parameter count (smallest deployable model) | **MedLite-CRC ✅** |
-| Disk size (smallest deployed model) | **MedLite-CRC ✅ (0.75 MB INT8)** |
+| Disk size (smallest deployed model) | **MedLite-CRC ✅ (0.72 MB INT8)** |
 | CPU inference speed | **MedLite-CRC ✅ (1.94 ms)** |
 | STARC-9 accuracy (vs foundation models) | **MedLite-CRC ✅ (+0.79% vs CTransPath)** |
 | CRC-5000 (noisy legacy data) | **MedLite-CRC ✅ (93.94%, new SOTA)** |

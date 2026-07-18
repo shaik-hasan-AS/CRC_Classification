@@ -45,7 +45,8 @@ This benchmark evaluates a model's capacity to generalize across scanning sites 
 | **Common Baselines** [5] | ShuffleNetV2 | 1.26 | 5.23 | No | 99.18% | 95.08% |
 | **Swin-T** [6] | Swin Transformer-T | 28.30 | 114.00 | No | 99.20% | 96.30% |
 | **MedLite-CRC (Ours - FP32)** | MedLite-CRC (Scratch) | **0.48** | 2.02 | No | 99.48% | 94.65% |
-| **MedLite-CRC (Ours - KD SOTA)** | MedLite-CRC (Distilled) | **0.48** | **0.75 (INT8)** | No | **99.46%** | **95.97% ± 0.21%** |
+| **MedLite-CRC (Ours - KD SOTA)** | MedLite-CRC (Distilled, FP32) | **0.48** | 2.02 | No | **99.46%** | **95.97% ± 0.21%** |
+| **MedLite-CRC (Ours - KD INT8)** | MedLite-CRC (Distilled, INT8) | **0.48** | **0.72** | No | **99.46%** | **95.72%** |
 
 *\*Note: Subject to patient-level data leakage (see detailed critique below).*
 

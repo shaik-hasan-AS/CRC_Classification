@@ -117,3 +117,28 @@ if int8_latency < fp32_latency:
     print(f"\n[SUCCESS] Speedup: {fp32_latency/int8_latency:.2f}x faster!")
 else:
     print(f"\n[NOTE] INT8 speedups depend heavily on the specific CPU architecture and PyTorch backend (e.g. FBGEMM).")
+
+# ── Evaluate Accuracy ──
+print("\n[INFO] Evaluating Accuracy on OOD Validation Set...")
+val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False)
+
+def evaluate_accuracy(net, loader):
+    net.eval()
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for imgs, labels in loader:
+            imgs = imgs.cpu()
+            labels = labels.cpu()
+            outputs = net(imgs)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    return 100 * correct / total
+
+fp32_acc = evaluate_accuracy(model, val_loader)
+print(f"[INFO] FP32 Model Accuracy on OOD: {fp32_acc:.2f}%")
+
+int8_acc = evaluate_accuracy(model_int8, val_loader)
+print(f"[INFO] INT8 Model Accuracy on OOD: {int8_acc:.2f}%")
+

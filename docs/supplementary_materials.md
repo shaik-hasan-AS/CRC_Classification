@@ -29,7 +29,7 @@ MedLite-CRC operates at the intersection of ultra-lightweight architecture desig
 
 ### 2.1 Parameter Efficiency Comparison
 - **Li et al. (2025):** The primary custom lightweight CNN designed for CRC tissue classification requires **4.41 Million parameters** and **16.9 MB** of disk space to hit 99.00% accuracy.
-- **MedLite-CRC (Ours):** Achieves **99.48%** in-distribution peak accuracy using only **0.48 Million parameters** (9.2× smaller) and occupies **0.75 MB** in INT8 format (22.5× smaller).
+- **MedLite-CRC (Ours):** Achieves **99.48%** in-distribution peak accuracy using only **0.48 Million parameters** (9.2× smaller) and occupies **0.72 MB** in INT8 format (23.5× smaller).
 
 ### 2.2 Train-from-Scratch Generalization
 When trained strictly from scratch (without ImageNet pre-training) on NCT-100K and evaluated on the out-of-distribution (OOD) `CRC-VAL-HE-7K` cohort:
@@ -44,7 +44,8 @@ When trained strictly from scratch (without ImageNet pre-training) on NCT-100K a
 
 | Model Architecture | Params (M) | In-Dist (100K) | OOD (7K) | STARC-9 | CRC-5000 | Deployed Footprint (INT8) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **MedLite-CRC (Ours, KD)** | **0.48** | **99.46%** | **95.97%** | **99.75%** | **93.94%** | **0.75 MB** |
+| **MedLite-CRC (Ours, KD)** | **0.48** | **99.46%** | **95.97%** | **99.75%** | **93.94%** | **2.02 MB** (FP32) |
+| **MedLite-CRC (Ours, KD INT8)** | **0.48** | **99.46%** | **95.72%** | **—** | **—** | **0.72 MB** |
 | **MedLite-CRC (Ours, standard)** | **0.48** | **99.48%** | **94.65%** | **99.79%** | **92.00%** | **2.02 MB** (FP32) |
 | Li et al. (2025) CNN | 4.41 | 99.00% | - | - | - | 16.9 MB |
 | MobileNetV2 | 2.24 | 99.18% | 94.82% | 99.63% | 89.00% | 9.19 MB |

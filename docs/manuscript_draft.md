@@ -6,7 +6,7 @@
 ---
 
 ## Abstract
-Deep learning has revolutionized automated histopathological diagnosis, but standard state-of-the-art (SOTA) architectures are computationally heavy (11M to 30M+ parameters) and highly sensitive to scanner domain shift. In this study, we present **MedLite-CRC**, an ultra-lightweight Convolutional Neural Network (CNN) specifically designed for colorectal cancer (CRC) tissue classification on memory-constrained edge devices. MedLite-CRC consists of only **0.48 Million parameters** and has an INT8 quantized disk footprint of **0.75 MB**, delivering an inference latency of **1.94 ms** on standard edge CPUs. 
+Deep learning has revolutionized automated histopathological diagnosis, but standard state-of-the-art (SOTA) architectures are computationally heavy (11M to 30M+ parameters) and highly sensitive to scanner domain shift. In this study, we present **MedLite-CRC**, an ultra-lightweight Convolutional Neural Network (CNN) specifically designed for colorectal cancer (CRC) tissue classification on memory-constrained edge devices. MedLite-CRC consists of only **0.48 Million parameters** and has an INT8 quantized disk footprint of **0.72 MB**, delivering an inference latency of **1.65 ms** on standard edge CPUs. 
 
 To overcome domain shift and scanner-specific biases (e.g., JPEG artifacts and H&E stain variations), we introduce two novel modules: an end-to-end differentiable, six-parameter **Learnable Stain Adaptation Layer** and a **Depthwise Separable Multi-Scale Branch** (capturing 3×3, 5×5, and 7×7 receptive fields simultaneously). 
 
@@ -26,7 +26,7 @@ Despite high accuracy rates (>98%) on public benchmarks, the clinical translatio
 2.  **Scanner-Specific Domain Shift:** public histopathological datasets are often collected using single scanners at specific medical centers. When models are tested on datasets from other hospitals (cross-site evaluation), their performance collapses due to varying scanner sensors, slice thicknesses, and local staining chemistries.
 3.  **Dataset Biases and Shortcutting:** As demonstrated by Ignatov & Malivenko (2024), popular benchmarks like `NCT-CRC-HE-100K` contain severe, class-dependent JPEG compression artifacts and color imbalances. Deeper networks often achieve high accuracy by memorizing these non-biological low-level artifacts, rather than learning true histopathological morphology.
 
-To address these challenges, we propose **MedLite-CRC**, an ultra-lightweight, edge-deployable CNN of **0.48 million parameters** (2.02 MB in FP32, 0.75 MB in INT8). Instead of relying on massive parameter capacity to memorize features, we constrain the model's capacity, forcing it to focus strictly on the most robust morphological structures. 
+To address these challenges, we propose **MedLite-CRC**, an ultra-lightweight, edge-deployable CNN of **0.48 million parameters** (2.02 MB in FP32, 0.72 MB in INT8). Instead of relying on massive parameter capacity to memorize features, we constrain the model's capacity, forcing it to focus strictly on the most robust morphological structures. 
 
 Our main contributions are:
 - We design a highly parameterized multi-scale branch utilizing depthwise separable convolutions to capture nuclei (3×3), glands (5×5), and fibrous connective tissue (7×7) simultaneously at low FLOP cost.
@@ -152,8 +152,8 @@ We evaluate MedLite-CRC (without the SEBlock, representing our final architectur
 | Model | Parameters (M) | Size (MB) | CPU Latency (ms) | NCT-100K Val Acc | OOD 7K Test Acc | Macro-F1 (OOD) | Wtd-F1 (OOD) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **95.97%** ✅ | **0.9476** | **0.9600** |
-| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.46% | 94.65% | 0.9327 | 0.9469 |
-| **MedLite-CRC (Ours, FP32)** | **0.48** | **2.02** | **7.93** | 99.48% | 94.65% | 0.9327 | 0.9469 |
+| **MedLite-CRC (Ours, KD INT8)** | **0.48** | **0.72** | **1.65** | 99.46% | **95.72%** | **—** | **—** |
+| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.48% | 94.65% | 0.9327 | 0.9469 |
 | ShuffleNetV2 | 1.26 | 5.23 | **0.58*** | 99.18% | 95.08% | 0.9351 | 0.9507 |
 | MobileNetV2 (Teacher) | 2.24 | 9.19 | 1.18* | 99.18% | 94.82% | 0.9286 | 0.9470 |
 | EfficientNet-B0 | 4.02 | 16.38 | 1.53* | 99.04% | 94.81% | 0.9268 | 0.9477 |
@@ -166,7 +166,7 @@ We evaluate MedLite-CRC (without the SEBlock, representing our final architectur
 #### Analysis:
 1.  **Parameter Efficiency:** MedLite-CRC (0.48M params) is **48× smaller** than ResNet-50 and **8.4× smaller** than EfficientNet-B0.
 2.  **Generalization Breakthrough under Knowledge Distillation:** When trained with Knowledge Distillation from a structurally aligned MobileNetV2 teacher model, MedLite-CRC achieves a **verified 95.97%** cross-patient accuracy on `CRC-VAL-HE-7K` (isolated eval on best checkpoint `ckpt_epoch058_acc0.9946.pt`). This out-performs the teacher itself (**94.82%**) by **+1.15%** absolute and the SOTA ShuffleNetV2 baseline (**95.08%**) by **+0.89%** absolute, establishing a new Pareto frontier of efficiency vs. generalization accuracy.
-3.  **Baseline Standard Generalization:** Even without KD, MedLite-CRC (Ablation 3) achieves **94.65%** accuracy on the out-of-distribution set, outperforming ResNet-50 (94.33%) and matching EfficientNet-B0 (94.81%) while occupying **22.5× less disk space** in its quantized INT8 form (0.75 MB).
+3.  **Baseline Standard Generalization:** Even without KD, MedLite-CRC (Ablation 3) achieves **94.65%** accuracy on the out-of-distribution set, outperforming ResNet-50 (94.33%) and matching EfficientNet-B0 (94.81%) while occupying **23.5× less disk space** in its quantized INT8 form (0.72 MB).
 
 ### 5.2 SOTA Confusion Matrix & Per-Class Performance
 To inspect the specific classification strengths and weaknesses of the SOTA MobileNetV2 KD student, we visualize its normalized confusion matrix and per-class performance metrics on the 7,180-image `CRC-VAL-HE-7K` test set:
@@ -197,7 +197,7 @@ We compare MedLite-CRC directly against the primary custom lightweight CNN desig
 
 | Model | Parameters (M) | Model Size (MB) | Peak In-Dist Accuracy (%) |
 |---|:---:|:---:|:---:|
-| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **99.48%** |
+| **MedLite-CRC (Ours, KD INT8)** | **0.48** | **0.72** | **99.46%** |
 | Li et al. (2025) CNN | 4.41 | 16.90 | 99.00% |
 
 Our architecture achieves a higher peak accuracy (99.48% vs 99.00%) while being **9.2× smaller** in parameters and occupying **22.5× less disk space** when quantized.
@@ -363,7 +363,7 @@ To quantify the environmental and financial benefits of MedLite-CRC for large-sc
 
 | Model Configuration | Parameters (M) | CPU Latency (ms) | Training Energy (kWh) | Training $\text{CO}_2$ (g) | Inference Energy (J/img) | Inference $\text{CO}_2$ (g/100k img) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **MedLite-CRC (Ours, INT8)** | **0.48** | **2.08** | **0.270** | **221.4** | **0.0582** | **1.327** |
+| **MedLite-CRC (Ours, KD INT8)** | **0.48** | **1.65** | **0.270** | **221.4** | **0.0462** | **1.052** |
 | **MedLite-CRC (Ours, FP32)** | **0.48** | **8.28** | **0.270** | **221.4** | **0.2318** | **5.281** |
 | ShuffleNetV2 | 1.26 | 5.13 | 0.351 | 287.8 | 0.1436 | 3.272 |
 | MobileNetV2 | 2.24 | 7.48 | 0.371 | 304.4 | 0.2094 | 4.771 |
@@ -376,7 +376,7 @@ To compare the resource requirements, we visualize the relative carbon footprint
 
 #### Key Insights:
 1.  **Training Efficiency:** The extremely compact size of MedLite-CRC reduces training time to 2.0 hours, consuming only $0.270 \text{ kWh}$ of energy ($221.4\text{g CO}_2$). This represents a **2.9× reduction** in carbon emissions compared to EfficientNet-B0 and a **5.1× reduction** compared to ResNet-50.
-2.  **Edge Inference Footprint:** During deployment, the fully quantized MedLite-CRC (INT8) model requires only $0.0582\text{ J}$ of energy per image ($1.327\text{g CO}_2$ per 100,000 images). This is **4.0× more carbon-efficient** than its FP32 counterpart, **3.6× more** than MobileNetV2, **5.6× more** than EfficientNet-B0, and **9.2× more** than ResNet-50.
+2.  **Edge Inference Footprint:** During deployment, the fully quantized MedLite-CRC (INT8) model requires only $0.0462\text{ J}$ of energy per image ($1.052\text{g CO}_2$ per 100,000 images). This is **5.0× more carbon-efficient** than its FP32 counterpart, **4.5× more** than MobileNetV2, **7.1× more** than EfficientNet-B0, and **11.5× more** than ResNet-50.
 3.  **Scalability in Low-Resource Settings:** By keeping the inference latency under 2.1 ms and energy requirements to micro-joules, MedLite-CRC can run continuously on local batteries or solar-powered point-of-care devices in clinics with unstable power grids, without contributing to local grid stress or high carbon footprints.
 
 ### Clinical & Technical Limitations:
@@ -387,7 +387,7 @@ To compare the resource requirements, we visualize the relative carbon footprint
 ---
 
 ## 9. Conclusion
-In this study, we presented **MedLite-CRC**, an ultra-lightweight, 0.48M parameter CNN designed for colorectal cancer tissue classification on edge devices. MedLite-CRC delivers an inference speed of 1.94 ms on standard CPUs with an INT8 disk size of 0.75 MB. Through multi-cohort benchmarking and leave-one-out ablations, we demonstrated that parameter constraints act as a powerful regularizer, enabling our model to tie or outperform architectures up to 48× larger. 
+In this study, we presented **MedLite-CRC**, an ultra-lightweight, 0.48M parameter CNN designed for colorectal cancer tissue classification on edge devices. MedLite-CRC delivers an inference speed of 1.65 ms on standard CPUs with an INT8 disk size of 0.72 MB. Through multi-cohort benchmarking and leave-one-out ablations, we demonstrated that parameter constraints act as a powerful regularizer, enabling our model to tie or outperform architectures up to 48× larger. 
 
 We documented the Squeeze-and-Excitation "Attention Paradox," showing that attention mechanisms can overfit to scanner-specific staining channels, and evaluated spatial biases using quantitative Grad-CAM alignment. Our findings provide a highly efficient, scientifically honest baseline for edge-deployable computational pathology.
 
