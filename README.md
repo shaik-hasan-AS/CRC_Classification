@@ -159,7 +159,7 @@ If you find this code or our weights useful in your research, please cite:
 ```bibtex
 @misc{hasan2026medlite,
   title={MedLite-CRC: Dataset Scale as a Regularizer for Ultra-Lightweight Colorectal Cancer Histopathology Classification},
-  author={Hasan, Shaik},
+  author={Shaik Hasan A S},
   howpublished={\url{https://github.com/shaik-hasan-AS/CRC_Classification}},
   year={2026}
 }
