@@ -1,4 +1,4 @@
-# MedLite-CRC: Dataset Scale as a Regularizer for Ultra-Lightweight Colorectal Cancer Histopathology Classification
+# MedLite-CRC: An Ultra-Lightweight, Attention-Free CNN for Domain-Robust Colorectal Cancer Classification
 
 **Author:** Shaik Hasan A S
   

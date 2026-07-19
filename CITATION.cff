@@ -1,9 +1,9 @@
 cff-version: 1.2.0
 message: "If you use this software in your research, please cite it as below."
 authors:
-  - family-names: "Hasan"
-    given-names: "Shaik"
-title: "MedLite-CRC: A Lightweight, Edge-Deployable CNN for Colorectal Cancer Histopathology"
+  - family-names: "A S"
+    given-names: "Shaik Hasan"
+title: "MedLite-CRC: An Ultra-Lightweight, Attention-Free CNN for Domain-Robust Colorectal Cancer Classification"
 version: 1.0.0
 date-released: 2026-06-29
 url: "https://github.com/shaik-hasan-AS/CRC_Classification"
