@@ -84,7 +84,7 @@ We tested adding Squeeze-and-Excitation (SE) channel attention and Coordinate At
 
 | Configuration | OOD Accuracy | Delta |
 |---|:---:|:---:|
-| Attention-Free (Final) | **94.65%** | — |
+| Attention-Free (Final) | **94.71%** | — |
 | + SE Block | 93.82% | **−0.83%** |
 | + Coordinate Attention | 93.44% | **−1.21%** |
 
@@ -113,7 +113,7 @@ We tried two teachers:
 
 **Teacher 2 — MobileNetV2 (2.24M params):**
 - Uses depthwise separable convolutions, NO attention → architecturally aligned
-- Result: OOD accuracy **jumped to 95.97%** — our best result ever
+- Result: OOD accuracy **jumped to 95.96%** — our best result ever
 - The structurally aligned teacher guides the student toward robust morphological features
 
 ### The "Student Surpasses Teacher" Phenomenon
@@ -121,8 +121,8 @@ We tried two teachers:
 | Model | OOD Accuracy |
 |---|:---:|
 | MobileNetV2 Teacher | 94.82% |
-| MedLite-CRC (no KD) | 94.65% |
-| **MedLite-CRC (MobileNetV2 KD) ← SOTA** | **95.97%** |
+| MedLite-CRC (no KD) | 94.71% |
+| **MedLite-CRC (MobileNetV2 KD) ← SOTA** | **95.96%** |
 
 Our 0.48M student **outperformed its own 2.24M teacher by +1.15%**. This happens because the highly constrained student cannot memorize noise — it is forced to extract only the robust, generalizable patterns from the teacher's soft knowledge.
 
@@ -140,7 +140,7 @@ This is the full map of every major experiment. Each one taught us something imp
 |---|---|---|
 | Baseline CNN stem only | 94.05% OOD | Starting point |
 | + Learnable Stain Norm | 94.64% OOD | +0.41%, zero cost |
-| + MultiScale Branch | 94.65% OOD | Best Macro-F1 |
+| + MultiScale Branch | 94.71% OOD | Best Macro-F1 |
 | + SE Attention | 93.82% OOD | **Worse** — scanner overfitting |
 | + Coordinate Attention | 93.44% OOD | **Even worse** |
 
@@ -158,7 +158,7 @@ This is the full map of every major experiment. Each one taught us something imp
 
 **EfficientNet-B0 Teacher KD:** Architecturally misaligned teacher → degraded OOD accuracy to **94.35%** (worse than no KD at all).
 
-**HED-Space Stain Normalization:** Biologically correct (deconvolves into Hematoxylin/Eosin/DAB channels) but achieved only **94.18%** vs RGB-space **94.65%**. RGB affine transformation has more mathematical freedom to compensate for non-linear scanner sensor differences that don't follow the Beer-Lambert model.
+**HED-Space Stain Normalization:** Biologically correct (deconvolves into Hematoxylin/Eosin/DAB channels) but achieved only **94.18%** vs RGB-space **94.71%**. RGB affine transformation has more mathematical freedom to compensate for non-linear scanner sensor differences that don't follow the Beer-Lambert model.
 
 > **Full details on every experiment:** [`docs/ablation_notes.md`](./ablation_notes.md)
 
@@ -304,10 +304,10 @@ This is perhaps the most clinically significant result. We took the pre-trained 
 
 | Model | Params | Size | OOD Acc | Macro-F1 |
 |---|:---:|:---:|:---:|:---:|
-| **MedLite-CRC (MobileNetV2 KD) ← SOTA** | **0.48M** | **2.02 MB** | **95.97%** | **0.9476** |
+| **MedLite-CRC (MobileNetV2 KD) ← SOTA** | **0.48M** | **2.02 MB** | **95.96%** | **0.9472** |
 | **MedLite-CRC (KD INT8) ← SOTA Deployable** | **0.48M** | **0.72 MB** | **95.72%** | **—** |
-| MedLite-CRC (standard) | 0.48M | 2.02 MB | 94.65% | 0.9327 |
-| MedLite-CRC (INT8 quantized) | 0.48M | **0.75 MB** | 94.65% | 0.9327 |
+| MedLite-CRC (standard) | 0.48M | 2.02 MB | 94.71% | 0.9327 |
+| MedLite-CRC (INT8 quantized) | 0.48M | **0.75 MB** | 94.71% | 0.9327 |
 | ShuffleNetV2 | 1.26M | 5.23 MB | 95.08% | 0.9351 |
 | MobileNetV2 (Teacher) | 2.24M | 9.19 MB | 94.82% | 0.9286 |
 | EfficientNet-B0 | 4.02M | 16.38 MB | 94.81% | 0.9268 |
@@ -418,7 +418,7 @@ Most published papers in this domain have **one or more of these four problems:*
 
 | Metric | VGG-19 (Kather 2019) | MedLite-CRC (Ours, KD) | Our Advantage |
 |---|:---:|:---:|:---:|
-| OOD Accuracy | 94.30% | **95.97%** | **+1.67%** |
+| OOD Accuracy | 94.30% | **95.96%** | **+1.67%** |
 | Parameters | 143.6M | **0.48M** | **300× fewer** |
 | Disk Size | 548 MB | **0.75 MB** | **730× smaller** |
 | ImageNet needed? | ✅ Yes | ❌ No | **Domain-pure** |
@@ -448,7 +448,7 @@ They also removed ~5% of training images as "outliers" via Gaussian distribution
 
 | Metric | Li et al. 2025 | MedLite-CRC (Ours) | Our Advantage |
 |---|:---:|:---:|:---:|
-| True OOD Accuracy (fair eval) | ~94% (estimated, post-leakage) | **95.97%** | **+2%** |
+| True OOD Accuracy (fair eval) | ~94% (estimated, post-leakage) | **95.96%** | **+2%** |
 | In-distribution Accuracy | 99.00% | **99.48%** | **+0.48%** |
 | Parameters | 4.41M | **0.48M** | **9.2× fewer** |
 | Disk Size | 16.9 MB | **0.75 MB** | **22.5× smaller** |
@@ -482,7 +482,7 @@ MSRANetV2's big selling point is its SE attention blocks. We tested the exact sa
 
 | Configuration | OOD Accuracy |
 |---|:---:|
-| **MedLite-CRC Attention-Free ← Ours** | **94.65%** |
+| **MedLite-CRC Attention-Free ← Ours** | **94.71%** |
 | MedLite-CRC + SE Attention (Ablation 4) | 93.82% (−0.83%) |
 | MedLite-CRC + Coordinate Attention | 93.44% (−1.21%) |
 
@@ -492,7 +492,7 @@ SE attention channels overfit to the specific H&E dye balance and electronic noi
 
 | Metric | MSRANetV2 2025 | MedLite-CRC (Ours) | Our Advantage |
 |---|:---:|:---:|:---:|
-| True OOD Accuracy (fair eval) | ~94% (post-leakage correction) | **95.97%** | **+2%** |
+| True OOD Accuracy (fair eval) | ~94% (post-leakage correction) | **95.96%** | **+2%** |
 | Parameters | 25.6M | **0.48M** | **53× fewer** |
 | Attention mechanism | SE (causes overfitting) | **None (attention-free)** | Better generalization |
 | ImageNet needed? | ✅ Yes | ❌ No | Domain-pure |
@@ -518,10 +518,10 @@ We never claimed to beat 97.70% — that would require ImageNet pre-training, wh
 | Configuration | OOD Accuracy | Parameters | ImageNet? |
 |---|:---:|:---:|:---:|
 | EfficientNet-B0 (ImageNet pre-trained) | **97.70%** | 4.02M | ✅ Yes |
-| **MedLite-CRC (KD, from scratch) ← Ours** | **95.97%** | **0.48M** | ❌ No |
+| **MedLite-CRC (KD, from scratch) ← Ours** | **95.96%** | **0.48M** | ❌ No |
 | EfficientNet-B0 (from scratch, fair comparison) | 94.81% | 4.02M | ❌ No |
 
-**From-scratch vs from-scratch:** We achieve **95.97%** vs EfficientNet-B0's **94.81%** — **+1.16% better, with 8.4× fewer parameters**. This is the fair comparison and we win.
+**From-scratch vs from-scratch:** We achieve **95.96%** vs EfficientNet-B0's **94.81%** — **+1.16% better, with 8.4× fewer parameters**. This is the fair comparison and we win.
 
 The only way to beat our score without ImageNet pre-training is to use our architecture.
 
@@ -541,7 +541,7 @@ On CRC-5000 (the legacy noisy dataset), CRCCN-Net achieves **93.50%** — one of
 | Metric | CRCCN-Net 2023 | MedLite-CRC (Ours, KD) | Our Advantage |
 |---|:---:|:---:|:---:|
 | CRC-5000 Accuracy | 93.50% | **93.94%** | **+0.44%** |
-| OOD Testing | ❌ Never done | ✅ 95.97% | **We actually tested it** |
+| OOD Testing | ❌ Never done | ✅ 95.96% | **We actually tested it** |
 | Parameters | ~3.0M | **0.48M** | **6.3× fewer** |
 
 ---
@@ -568,7 +568,7 @@ Additionally, FabNet uses only 2 scales (3×3 and 5×5). We use 3 scales (3×3 /
 | Metric | FabNet 2023 | MedLite-CRC (Ours) | Our Advantage |
 |---|:---:|:---:|:---:|
 | In-distribution Accuracy | 99.00% | **99.48%** | **+0.48%** |
-| OOD Testing | ❌ Never done | ✅ 95.97% | **We actually tested it** |
+| OOD Testing | ❌ Never done | ✅ 95.96% | **We actually tested it** |
 | Parameters | ~3.24M | **0.48M** | **6.8× fewer** |
 | Multi-scale kernels | 3×3, 5×5 only | **3×3, 5×5, 7×7** | **Extra macro scale** |
 | Convolution type | Dense (expensive) | **Depthwise Separable** | **~18× more efficient** |
@@ -608,7 +608,7 @@ Our 0.48M model cannot memorize anything. It is forced to learn only the most st
 | EfficientNet-B0 | 2024 | 4.02M | ❌ | ❌ | ✅ SE | ✅ | ✅ | 97.70% |
 | EfficientNet-B0 (scratch) | 2024 | 4.02M | ❌ | ❌ | ✅ SE | ✅ | ❌ | 94.81% |
 | ShuffleNetV2 | — | 1.26M | ❌ | ❌ | ❌ | ✅ | ❌ | 95.08% |
-| **MedLite-CRC (Ours)** | **2026** | **0.48M** | **✅ 3×3/5×5/7×7 DWS** | **✅ 6-param** | **❌ (by design)** | **✅** | **❌** | **95.97%** |
+| **MedLite-CRC (Ours)** | **2026** | **0.48M** | **✅ 3×3/5×5/7×7 DWS** | **✅ 6-param** | **❌ (by design)** | **✅** | **❌** | **95.96%** |
 
 *\*Estimated after correcting patient-level data leakage. True OOD performance without leakage is approximately 94%.*
 

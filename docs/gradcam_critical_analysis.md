@@ -56,4 +56,4 @@ Through qualitative and quantitative inspection of misclassified samples (specif
 
 ---
 
-**Ultimate Takeaway:** While the SOTA MedLite-CRC (KD) model achieves an outstanding **95.97%** cross-patient validation accuracy, mathematical interpretability reveals that knowledge distillation combined with reflection padding has not only boosted performance but also resolved structural flaws like the "negative space shortcut" and boundary over-activation artifacts.
+**Ultimate Takeaway:** While the SOTA MedLite-CRC (KD) model achieves an outstanding **95.96%** cross-patient validation accuracy, mathematical interpretability reveals that knowledge distillation combined with reflection padding has not only boosted performance but also resolved structural flaws like the "negative space shortcut" and boundary over-activation artifacts.

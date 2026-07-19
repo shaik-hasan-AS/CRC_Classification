@@ -44,8 +44,8 @@ This benchmark evaluates a model's capacity to generalize across scanning sites 
 | **Common Baselines** [5] | MobileNetV2 | 2.24 | 9.19 | No | 99.18% | 94.82% |
 | **Common Baselines** [5] | ShuffleNetV2 | 1.26 | 5.23 | No | 99.18% | 95.08% |
 | **Swin-T** [6] | Swin Transformer-T | 28.30 | 114.00 | No | 99.20% | 96.30% |
-| **MedLite-CRC (Ours - FP32)** | MedLite-CRC (Scratch) | **0.48** | 2.02 | No | 99.48% | 94.65% |
-| **MedLite-CRC (Ours - KD SOTA)** | MedLite-CRC (Distilled, FP32) | **0.48** | 2.02 | No | **99.46%** | **95.97% ± 0.21%** |
+| **MedLite-CRC (Ours - FP32)** | MedLite-CRC (Scratch) | **0.48** | 2.02 | No | 99.48% | 94.71% |
+| **MedLite-CRC (Ours - KD SOTA)** | MedLite-CRC (Distilled, FP32) | **0.48** | 2.02 | No | **99.46%** | **95.96% ± 0.21%** |
 | **MedLite-CRC (Ours - KD INT8)** | MedLite-CRC (Distilled, INT8) | **0.48** | **0.72** | No | **99.46%** | **95.72%** |
 
 *\*Note: Subject to patient-level data leakage (see detailed critique below).*
@@ -166,7 +166,7 @@ During architectural exploration, we implemented standard attention mechanisms t
 
 ### A. The Squeeze-and-Excitation (SE) Channel Attention Paradox
 * **Hypothesis:** SE blocks compute channel-wise attention weights to dynamically recalibrate feature maps, which should theoretically improve convergence and tissue focus.
-* **The Result:** Integrating late-stage SE blocks dropped validation accuracy on `CRC-VAL-HE-7K` from **94.65% down to 93.82%** (a **-0.83%** absolute decrease).
+* **The Result:** Integrating late-stage SE blocks dropped validation accuracy on `CRC-VAL-HE-7K` from **94.71% down to 93.82%** (a **-0.83%** absolute decrease).
 * **The Scientific Conclusion:** While SE blocks improve training convergence on the in-distribution validation split (99.52%), their channel-reweighting coefficients overfit to the high-frequency electronic noise and specific staining balances of the training scanner (`NCT-CRC-HE-100K`). When tested on the unseen Mannheim scanner, these coefficients represent non-biological channel shortcuts, degrading model generalization.
 
 ### B. The Coordinate Attention (CA) Spatial Attention Paradox

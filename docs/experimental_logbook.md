@@ -34,10 +34,10 @@ This logbook serves as the single source of truth for all quantitative metrics, 
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Ablation 1** (Baseline CNN stem) | 99.02% | 94.05% | - | - | 0.453M | 0.349 | 1.89 MB |
 | **Ablation 2** (+ Stain Adaptation) | 99.28% | 94.64% | - | - | 0.453M | 0.349 | 1.89 MB |
-| **Ablation 3** (+ MultiScaleBranch) | 99.41% | 94.65% | - | - | 0.482M | 0.726 | 2.02 MB |
+| **Ablation 3** (+ MultiScaleBranch) | 99.41% | 94.71% | - | - | 0.482M | 0.726 | 2.02 MB |
 | **Ablation 4** (+ SEBlock attention) | **99.52%** | 93.82% | - | - | 0.490M | 0.726 | 2.05 MB |
 | **KD (EfficientNet-B0 Teacher)** | 99.12% | 94.35% | - | - | 0.482M | 0.726 | 2.02 MB |
-| **KD (MobileNetV2 Teacher) - V1** | 99.46% | **95.97%** | - | - | 0.482M | 0.726 | 2.02 MB |
+| **KD (MobileNetV2 Teacher) - V1** | 99.46% | **95.96%** | - | - | 0.482M | 0.726 | 2.02 MB |
 | **KD (MobileNetV2 Teacher) - V2** | 99.35% | **95.84%** | - | - | 0.482M | 0.726 | 2.02 MB |
 | **STARC-9 Baseline (V1)** | - | - | **99.79%** | - | 0.482M | 0.726 | 2.02 MB |
 | **Hybrid 11-Class Model** | - | 93.50% | 99.76% | 45.23% | 0.482M | 0.726 | 2.02 MB |
@@ -48,8 +48,8 @@ This logbook serves as the single source of truth for all quantitative metrics, 
 ## 🧪 2. Detailed Per-Class Breakdowns
 
 ### A. SOTA KD Student Model (MobileNetV2 Teacher) on OOD 7K Set (V1 Checkpoint)
-* **Overall Accuracy:** 95.97%
-* **Macro F1:** 0.9476
+* **Overall Accuracy:** 95.96%
+* **Macro F1:** 0.9472
 * **Weighted F1:** 0.9600
 
 | Class | Precision | Recall | F1-Score | Support |
@@ -253,8 +253,8 @@ This table compares the parameter footprint and out-of-distribution test accurac
 | **Common Pathology Baselines** [4] | MobileNetV2 | 2.24M | 9.19 MB | **94.82%** |
 | **Common Pathology Baselines** [4] | MobileNetV3-Small | 1.52M | 5.40 MB | **94.10%** |
 | **Standard Swin Transformer** [5] | Swin-T | 28.3M | 114.0 MB | **96.30%** |
-| **MedLite-CRC V2 (Ours - Standard)** | MedLite-CRC (Scratch) | **0.48M** | 2.02 MB | **94.65%** |
-| **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **2.02 MB (FP32)** | **95.97% (Mean: 95.73% ± 0.21%)** |
+| **MedLite-CRC V2 (Ours - Standard)** | MedLite-CRC (Scratch) | **0.48M** | 2.02 MB | **94.71%** |
+| **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **2.02 MB (FP32)** | **95.96% (Mean: 95.73% ± 0.21%)** |
 | **MedLite-CRC V2 (Ours - KD INT8)** | MedLite-CRC + KD (INT8) | **0.48M** | **0.72 MB** | **95.72%** |
 
 ### B. CRC-5000 Cohort (8-Class Benchmark)

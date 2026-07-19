@@ -10,7 +10,7 @@ Deep learning has revolutionized automated histopathological diagnosis, but stan
 
 To overcome domain shift and scanner-specific biases (e.g., JPEG artifacts and H&E stain variations), we introduce two novel modules: an end-to-end differentiable, six-parameter **Learnable Stain Adaptation Layer** and a **Depthwise Separable Multi-Scale Branch** (capturing 3×3, 5×5, and 7×7 receptive fields simultaneously). 
 
-We evaluate MedLite-CRC across three distinct datasets: NCT-CRC-HE-100K, STARC-9, and CRC-5000. Under standard training conditions, MedLite-CRC achieves a peak in-distribution accuracy of **99.48%** and an out-of-distribution, cross-patient validation accuracy of **94.65%** on the unseen CRC-VAL-HE-7K cohort. By introducing a Knowledge Distillation (KD) framework with a structurally aligned MobileNetV2 teacher model, MedLite-CRC generalizes exceptionally well, achieving a verified out-of-distribution accuracy of **95.97%** on the best checkpoint—outperforming the teacher itself (94.82%) by **+1.15%** absolute and the state-of-the-art ShuffleNetV2 baseline (95.08%) by **+0.89%** absolute, while requiring up to 48× fewer parameters than ResNet-50.
+We evaluate MedLite-CRC across three distinct datasets: NCT-CRC-HE-100K, STARC-9, and CRC-5000. Under standard training conditions, MedLite-CRC achieves a peak in-distribution accuracy of **99.48%** and an out-of-distribution, cross-patient validation accuracy of **94.71%** on the unseen CRC-VAL-HE-7K cohort. By introducing a Knowledge Distillation (KD) framework with a structurally aligned MobileNetV2 teacher model, MedLite-CRC generalizes exceptionally well, achieving a verified out-of-distribution accuracy of **95.96%** on the best checkpoint—outperforming the teacher itself (94.82%) by **+1.15%** absolute and the state-of-the-art ShuffleNetV2 baseline (95.08%) by **+0.89%** absolute, while requiring up to 48× fewer parameters than ResNet-50.
 
 Furthermore, we benchmark our architecture on the massive 630,000-image STARC-9 dataset (NeurIPS 2025), achieving **99.79%** accuracy, proving that dataset scale acts as a natural regularizer for highly constrained networks. 
 
@@ -151,9 +151,9 @@ We evaluate MedLite-CRC (without the SEBlock, representing our final architectur
 
 | Model | Parameters (M) | Size (MB) | CPU Latency (ms) | NCT-100K Val Acc | OOD 7K Test Acc | Macro-F1 (OOD) | Wtd-F1 (OOD) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **95.97%** ✅ | **0.9476** | **0.9600** |
+| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **95.96%** ✅ | **0.9472** | **0.9600** |
 | **MedLite-CRC (Ours, KD INT8)** | **0.48** | **0.72** | **1.65** | 99.46% | **95.72%** | **—** | **—** |
-| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.48% | 94.65% | 0.9327 | 0.9469 |
+| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.48% | 94.71% | 0.9327 | 0.9469 |
 | ShuffleNetV2 | 1.26 | 5.23 | **0.58*** | 99.18% | 95.08% | 0.9351 | 0.9507 |
 | MobileNetV2 (Teacher) | 2.24 | 9.19 | 1.18* | 99.18% | 94.82% | 0.9286 | 0.9470 |
 | EfficientNet-B0 | 4.02 | 16.38 | 1.53* | 99.04% | 94.81% | 0.9268 | 0.9477 |
@@ -165,8 +165,8 @@ We evaluate MedLite-CRC (without the SEBlock, representing our final architectur
 
 #### Analysis:
 1.  **Parameter Efficiency:** MedLite-CRC (0.48M params) is **48× smaller** than ResNet-50 and **8.4× smaller** than EfficientNet-B0.
-2.  **Generalization Breakthrough under Knowledge Distillation:** When trained with Knowledge Distillation from a structurally aligned MobileNetV2 teacher model, MedLite-CRC achieves a **verified 95.97%** cross-patient accuracy on `CRC-VAL-HE-7K` (isolated eval on best checkpoint `ckpt_epoch058_acc0.9946.pt`). This out-performs the teacher itself (**94.82%**) by **+1.15%** absolute and the SOTA ShuffleNetV2 baseline (**95.08%**) by **+0.89%** absolute, establishing a new Pareto frontier of efficiency vs. generalization accuracy.
-3.  **Baseline Standard Generalization:** Even without KD, MedLite-CRC (Ablation 3) achieves **94.65%** accuracy on the out-of-distribution set, outperforming ResNet-50 (94.33%) and matching EfficientNet-B0 (94.81%) while occupying **23.5× less disk space** in its quantized INT8 form (0.72 MB).
+2.  **Generalization Breakthrough under Knowledge Distillation:** When trained with Knowledge Distillation from a structurally aligned MobileNetV2 teacher model, MedLite-CRC achieves a **verified 95.96%** cross-patient accuracy on `CRC-VAL-HE-7K` (isolated eval on best checkpoint `ckpt_epoch058_acc0.9946.pt`). This out-performs the teacher itself (**94.82%**) by **+1.15%** absolute and the SOTA ShuffleNetV2 baseline (**95.08%**) by **+0.89%** absolute, establishing a new Pareto frontier of efficiency vs. generalization accuracy.
+3.  **Baseline Standard Generalization:** Even without KD, MedLite-CRC (Ablation 3) achieves **94.71%** accuracy on the out-of-distribution set, outperforming ResNet-50 (94.33%) and matching EfficientNet-B0 (94.81%) while occupying **23.5× less disk space** in its quantized INT8 form (0.72 MB).
 
 ### 5.2 SOTA Confusion Matrix & Per-Class Performance
 To inspect the specific classification strengths and weaknesses of the SOTA MobileNetV2 KD student, we visualize its normalized confusion matrix and per-class performance metrics on the 7,180-image `CRC-VAL-HE-7K` test set:
@@ -244,7 +244,7 @@ To systematically validate each component, we performed a leave-one-out ablation
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **1. Baseline CNN** | 0.453M | 0.349 | 1.89 MB | **0.664** | 94.05% | 0.9257 | 0.9410 |
 | **2. Baseline + Stain Adaptation** | 0.453M | 0.349 | 1.89 MB | **0.658** | **94.64%** | 0.9319 | **0.9468** |
-| **3. Baseline + Stain + MultiScale ← Final Architecture** | 0.482M | 0.726 | 2.02 MB | 0.845 | 94.65% | **0.9327** | 0.9469 |
+| **3. Baseline + Stain + MultiScale ← Final Architecture** | 0.482M | 0.726 | 2.02 MB | 0.845 | 94.71% | **0.9327** | 0.9469 |
 | **4. + SEBlock (Negative Finding)** | **0.490M** | **0.726** | **2.05 MB** | 0.788 | 93.82% | 0.9233 | 0.9396 |
 | **5. + Coordinate Attention (Negative Finding)** | 0.488M | 0.726 | 2.05 MB | 0.850 | 93.44% | 0.9177 | 0.9349 |
 
@@ -279,7 +279,7 @@ We document five key design failures during development to guide future research
 ### 6.6 Knowledge Distillation and Teacher-Student Alignment
 To investigate the impact of Knowledge Distillation (KD) on ultra-lightweight models under domain shift, we trained the MedLite-CRC student (0.48M parameters) using two different pre-trained teacher architectures:
 - **EfficientNet-B0 Teacher (4.02M parameters):** Distilling soft probability distributions from this teacher degraded out-of-distribution accuracy on `CRC-VAL-HE-7K` to a verified **94.35%** (a -0.27% reduction compared to Ablation 3 without KD). EfficientNet-B0 relies heavily on Squeeze-and-Excitation attention maps and Swish activations. This mismatch in representation style and the transfer of teacher-specific scanner bias restricted the student from learning robust morphology.
-- **MobileNetV2 Teacher (2.24M parameters):** Distilling from this teacher led to a massive generalization breakthrough, achieving a **verified 95.97% OOD accuracy** (+1.32% absolute over Ablation 3, best checkpoint). Both MobileNetV2 and our student architecture rely on attention-free, depthwise separable convolutions. This high degree of architectural alignment allowed the student to seamlessly ingest the teacher's soft boundaries. Under this aligned setup, the student outperformed its own teacher by **+1.15%** absolute on unseen domains, demonstrating that distilling structured dark knowledge into a highly parameter-constrained model acts as an ultimate regularizer. Notably, the two historically difficult classes — Stroma (STR F1: 0.7530 → 0.8084) and Smooth Muscle (MUS F1: 0.7933 → 0.8564) — saw their largest improvements under this regime.
+- **MobileNetV2 Teacher (2.24M parameters):** Distilling from this teacher led to a massive generalization breakthrough, achieving a **verified 95.96% OOD accuracy** (+1.32% absolute over Ablation 3, best checkpoint). Both MobileNetV2 and our student architecture rely on attention-free, depthwise separable convolutions. This high degree of architectural alignment allowed the student to seamlessly ingest the teacher's soft boundaries. Under this aligned setup, the student outperformed its own teacher by **+1.15%** absolute on unseen domains, demonstrating that distilling structured dark knowledge into a highly parameter-constrained model acts as an ultimate regularizer. Notably, the two historically difficult classes — Stroma (STR F1: 0.7530 → 0.8084) and Smooth Muscle (MUS F1: 0.7933 → 0.8564) — saw their largest improvements under this regime.
 
 
 ---
