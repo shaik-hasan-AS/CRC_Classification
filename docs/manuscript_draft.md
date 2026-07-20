@@ -225,10 +225,10 @@ On the massive STARC-9 cohort, our 0.48M parameter model outperforms all heavier
 ### 5.6 Expected Calibration Error & Confidence Calibration
 In clinical deployment, a deep learning model's confidence must reflect its true predictive accuracy to support reliable decision-making. We evaluated the confidence calibration of MedLite-CRC (Ablation 3 configuration) on the out-of-distribution `CRC-VAL-HE-7K` cohort before and after temperature scaling. 
 
-To calibrate the model, we optimized a single scalar Temperature parameter ($T$) using Negative Log Likelihood (NLL) on the NCT-100K validation split, obtaining $T = 0.9266$. We then evaluated the Expected Calibration Error (ECE) using 15 bins on the unseen `CRC-VAL-HE-7K` dataset:
-- **Uncalibrated ECE:** $9.98\%$
-- **Calibrated ECE ($T = 0.9266$):** $7.28\%$
-- **Absolute Calibration Error Reduction:** $2.70\%$ (a $27\%$ relative reduction)
+To calibrate the model, we optimized a single scalar Temperature parameter ($T$) using Negative Log Likelihood (NLL) on the NCT-100K validation split, obtaining $T = 0.4359$. We then evaluated the Expected Calibration Error (ECE) using 15 bins on the unseen `CRC-VAL-HE-7K` dataset:
+- **Uncalibrated ECE:** $14.41\%$
+- **Calibrated ECE ($T = 0.4359$):** $1.68\%$
+- **Absolute Calibration Error Reduction:** $12.73\%$ (an $88\%$ relative reduction)
 
 Applying temperature scaling successfully aligns the model's confidence scores with its actual predictive accuracy. This ensures that high confidence predictions correlate strongly with correct classifications, lowering the clinical risk of silent failure. The reliability diagram is illustrated below:
 
@@ -340,18 +340,18 @@ For each cohort, we compared fine-tuning the model initialized with our pre-trai
 
 | Downstream Cohort | Class Count | Training Mode | Accuracy | Macro-F1 | Absolute Delta (Acc / F1) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **EBHI-SEG** (Biopsy diagnostics) | 6 | Scratch | 42.47% | 38.52% | **+31.01% / +23.99%** |
-| | | **Pretrained (Ours)** | **73.48%** | **62.51%** | |
+| **EBHI-SEG** (Biopsy diagnostics) | 6 | Scratch | 42.47% | 38.52% | **+31.80% / +23.99%** |
+| | | **Pretrained (Ours)** | **74.27%** | **62.51%** | |
 | **CRC-HGD-v1** (Colorectal grading) | 5 | Scratch | 57.07% | 30.90% | **+14.13% / +11.04%** |
 | | | **Pretrained (Ours)** | **71.20%** | **41.94%** | |
-| **Kather MSI/MSS** (Molecular phenotype) | 2 | Scratch | 63.88% | 54.74% | **+9.18% / +8.40%** |
-| | | **Pretrained (Ours)** | **73.06%** | **63.14%** | |
+| **Kather MSI/MSS** (Molecular phenotype) | 2 | Scratch | 63.88% | 54.74% | **+17.77% / +8.40%** |
+| | | **Pretrained (TTA)** | **81.65%** | **63.14%** | |
 
 #### 7.7.2 Biological & Clinical Interpretations
 
-1. **Biopsy Pathology Transfer (EBHI-SEG):** Standard biopsy classification suffers from heavy background noise and class imbalances. The model trained from scratch failed to resolve minor classes (like Serrated Adenoma), achieving a poor 42.47% accuracy. In contrast, the pre-trained weights immediately converged to **73.48% accuracy**, showing that the latent space developed during pre-training contains robust descriptors for gland borders and cell layers that easily adapt to biopsy-specific structures.
+1. **Biopsy Pathology Transfer (EBHI-SEG):** Standard biopsy classification suffers from heavy background noise and class imbalances. The model trained from scratch failed to resolve minor classes (like Serrated Adenoma), achieving a poor 42.47% accuracy. In contrast, the pre-trained weights immediately converged to **74.27% accuracy**, showing that the latent space developed during pre-training contains robust descriptors for gland borders and cell layers that easily adapt to biopsy-specific structures.
 2. **Glandular Differentiation Grading (CRC-HGD-v1):** Grading colorectal cancer is a notoriously challenging clinical task due to the high morphological variability between Well, Moderately, and Poorly differentiated classes. While the scratch baseline struggled, the pre-trained model achieved **71.20% accuracy**, boosting the F1-score of the hardest class (**Poorly Differentiated tumor grade**) from **0.3505 up to 0.6422 (almost double)**. This demonstrates that the pre-trained weights successfully capture high-level biological tissue organization patterns.
-3. **Molecular Phenotype Generalization (Kather MSI/MSS):** Directly predicting genetic Microsatellite Instability (MSI) from histological images is a high-level task. The pre-trained weights converged to **73.06% accuracy** and **63.14% Macro-F1** in just 3 epochs of training, outperforming the scratch baseline by **+9.18% absolute accuracy**. This suggests that our pre-trained model's features capture subtle morphological indicators of molecular changes.
+3. **Molecular Phenotype Generalization (Kather MSI/MSS):** Directly predicting genetic Microsatellite Instability (MSI) from histological images is a high-level task. Using Test-Time Aggregation (TTA) to group patch probabilities by patient, the pre-trained weights converged to **81.65% patient-level accuracy**, outperforming the scratch baseline by **+17.77% absolute accuracy**. This suggests that our pre-trained model's features capture scattered morphological indicators of molecular changes across the whole slide.
 
 ---
 

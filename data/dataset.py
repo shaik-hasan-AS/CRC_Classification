@@ -127,7 +127,7 @@ def get_train_val_loaders(cfg) -> Tuple[DataLoader, DataLoader]:
     Returns train and validation DataLoaders from NCT-CRC-HE-100K.
     Uses 80/20 stratified split.
     """
-    train_dir = cfg["data"]["nct_crc_train_dir"]
+    train_dir = cfg["data"].get("dataset_dir", cfg["data"].get("train_dir", cfg["data"].get("nct_crc_train_dir")))
     bs        = cfg["training"]["batch_size"]
     val_bs    = cfg["training"]["val_batch_size"]
     nw        = cfg["data"]["num_workers"]
@@ -138,8 +138,13 @@ def get_train_val_loaders(cfg) -> Tuple[DataLoader, DataLoader]:
         train_dataset = HybridCRCDataset(train_dir, starc9_dir, transform=get_train_transforms(cfg))
         val_dataset   = HybridCRCDataset(train_dir, starc9_dir, transform=get_val_transforms(cfg))
     else:
-        train_dataset = CRCDataset(train_dir, transform=get_train_transforms(cfg))
-        val_dataset   = CRCDataset(train_dir, transform=get_val_transforms(cfg))
+        if "dataset_dir" in cfg["data"] or "train_dir" in cfg["data"]:
+            from torchvision.datasets import ImageFolder
+            train_dataset = ImageFolder(train_dir, transform=get_train_transforms(cfg))
+            val_dataset   = ImageFolder(train_dir, transform=get_val_transforms(cfg))
+        else:
+            train_dataset = CRCDataset(train_dir, transform=get_train_transforms(cfg))
+            val_dataset   = CRCDataset(train_dir, transform=get_val_transforms(cfg))
 
     # 80/20 split — same indices for both (different transforms)
     total    = len(train_dataset)

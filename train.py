@@ -94,11 +94,21 @@ def build_criterion(cfg, train_dataset=None):
         )
         print(f"  [LOSS] Class weights: {class_weights.numpy().round(3)}")
 
-    print(f"  [LOSS] CrossEntropyLoss(smoothing={label_smoothing})")
-    criterion = nn.CrossEntropyLoss(
-        weight=class_weights,
-        label_smoothing=label_smoothing,
-    )
+    if loss_type == "focal":
+        from utils.losses import FocalLoss
+        gamma = tr.get("focal_gamma", 2.0)
+        print(f"  [LOSS] FocalLoss(gamma={gamma}, smoothing={label_smoothing})")
+        criterion = FocalLoss(
+            alpha=class_weights,
+            gamma=gamma,
+            label_smoothing=label_smoothing
+        )
+    else:
+        print(f"  [LOSS] CrossEntropyLoss(smoothing={label_smoothing})")
+        criterion = nn.CrossEntropyLoss(
+            weight=class_weights,
+            label_smoothing=label_smoothing,
+        )
     return criterion
 
 
@@ -383,6 +393,21 @@ def train(cfg_path: str, resume: str = None, finetune: str = None):
 
     for epoch in range(start_epoch, epochs):
         t0 = time.time()
+        
+        # Gradual unfreezing
+        freeze_epochs = cfg["training"].get("freeze_backbone_epochs", 0)
+        if freeze_epochs > 0:
+            if epoch < freeze_epochs:
+                if epoch == start_epoch:
+                    print(f"  [TRAIN] Freezing backbone. Only training classifier for {freeze_epochs} epochs.")
+                for name, param in model.named_parameters():
+                    if "classifier" not in name:
+                        param.requires_grad = False
+            elif epoch == freeze_epochs:
+                print(f"  [TRAIN] Unfreezing backbone for end-to-end fine-tuning.")
+                for param in model.parameters():
+                    param.requires_grad = True
+
         lr = optimizer.param_groups[0]["lr"]
         print(f"{'='*60}")
         print(f"Epoch [{epoch+1}/{epochs}]  lr={lr:.6f}")

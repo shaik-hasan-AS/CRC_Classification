@@ -33,18 +33,21 @@ data:
     normalize_std:  [0.1651, 0.2174, 0.1574]
 
 training:
-  epochs: 3
+  epochs: 30
   batch_size: 64
   val_batch_size: 128
   optimizer: "adamw"
-  lr: 0.0003
+  lr: 0.0001
   weight_decay: 0.0001
   scheduler: "cosine"
-  warmup_epochs: 1
-  early_stopping_patience: 10
+  warmup_epochs: 2
+  freeze_backbone_epochs: 10
+  mixup_alpha: 0.1
+  early_stopping_patience: 15
   grad_clip: 1.0
   mixed_precision: true
-  loss: "ce"
+  loss: "focal"
+  focal_gamma: 2.0
   label_smoothing: 0.1
   use_class_weights: true
 
@@ -63,3 +66,6 @@ outputs:
   checkpoint_dir: "outputs/checkpoints_kather"
   log_dir:        "outputs/logs_kather"
   gradcam_dir:    "outputs/eval_new/kather"
+
+wandb:
+  enabled: false

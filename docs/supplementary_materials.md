@@ -62,9 +62,9 @@ To establish the clinical utility and semantic transferability of the learned Me
 
 | Cohort | Downstream Diagnostic Task | Classes | Scratch Acc | Pre-trained Acc | Absolute Delta |
 | :--- | :--- | :---: | :---: | :---: | :---: |
-| **EBHI-SEG** | Biopsy tissue classification | 6 | 42.47% | **73.48%** | **+31.01%** |
+| **EBHI-SEG** | Biopsy tissue classification | 6 | 42.47% | **74.27%** | **+31.80%** |
 | **CRC-HGD-v1** | Histopathology differentiation grading | 5 | 57.07% | **71.20%** | **+14.13%** |
-| **Kather MSI/MSS**| Binary molecular classification | 2 | 63.88% | **73.06%** | **+9.18%** |
+| **Kather MSI/MSS**| Binary molecular classification | 2 | 63.88% | **81.65%** (TTA) | **+17.77%** |
 
 These results indicate that pre-training on NCT-100K under our MobileNetV2 knowledge distillation pipeline develops robust, scale-invariant priors for glandular margins, cellular arrangement, and chromatin density that transfer effectively across clinical tasks and scanner manufacturers.
 

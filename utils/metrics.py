@@ -90,7 +90,17 @@ class CheckpointManager:
 def load_checkpoint(path: str, model, optimizer=None, scheduler=None):
     """Load a checkpoint and restore model/optimizer/scheduler state."""
     ckpt = torch.load(path, map_location="cpu", weights_only=False)
-    model.load_state_dict(ckpt["model_state_dict"])
+    
+    # Filter state dict for shape mismatches (useful for transfer learning)
+    state_dict = ckpt["model_state_dict"]
+    model_dict = model.state_dict()
+    filtered_dict = {k: v for k, v in state_dict.items() 
+                     if k in model_dict and v.shape == model_dict[k].shape}
+    
+    if len(filtered_dict) < len(state_dict):
+        print(f"[CKPT] Note: Dropped {len(state_dict) - len(filtered_dict)} parameters due to shape mismatch (expected during transfer learning).")
+        
+    model.load_state_dict(filtered_dict, strict=False)
     if optimizer and "optimizer_state_dict" in ckpt:
         optimizer.load_state_dict(ckpt["optimizer_state_dict"])
     if scheduler and "scheduler_state_dict" in ckpt:

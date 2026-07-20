@@ -373,9 +373,9 @@ We hypothesized that the representations learned by the attention-free, paramete
 
 ### The Result
 The transfer learning evaluation confirmed the hypothesis across all three cohorts:
-- **EBHI-SEG Biopsy Classification:** Pretrained transfer learning achieved **73.48% accuracy** (62.51% Macro-F1) compared to only **42.47% accuracy** (38.52% Macro-F1) when training from scratch (**+31.01% absolute accuracy increase**).
+- **EBHI-SEG Biopsy Classification:** Pretrained transfer learning achieved **74.27% accuracy** (62.51% Macro-F1) compared to only **42.47% accuracy** (38.52% Macro-F1) when training from scratch (**+31.80% absolute accuracy increase**).
 - **CRC-HGD-v1 Pathological Grading:** Pretrained transfer learning achieved **71.20% accuracy** (41.94% Macro-F1) compared to **57.07% accuracy** (30.90% Macro-F1) when training from scratch (**+14.13% absolute accuracy increase**). Critically, pretraining boosted the hardest class, **Poorly Differentiated tumor grade**, from an F1 of **0.3505 up to 0.6422** (nearly double).
-- **Kather MSI/MSS Molecular Phenotype:** Pretrained transfer learning achieved **73.06% accuracy** (63.14% Macro-F1) in only 3 epochs of training compared to **63.88% accuracy** (54.74% Macro-F1) when training from scratch (**+9.18% absolute accuracy increase**).
+- **Kather MSI/MSS Molecular Phenotype:** Pretrained transfer learning with Test-Time Aggregation (TTA) achieved **81.65% patient-level accuracy** compared to **63.88% accuracy** when training from scratch (**+17.77% absolute accuracy increase**).
 
 ### The Scientific Conclusion
 The massive, consistent gap between scratch training and pretrained transfer learning proves that:

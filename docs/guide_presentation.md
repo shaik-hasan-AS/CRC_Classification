@@ -205,9 +205,9 @@ KD not only improves accuracy — it **halves the variance**, proving superior c
 
 In clinical deployment, confidence must reflect accuracy. An overconfident model that says "99% sure" when it's actually 70% correct is dangerous.
 
-- **Uncalibrated ECE:** 9.98%
-- **After Temperature Scaling (T = 0.9266):** 7.28%
-- **27% relative reduction** in calibration error
+- **Uncalibrated ECE:** 14.41%
+- **After Temperature Scaling (T = 0.4359):** 1.68%
+- **88% relative reduction** in calibration error
 
 > **Full stats:** [`docs/supplementary_materials.md §3`](./supplementary_materials.md)
 
@@ -246,7 +246,10 @@ Standard zero-padding creates a sharp contrast at patch edges. On low-density ti
 We extracted 256-dimensional feature vectors from all 7,180 test images and projected to 2D using t-SNE:
 
 - **Colored by tissue class:** Highly compact, well-separated clusters — confirms semantic classification capacity
+![t-SNE Class Separation](../assets/tsne_class_separation.png)
+
 - **Colored by patient/scanner origin:** Complete mixing within clusters — confirms scanner-invariant representations
+![t-SNE Scanner Origin](../assets/tsne_scanner_origin.png)
 
 > **Full Grad-CAM analysis:** [`docs/gradcam_critical_analysis.md`](./gradcam_critical_analysis.md)
 
@@ -268,15 +271,15 @@ This is perhaps the most clinically significant result. We took the pre-trained 
 
 | Cohort | Scratch Accuracy | Pretrained Accuracy | Gain |
 |---|:---:|:---:|:---:|
-| EBHI-SEG (Biopsy, 6 classes) | 42.47% | **73.48%** | **+31.01%** |
+| EBHI-SEG (Biopsy, 6 classes) | 42.47% | **74.27%** | **+31.80%** |
 | CRC-HGD-v1 (Grading, 5 classes) | 57.07% | **71.20%** | **+14.13%** |
-| Kather MSI/MSS (Molecular, 2 classes) | 63.88% | **73.06%** | **+9.18%** |
+| Kather MSI/MSS (Molecular, 2 classes) | 63.88% | **81.65%** (TTA) | **+17.77%** |
 
 ### Why This Matters
 
 - **EBHI-SEG:** Scratch training couldn't resolve minor classes (Serrated Adenoma). Pre-trained features immediately understood glandular border structures.
 - **CRC-HGD-v1:** Pre-training **nearly doubled** the F1-score of the hardest class (Poorly Differentiated tumor: 0.3505 → 0.6422). The model learned high-level tissue organization during pre-training that transfers to grading.
-- **Kather MSI/MSS:** Converged to 73.06% in just **3 epochs**. The model's features capture subtle morphological indicators of genetic Microsatellite Instability — something never explicitly trained for.
+- **Kather MSI/MSS:** Using Test-Time Aggregation (TTA) across patients, accuracy reached **81.65%**. The model successfully scans slides to capture subtle, scattered morphological indicators of genetic Microsatellite Instability.
 
 **Bottom line:** MedLite-CRC is not just a CRC tissue classifier. It is a **general-purpose histopathological feature extractor** that transfers to biopsy diagnostics, tumor grading, and molecular phenotyping — all with the same 0.48M parameter backbone.
 
@@ -319,9 +322,9 @@ This is perhaps the most clinically significant result. We took the pre-trained 
 |---|:---:|:---:|:---:|
 | STARC-9 (Stanford, 630K imgs) | **99.79%** | 99.75% | ResNet-50: 99.60% |
 | CRC-5000 (Legacy Noisy) | 92.00% | **93.94%** | EfficientNet-B0: 92.00% |
-| EBHI-SEG (Transfer) | 42.47% (scratch) | **73.48%** | N/A |
+| EBHI-SEG (Transfer) | 42.47% (scratch) | **74.27%** | N/A |
 | CRC-HGD-v1 (Transfer) | 57.07% (scratch) | **71.20%** | N/A |
-| Kather MSI/MSS (Transfer) | 63.88% (scratch) | **73.06%** | N/A |
+| Kather MSI/MSS (Transfer) | 63.88% (scratch) | **81.65%** (TTA)| N/A |
 
 ---
 

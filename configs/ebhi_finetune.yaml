@@ -36,14 +36,15 @@ data:
     normalize_std:  [0.1651, 0.2174, 0.1574]
 
 training:
-  epochs: 20
+  epochs: 40
   batch_size: 32
   val_batch_size: 64
   optimizer: "adamw"
   lr: 0.0002
   weight_decay: 0.0001
   scheduler: "cosine"
-  warmup_epochs: 1
+  warmup_epochs: 5
+  mixup_alpha: 0.2
   early_stopping_patience: 10
   grad_clip: 1.0
   mixed_precision: true
@@ -66,3 +67,6 @@ outputs:
   checkpoint_dir: "outputs/checkpoints_ebhi"
   log_dir:        "outputs/logs_ebhi"
   gradcam_dir:    "outputs/eval_new/ebhi"
+
+wandb:
+  enabled: false
