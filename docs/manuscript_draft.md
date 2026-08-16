@@ -10,11 +10,11 @@ Deep learning has revolutionized automated histopathological diagnosis, but stan
 
 To overcome domain shift and scanner-specific biases (e.g., JPEG artifacts and H&E stain variations), we introduce two novel modules: an end-to-end differentiable, six-parameter **Learnable Stain Adaptation Layer** and a **Depthwise Separable Multi-Scale Branch** (capturing 3×3, 5×5, and 7×7 receptive fields simultaneously). 
 
-We evaluate MedLite-CRC across three distinct datasets: NCT-CRC-HE-100K, STARC-9, and CRC-5000. Under standard training conditions, MedLite-CRC achieves a peak in-distribution accuracy of **99.48%** and an out-of-distribution, cross-patient validation accuracy of **94.71%** on the unseen CRC-VAL-HE-7K cohort. By introducing a Knowledge Distillation (KD) framework with a structurally aligned MobileNetV2 teacher model, MedLite-CRC generalizes exceptionally well, achieving a verified out-of-distribution accuracy of **95.96%** on the best checkpoint—outperforming the teacher itself (94.82%) by **+1.15%** absolute and the state-of-the-art ShuffleNetV2 baseline (95.08%) by **+0.89%** absolute, while requiring up to 48× fewer parameters than ResNet-50.
+We evaluate MedLite-CRC across three distinct datasets: NCT-CRC-HE-100K, STARC-9, and CRC-5000. Under standard training conditions, MedLite-CRC achieves a peak in-distribution accuracy of **99.48%** and an out-of-distribution, cross-patient validation accuracy of **94.71%** on the unseen CRC-VAL-HE-7K cohort. By introducing a Knowledge Distillation (KD) framework with a structurally aligned MobileNetV2 teacher model, MedLite-CRC generalizes exceptionally well, achieving a verified out-of-distribution accuracy of **95.96%** on the best checkpoint—outperforming the teacher itself (94.82%) by **+1.14%** absolute and the state-of-the-art ShuffleNetV2 baseline (95.08%) by **+0.89%** absolute, while requiring up to 48× fewer parameters than ResNet-50.
 
 Furthermore, we benchmark our architecture on the massive 630,000-image STARC-9 dataset (NeurIPS 2025), achieving **99.79%** accuracy, proving that dataset scale acts as a natural regularizer for highly constrained networks. 
 
-Finally, we perform a rigorous statistical validation using McNemar's test ($p = 5.01 \times 10^{-6}$) and conduct a quantitative spatial Grad-CAM analysis to inspect potential model shortcuts. Our interpretability study reveals the "Attention Paradox": while Squeeze-and-Excitation attention blocks improve training convergence, they overfit to scanner-specific staining channels, degrading cross-site generalization by 0.83%. Consequently, we establish the attention-free MedLite-CRC as the optimal architecture for robust cross-site clinical deployment.
+Finally, we perform a rigorous statistical validation using McNemar's test ($p = 5.01 \times 10^{-6}$) and conduct a quantitative spatial Grad-CAM analysis to inspect potential model shortcuts. Our interpretability study reveals the "Attention Paradox": while Squeeze-and-Excitation attention blocks improve training convergence, they overfit to scanner-specific staining channels, degrading cross-site generalization by 0.89%. Consequently, we establish the attention-free MedLite-CRC as the optimal architecture for robust cross-site clinical deployment.
 
 ---
 
@@ -165,7 +165,7 @@ We evaluate MedLite-CRC (without the SEBlock, representing our final architectur
 
 #### Analysis:
 1.  **Parameter Efficiency:** MedLite-CRC (0.48M params) is **48× smaller** than ResNet-50 and **8.4× smaller** than EfficientNet-B0.
-2.  **Generalization Breakthrough under Knowledge Distillation:** When trained with Knowledge Distillation from a structurally aligned MobileNetV2 teacher model, MedLite-CRC achieves a **verified 95.96%** cross-patient accuracy on `CRC-VAL-HE-7K` (isolated eval on best checkpoint `ckpt_epoch058_acc0.9946.pt`). This out-performs the teacher itself (**94.82%**) by **+1.15%** absolute and the SOTA ShuffleNetV2 baseline (**95.08%**) by **+0.89%** absolute, establishing a new Pareto frontier of efficiency vs. generalization accuracy.
+2.  **Generalization Breakthrough under Knowledge Distillation:** When trained with Knowledge Distillation from a structurally aligned MobileNetV2 teacher model, MedLite-CRC achieves a **verified 95.96%** cross-patient accuracy on `CRC-VAL-HE-7K` (isolated eval on best checkpoint `ckpt_epoch058_acc0.9946.pt`). This out-performs the teacher itself (**94.82%**) by **+1.14%** absolute and the SOTA ShuffleNetV2 baseline (**95.08%**) by **+0.89%** absolute, establishing a new Pareto frontier of efficiency vs. generalization accuracy.
 3.  **Baseline Standard Generalization:** Even without KD, MedLite-CRC (Ablation 3) achieves **94.71%** accuracy on the out-of-distribution set, outperforming ResNet-50 (94.33%) and matching EfficientNet-B0 (94.81%) while occupying **23.5× less disk space** in its quantized INT8 form (0.72 MB).
 
 ### 5.2 SOTA Confusion Matrix & Per-Class Performance
@@ -177,7 +177,7 @@ To inspect the specific classification strengths and weaknesses of the SOTA Mobi
 
 
 ### 5.3 Statistical Significance (McNemar's Test)
-To prove that MedLite-CRC's performance gains under Knowledge Distillation are not due to random initialization or domain splitting, we performed a McNemar's test comparing the MobileNetV2 KD-distilled MedLite-CRC student against the 8× larger baseline EfficientNet-B0 on the 7,180-image `CRC-VAL-HE-7K` test set under their respective optimal setups (KD student with masking vs. EfficientNet-B0 baseline without masking). The contingency table is reported below:
+To prove that MedLite-CRC's performance gains under Knowledge Distillation are not due to random initialization or domain splitting, we performed a McNemar's test comparing the MobileNetV2 KD-distilled MedLite-CRC student against the 8× larger baseline EfficientNet-B0 on the 7,180-image `CRC-VAL-HE-7K` test set under their respective optimal setups (KD student without masking vs. EfficientNet-B0 baseline without masking). The contingency table is reported below:
 
 | | EfficientNet-B0 Correct | EfficientNet-B0 Incorrect |
 | :--- | :---: | :---: |
@@ -200,7 +200,7 @@ We compare MedLite-CRC directly against the primary custom lightweight CNN desig
 | **MedLite-CRC (Ours, KD INT8)** | **0.48** | **0.72** | **99.46%** |
 | Li et al. (2025) CNN | 4.41 | 16.90 | 99.00% |
 
-Our architecture achieves a higher peak accuracy (99.48% vs 99.00%) while being **9.2× smaller** in parameters and occupying **22.5× less disk space** when quantized.
+Our architecture achieves a higher peak accuracy (99.46% vs 99.00%) while being **9.2× smaller** in parameters and occupying **22.5× less disk space** when quantized.
 
 ### 5.5 Multi-Cohort Benchmarking (STARC-9 & CRC-5000)
 To establish generalizability, we benchmarked MedLite-CRC and our baselines on STARC-9 and CRC-5000. All models were trained from scratch.
@@ -249,18 +249,18 @@ To systematically validate each component, we performed a leave-one-out ablation
 | **5. + Coordinate Attention (Negative Finding)** | 0.488M | 0.726 | 2.05 MB | 0.850 | 93.44% | 0.9177 | 0.9349 |
 
 ### 6.1 Learnable Stain Adaptation Benefit:
-Comparing Configuration 1 and 2, adding the learnable stain adaptation parameters yields the highest overall accuracy of **94.64%** (+0.41% over Baseline). Because this layer learns to map variable source colors to a standardized latent space dynamically, it significantly improves cross-site generalization with zero parameter or latency overhead during deployment.
+Comparing Configuration 1 and 2, adding the learnable stain adaptation parameters yields the highest overall accuracy of **94.64%** (+0.59% over Baseline). Because this layer learns to map variable source colors to a standardized latent space dynamically, it significantly improves cross-site generalization with zero parameter or latency overhead during deployment.
 
 ### 6.2 Multi-Scale Convolutional Feature Extraction:
-Comparing Configuration 2 and 3, adding the parallel multi-scale branch yields the highest Macro F1 score of **0.9325** (+0.45% over Baseline). The multi-scale path extracts features simultaneously using parallel `3x3`, `5x5`, and `7x7` receptive fields, making the model highly robust to scale variations introduced by different scanner sensors.
+Comparing Configuration 2 and 3, adding the parallel multi-scale branch yields the highest Macro F1 score of **0.9325** (+0.70% over Baseline). The multi-scale path extracts features simultaneously using parallel `3x3`, `5x5`, and `7x7` receptive fields, making the model highly robust to scale variations introduced by different scanner sensors.
 
 ### 6.3 The Squeeze-and-Excitation "Attention Paradox"
-Integrating late-stage Squeeze-and-Excitation (SE) attention blocks (Ablation 4) consistently degraded cross-dataset validation accuracy to **93.82%** — a significant −0.83% drop from the attention-free Ablation 3.
+Integrating late-stage Squeeze-and-Excitation (SE) attention blocks (Ablation 4) consistently degraded cross-dataset validation accuracy to **93.82%** — a significant −0.89% drop from the attention-free Ablation 3.
 
 While SE blocks improve training convergence and score highly on the source in-distribution validation split (99.52%), their channel-reweighting coefficients overfit to the specific H&E dye balances and scanner noise profiles of the source scanner (NCT-100K). When tested on a completely unseen clinical center (Mannheim cohort), these attention maps encode non-biological channel correlations, consistently degrading generalization. This highlights a critical design warning for lightweight medical CNNs: channel-attention mechanisms in small models trigger domain-specific shortcut learning that reduces robustness on unseen scanners. Consequently, the SEBlock is permanently removed from the final architecture. **MedLite-CRC's final deployed configuration corresponds exclusively to Ablation 3 (LearnableStainNorm + MultiScaleBranch + DWResBlocks), which achieves the optimal balance of parameter efficiency and cross-site generalization.**
 
 ### 6.4 The Coordinate Attention and Spatial Attention Paradox
-We also explored whether spatial-based attention could overcome the limitations of channel attention. Coordinate Attention (Ablation 5) factorizes channel attention into horizontal and vertical 1D pooling operations, encoding direction- and coordinate-aware spatial details. However, when evaluated on the out-of-distribution Mannheim test set, the Coordinate Attention model degraded accuracy further to **93.44%** (-1.21% drop from Ablation 3). 
+We also explored whether spatial-based attention could overcome the limitations of channel attention. Coordinate Attention (Ablation 5) factorizes channel attention into horizontal and vertical 1D pooling operations, encoding direction- and coordinate-aware spatial details. However, when evaluated on the out-of-distribution Mannheim test set, the Coordinate Attention model degraded accuracy further to **93.44%** (-1.27% drop from Ablation 3). 
 
 This drop is driven by two factors:
 1. **Overfitting to Absolute Scanner Layouts:** Unlike objects in natural images, histopathology tissue layout is orientation-invariant and arbitrary. Forcing location-sensitivity via absolute horizontal/vertical coordinates causes the model to memorize scanner-specific spatial noise, dye gradients, and edge heuristics of the training center.
@@ -279,7 +279,7 @@ We document five key design failures during development to guide future research
 ### 6.6 Knowledge Distillation and Teacher-Student Alignment
 To investigate the impact of Knowledge Distillation (KD) on ultra-lightweight models under domain shift, we trained the MedLite-CRC student (0.48M parameters) using two different pre-trained teacher architectures:
 - **EfficientNet-B0 Teacher (4.02M parameters):** Distilling soft probability distributions from this teacher degraded out-of-distribution accuracy on `CRC-VAL-HE-7K` to a verified **94.35%** (a -0.27% reduction compared to Ablation 3 without KD). EfficientNet-B0 relies heavily on Squeeze-and-Excitation attention maps and Swish activations. This mismatch in representation style and the transfer of teacher-specific scanner bias restricted the student from learning robust morphology.
-- **MobileNetV2 Teacher (2.24M parameters):** Distilling from this teacher led to a massive generalization breakthrough, achieving a **verified 95.96% OOD accuracy** (+1.32% absolute over Ablation 3, best checkpoint). Both MobileNetV2 and our student architecture rely on attention-free, depthwise separable convolutions. This high degree of architectural alignment allowed the student to seamlessly ingest the teacher's soft boundaries. Under this aligned setup, the student outperformed its own teacher by **+1.15%** absolute on unseen domains, demonstrating that distilling structured dark knowledge into a highly parameter-constrained model acts as an ultimate regularizer. Notably, the two historically difficult classes — Stroma (STR F1: 0.7530 → 0.8084) and Smooth Muscle (MUS F1: 0.7933 → 0.8564) — saw their largest improvements under this regime.
+- **MobileNetV2 Teacher (2.24M parameters):** Distilling from this teacher led to a massive generalization breakthrough, achieving a **verified 95.96% OOD accuracy** (+1.25% absolute over Ablation 3, best checkpoint). Both MobileNetV2 and our student architecture rely on attention-free, depthwise separable convolutions. This high degree of architectural alignment allowed the student to seamlessly ingest the teacher's soft boundaries. Under this aligned setup, the student outperformed its own teacher by **+1.14%** absolute on unseen domains, demonstrating that distilling structured dark knowledge into a highly parameter-constrained model acts as an ultimate regularizer. Notably, the two historically difficult classes — Stroma (STR F1: 0.7530 → 0.8084) and Smooth Muscle (MUS F1: 0.7933 → 0.8564) — saw their largest improvements under this regime.
 
 
 ---
@@ -375,13 +375,13 @@ To compare the resource requirements, we visualize the relative carbon footprint
 ![Figure 8: Computational and Carbon Footprint Analysis Comparison](../assets/carbon_efficiency_comparison.png)
 
 #### Key Insights:
-1.  **Training Efficiency:** The extremely compact size of MedLite-CRC reduces training time to 2.0 hours, consuming only $0.270 \text{ kWh}$ of energy ($221.4\text{g CO}_2$). This represents a **2.9× reduction** in carbon emissions compared to EfficientNet-B0 and a **5.1× reduction** compared to ResNet-50.
+1.  **Training Efficiency:** The extremely compact size of MedLite-CRC reduces training time to 2.0 hours, consuming only $0.270 \text{ kWh}$ of energy ($221.4\text{g CO}_2$). This represents a **1.8× reduction** in carbon emissions compared to EfficientNet-B0 and a **2.9× reduction** compared to ResNet-50.
 2.  **Edge Inference Footprint:** During deployment, the fully quantized MedLite-CRC (INT8) model requires only $0.0462\text{ J}$ of energy per image ($1.052\text{g CO}_2$ per 100,000 images). This is **5.0× more carbon-efficient** than its FP32 counterpart, **4.5× more** than MobileNetV2, **7.1× more** than EfficientNet-B0, and **11.5× more** than ResNet-50.
 3.  **Scalability in Low-Resource Settings:** By keeping the inference latency under 2.1 ms and energy requirements to micro-joules, MedLite-CRC can run continuously on local batteries or solar-powered point-of-care devices in clinics with unstable power grids, without contributing to local grid stress or high carbon footprints.
 
 ### Clinical & Technical Limitations:
 1.  **Patch-Level Evaluation:** MedLite-CRC is evaluated on $224\times224$ pixel patches. In clinical workflows, whole slide images are gigapixel files. True deployment requires integrating our model as a feature extractor in a Multiple Instance Learning (MIL) framework to aggregate patch predictions to slide-level diagnoses.
-2.  **Stain Dependency:** While our learnable stain normalization layer improves cross-patient generalization (+0.41%), it cannot completely overcome severe stain variances across laboratories.
+2.  **Stain Dependency:** While our learnable stain normalization layer improves cross-patient generalization (+0.59%), it cannot completely overcome severe stain variances across laboratories.
 3.  **Fibrous Connective Tissue Confusion:** The model maintains a lower classification accuracy on Stroma (82.19%) and Smooth Muscle (76.18%) due to their visual similarities. Differentiating wavy stroma from straight muscle remains a biological bottleneck for H&E staining without specialized IHC markers.
 
 ---

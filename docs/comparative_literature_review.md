@@ -108,7 +108,7 @@ To understand how various models perform, we audit their underlying architecture
 ### C. ImageNet Pre-training Dependency (Ignatov & Malivenko [3] & Kather et al. [1])
 * **Factual Critique:** The high OOD accuracy of **EfficientNet-B0** (97.70%) in Ignatov & Malivenko's experiments and **VGG-19** (94.30%) in Kather et al.'s PLOS Medicine study heavily relies on ImageNet-1k pre-trained weights.
 * **The Representation Gap:** ImageNet pre-training biases CNNs toward texture over shape (Geirhos et al. [7]). In histopathology, this makes networks highly sensitive to non-biological texture patterns (scanner glass scratches, slide mounting media thickness, JPEG compression blocks) rather than cell morphology. 
-* **The MedLite-CRC Solution:** MedLite-CRC is trained **from scratch** directly on histopathology images. By using a structurally aligned Knowledge Distillation (KD) framework with a MobileNetV2 teacher, we force the network to learn shape-invariant, domain-specific representations. This allows our 0.48M student model to outperform its own 2.24M teacher by **+1.15%** absolute on OOD testing.
+* **The MedLite-CRC Solution:** MedLite-CRC is trained **from scratch** directly on histopathology images. By using a structurally aligned Knowledge Distillation (KD) framework with a MobileNetV2 teacher, we force the network to learn shape-invariant, domain-specific representations. This allows our 0.48M student model to outperform its own 2.24M teacher by **+1.14%** absolute on OOD testing.
 
 ---
 
@@ -166,12 +166,12 @@ During architectural exploration, we implemented standard attention mechanisms t
 
 ### A. The Squeeze-and-Excitation (SE) Channel Attention Paradox
 * **Hypothesis:** SE blocks compute channel-wise attention weights to dynamically recalibrate feature maps, which should theoretically improve convergence and tissue focus.
-* **The Result:** Integrating late-stage SE blocks dropped validation accuracy on `CRC-VAL-HE-7K` from **94.71% down to 93.82%** (a **-0.83%** absolute decrease).
+* **The Result:** Integrating late-stage SE blocks dropped validation accuracy on `CRC-VAL-HE-7K` from **94.71% down to 93.82%** (a **-0.89%** absolute decrease).
 * **The Scientific Conclusion:** While SE blocks improve training convergence on the in-distribution validation split (99.52%), their channel-reweighting coefficients overfit to the high-frequency electronic noise and specific staining balances of the training scanner (`NCT-CRC-HE-100K`). When tested on the unseen Mannheim scanner, these coefficients represent non-biological channel shortcuts, degrading model generalization.
 
 ### B. The Coordinate Attention (CA) Spatial Attention Paradox
 * **Hypothesis:** Coordinate Attention factorizes channel attention into horizontal and vertical 1D pooling operations, keeping spatial coordinates intact to focus on nuclear geometry and tissue patterns instead of scanner-specific staining colors.
-* **The Result:** Integrating Coordinate Attention degraded OOD validation accuracy further to **93.44%** (a **-1.21%** drop from the attention-free baseline). Stroma (STR) F1-score dropped from **0.7530 down to 0.7203** and Smooth Muscle (MUS) F1 dropped from **0.7933 down to 0.7867**.
+* **The Result:** Integrating Coordinate Attention degraded OOD validation accuracy further to **93.44%** (a **-1.27%** drop from the attention-free baseline). Stroma (STR) F1-score dropped from **0.7530 down to 0.7203** and Smooth Muscle (MUS) F1 dropped from **0.7933 down to 0.7867**.
 * **The Scientific Conclusion:** 
   1. **Overfitting to Absolute Layouts:** Pathology tiles are orientation-invariant. By constructing horizontal and vertical 1D coordinate vectors, CA forced the lightweight model to overfit to the absolute layout geometries and sensor vignetting signatures of the training scanner.
   2. **Textural Information Loss:** The horizontal and vertical pooling operations smooth over fine local details. This acts as a low-pass filter, blurring critical high-frequency morphological boundaries (such as fine stroma collagen waves and nuclear margins), crippling the model's ability to separate similar fibrous tissues (Stroma vs. Muscle).

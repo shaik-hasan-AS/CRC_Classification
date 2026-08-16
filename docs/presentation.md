@@ -65,7 +65,7 @@ X̂(channel) = X(channel) × γ(channel) + β(channel)
 
 Where γ and β are learnable per-channel scale and bias. During training, these adapt automatically to standardize stain color. At deployment, they can be mathematically fused into the first convolution — **zero overhead**.
 
-**Ablation result:** Adding this layer improved OOD accuracy by **+0.41%** (94.05% → 94.64%) at no parameter cost.
+**Ablation result:** Adding this layer improved OOD accuracy by **+0.59%** (94.05% → 94.64%) at no parameter cost.
 
 #### Contribution 2 — Parallel Multi-Scale Branch (3×3 / 5×5 / 7×7)
 
@@ -76,7 +76,7 @@ Tissue has structure at multiple biological scales simultaneously:
 
 We run three **depthwise separable** convolution branches in parallel and fuse them with a 1×1 pointwise convolution. Depthwise separable convolutions reduce parameters ~8× vs standard convolutions of the same size.
 
-**Ablation result:** Adding this branch improved Macro-F1 by **+0.45%** (0.9257 → 0.9327).
+**Ablation result:** Adding this branch improved Macro-F1 by **+0.70%** (0.9257 → 0.9327).
 
 #### Contribution 3 — Attention-Free Design (The Key Insight)
 
@@ -85,8 +85,8 @@ We tested adding Squeeze-and-Excitation (SE) channel attention and Coordinate At
 | Configuration | OOD Accuracy | Delta |
 |---|:---:|:---:|
 | Attention-Free (Final) | **94.71%** | — |
-| + SE Block | 93.82% | **−0.83%** |
-| + Coordinate Attention | 93.44% | **−1.21%** |
+| + SE Block | 93.82% | **−0.89%** |
+| + Coordinate Attention | 93.44% | **−1.27%** |
 
 **Why?** Attention mechanisms compute reweighting coefficients based on the *current input's statistics*. In histopathology, these statistics differ between scanners (different dye batches, sensor gains, glass thickness). The attention weights overfit to the source scanner's color signatures. On a different hospital's scanner, these weights encode non-biological correlations — hurting generalization.
 
@@ -124,7 +124,7 @@ We tried two teachers:
 | MedLite-CRC (no KD) | 94.71% |
 | **MedLite-CRC (MobileNetV2 KD) ← SOTA** | **95.96%** |
 
-Our 0.48M student **outperformed its own 2.24M teacher by +1.15%**. This happens because the highly constrained student cannot memorize noise — it is forced to extract only the robust, generalizable patterns from the teacher's soft knowledge.
+Our 0.48M student **outperformed its own 2.24M teacher by +1.14%**. This happens because the highly constrained student cannot memorize noise — it is forced to extract only the robust, generalizable patterns from the teacher's soft knowledge.
 
 > **Full KD analysis:** [`docs/ablation_notes.md §12`](./ablation_notes.md)
 
@@ -139,7 +139,7 @@ This is the full map of every major experiment. Each one taught us something imp
 | Test | Result | Lesson |
 |---|---|---|
 | Baseline CNN stem only | 94.05% OOD | Starting point |
-| + Learnable Stain Norm | 94.64% OOD | +0.41%, zero cost |
+| + Learnable Stain Norm | 94.64% OOD | +0.59%, zero cost |
 | + MultiScale Branch | 94.71% OOD | Best Macro-F1 |
 | + SE Attention | 93.82% OOD | **Worse** — scanner overfitting |
 | + Coordinate Attention | 93.44% OOD | **Even worse** |
@@ -486,8 +486,8 @@ MSRANetV2's big selling point is its SE attention blocks. We tested the exact sa
 | Configuration | OOD Accuracy |
 |---|:---:|
 | **MedLite-CRC Attention-Free ← Ours** | **94.71%** |
-| MedLite-CRC + SE Attention (Ablation 4) | 93.82% (−0.83%) |
-| MedLite-CRC + Coordinate Attention | 93.44% (−1.21%) |
+| MedLite-CRC + SE Attention (Ablation 4) | 93.82% (−0.89%) |
+| MedLite-CRC + Coordinate Attention | 93.44% (−1.27%) |
 
 SE attention channels overfit to the specific H&E dye balance and electronic noise profile of the training scanner. On a different scanner (the OOD test), these channel weights encode non-biological noise correlations, **degrading generalization**. MSRANetV2 uses this on a 25.6M model with ImageNet pre-training — the massive model capacity and pre-training mask this problem in in-distribution tests, but the fundamental flaw is there.
 
@@ -629,7 +629,7 @@ No competing paper in this benchmark domain implements trainable stain normaliza
 The current trend in the field is to add more attention (SE blocks in MSRANetV2, CBAM in others). We ran the controlled experiment and proved that **attention mechanisms degrade OOD accuracy in lightweight histopathology models** because they overfit to scanner-specific channel statistics. We are the only paper to empirically demonstrate and document this "Attention Paradox" as a systematic phenomenon with ablation evidence.
 
 #### 4. Structurally Aligned Knowledge Distillation (Teacher Architecture Matters)
-Prior KD work in medical imaging uses arbitrary teacher models. We empirically showed that **teacher-student architectural alignment is critical**: an EfficientNet-B0 teacher (misaligned — uses SE attention) degraded our accuracy, while a MobileNetV2 teacher (aligned — uses DWS convolutions) produced a +1.32% breakthrough. We are the first to document this alignment requirement for histopathology KD.
+Prior KD work in medical imaging uses arbitrary teacher models. We empirically showed that **teacher-student architectural alignment is critical**: an EfficientNet-B0 teacher (misaligned — uses SE attention) degraded our accuracy, while a MobileNetV2 teacher (aligned — uses DWS convolutions) produced a +1.25% breakthrough. We are the first to document this alignment requirement for histopathology KD.
 
 #### 5. Honest, Rigorous Evaluation Protocol
 We are the only paper in this comparison that:

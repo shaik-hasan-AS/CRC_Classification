@@ -202,10 +202,10 @@ We parameterized the `MedLiteCRC` architecture to accept boolean flags to toggle
 ### Scientific Interpretation of Results
 
 1. **Learnable Stain Adaptation Benefit:**
-   Introducing the learnable stain adaptation parameters (Ablation 2) yielded the highest overall classification accuracy of **94.64%** (+0.41% over Baseline) and weighted F1 of **0.9469** on the out-of-distribution 7k cross-patient test set. Since this layer learns to map variable source stainings to a standardized color space dynamically, it significantly improves cross-site generalization with zero latency or parameter overhead at inference time.
+   Introducing the learnable stain adaptation parameters (Ablation 2) yielded the highest overall classification accuracy of **94.64%** (+0.59% over Baseline) and weighted F1 of **0.9469** on the out-of-distribution 7k cross-patient test set. Since this layer learns to map variable source stainings to a standardized color space dynamically, it significantly improves cross-site generalization with zero latency or parameter overhead at inference time.
 
 2. **Multi-Scale Convolutional Feature Extraction:**
-   The multi-scale parallel branch (Ablation 3) achieved the highest Macro F1 score of **0.9325** (+0.45% over Baseline). By extracting features simultaneously using parallel `3x3`, `5x5`, and `7x7` depthwise separable receptive fields, the model becomes more robust to physical cellular scale variations across different patient scanners.
+   The multi-scale parallel branch (Ablation 3) achieved the highest Macro F1 score of **0.9325** (+0.70% over Baseline). By extracting features simultaneously using parallel `3x3`, `5x5`, and `7x7` depthwise separable receptive fields, the model becomes more robust to physical cellular scale variations across different patient scanners.
 
 3. **The Attention Squeeze-and-Excitation Paradox:**
    Adding late-stage squeeze-and-excitation (SE) blocks (Ablation 4, Full MedLite-CRC) led to a minor decrease in cross-dataset generalization accuracy to **93.80%**. While SE attention blocks improve training convergence and score highly on the source validation split (99.52%), their channel-reweighting coefficients can overfit to specific high-frequency noise distributions or stain balances of the source scanner (NCT-CRC-HE-100K). This highlights a critical design warning for lightweight medical CNNs: adding parameter-heavy attention blocks to small models can trigger domain-specific shortcut learning, reducing robustness on completely unseen clinical centers.
@@ -292,7 +292,7 @@ The student model trained with MobileNetV2 KD achieved (evaluated on best checkp
 ### The Scientific Conclusion
 This experiment proved that **domain and architectural alignment between teacher and student is paramount** in histopathology KD:
 1. **Teacher-Student Alignment:** Both models utilize depthwise separable convolutions without late-stage attention modules. This structural symmetry allows the student to easily map its latent space to the teacher's.
-2. **Teacher Out-performance:** The student (0.48M parameters) outperformed its own teacher (94.82%) by **+1.15%** absolute and outperformed the non-KD student (94.71%) by **+1.32%** absolute. This is a classic "student surpasses teacher" phenomenon, showing that distilling robust dark knowledge into a highly constrained student acts as an ultimate regularizer, forcing the student to learn pure domain-invariant morphologies.
+2. **Teacher Out-performance:** The student (0.48M parameters) outperformed its own teacher (94.82%) by **+1.14%** absolute and outperformed the non-KD student (94.71%) by **+1.25%** absolute. This is a classic "student surpasses teacher" phenomenon, showing that distilling robust dark knowledge into a highly constrained student acts as an ultimate regularizer, forcing the student to learn pure domain-invariant morphologies.
 3. **STR/MUS Breakthrough:** Stroma F1 rose from **0.7530 → 0.8084 (+5.54%)**, Smooth Muscle F1 rose from **0.7933 → 0.8564 (+6.31%)**.
 
 **Conclusion:** Knowledge Distillation using a structurally aligned MobileNetV2 teacher is the optimal training protocol for MedLite-CRC, setting the state-of-the-art benchmark for ultra-lightweight histopathology classification at **95.96% OOD accuracy**.
