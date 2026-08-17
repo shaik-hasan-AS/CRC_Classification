@@ -167,21 +167,21 @@ This logbook serves as the single source of truth for all quantitative metrics, 
 
 ### A. Normal Conditions (MedLite-CRC SOTA vs. EfficientNet-B0)
 - **Contingency Table:**
-  - Both Correct: 6,673
-  - Both Incorrect: 152
-  - MedLite Correct / EffNet Incorrect: 221
-  - MedLite Incorrect / EffNet Correct: 134
-- **Chi-Square Statistic ($\chi^2$):** 20.830
-- **P-Value:** $5.01 \times 10^{-6}$ (Extremely significant, rejecting the Null Hypothesis)
+  - Both Correct: 6,688
+  - Both Incorrect: 149
+  - MedLite Correct / EffNet Incorrect: 224
+  - MedLite Incorrect / EffNet Correct: 119
+- **Chi-Square Statistic ($\chi^2$):** 31.534
+- **P-Value:** $1.96 \times 10^{-8}$ ($1.53 \times 10^{-8}$ exact, extremely significant)
 
 ### B. Boundary Masked Conditions (Simulated Slide Edge Errors)
 - **Contingency Table:**
-  - Both Correct: 5,743
-  - Both Incorrect: 225
-  - MedLite Correct / EffNet Incorrect: 1,148
-  - MedLite Incorrect / EffNet Correct: 64
-- **Chi-Square Statistic ($\chi^2$):** 967.730
-- **P-Value:** $1.86 \times 10^{-212}$ (Highly significant difference in favor of MedLite-CRC's architectural robustness to border artifacts)
+  - Both Correct: 5,731
+  - Both Incorrect: 223
+  - MedLite Correct / EffNet Incorrect: 1,166
+  - MedLite Incorrect / EffNet Correct: 60
+- **Chi-Square Statistic ($\chi^2$):** 995.942
+- **P-Value:** $1.37 \times 10^{-218}$ (Highly significant difference in favor of MedLite-CRC's architectural robustness to border artifacts)
 
 ---
 
@@ -213,7 +213,7 @@ This logbook serves as the single source of truth for all quantitative metrics, 
 ## 🩺 7. Cross-Cohort Generalization & Transfer Learning Validation
 
 To evaluate the clinical transferability of the learned feature representations of our SOTA checkpoint, we fine-tuned MedLite-CRC (both from scratch and utilizing pretrained SOTA weights) on three external downstream cohorts representing different diagnostic tasks:
-1. **EBHI-SEG** (6-class biopsy diagnostics, 2,225 images total)
+1. **EBHI-SEG** (6-class biopsy diagnostics, 2,228 images total; Shi et al., 2023)
 2. **CRC-HGD-v1** (5-class histopathology grading, 1,914 images total)
 3. **Kather MSI/MSS** (2-class molecular phenotype classification, 139,143 images total)
 

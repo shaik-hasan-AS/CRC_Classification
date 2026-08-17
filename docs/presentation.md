@@ -166,7 +166,7 @@ This is the full map of every major experiment. Each one taught us something imp
 
 **STARC-9 (Stanford, 630,000 images, NeurIPS 2025 dataset):**
 
-We trained on a 10% subset (63,000 images). Result: **99.79% accuracy** — beating ResNet-50 (99.60%), EfficientNet-B0 (99.68%), and even massive foundation models like CTransPath (99.00%) which was pre-trained on 15M+ patches.
+We trained on a stratified 10% sample of the training split (63,000 images out of ~630,000) and evaluated on the full 54,000-image validation set. Result: **99.79% accuracy** — beating ResNet-50 (99.60%), EfficientNet-B0 (99.68%), and even massive foundation models like CTransPath (99.00%) which was pre-trained on 15M+ patches.
 
 **Why?** When the dataset itself provides enough natural variance (630k images from hundreds of Stanford scanners), dataset scale becomes the regularizer. No augmentation tricks needed.
 
@@ -184,10 +184,10 @@ We compared MedLite-CRC (KD) against EfficientNet-B0 on the 7,180-image OOD test
 
 | | EfficientNet-B0 Correct | EfficientNet-B0 Wrong |
 |---|:---:|:---:|
-| **MedLite-CRC KD Correct** | 6,673 | **221** |
-| **MedLite-CRC KD Wrong** | 134 | 152 |
+| **MedLite-CRC KD Correct** | 6,688 | **224** |
+| **MedLite-CRC KD Wrong** | 119 | 149 |
 
-- **χ² = 20.83**, **p = 5.01 × 10⁻⁶**
+- **χ² = 31.53**, **p = 1.96 × 10⁻⁸**
 - We reject the null hypothesis. Our gains are **not random initialization luck**.
 
 Under masked conditions (foreground only — where EfficientNet-B0 collapses to 80.88%), the test gives **χ² = 967.73**, **p = 1.86 × 10⁻²¹²**.

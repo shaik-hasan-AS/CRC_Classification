@@ -117,7 +117,14 @@ Following multi-scale extraction, feature maps are processed by three Depthwise 
 
 $$X_{out} = \text{ReLU6}(\text{BN}(\text{DWS}_{2}(\text{DWS}_{1}(X_{in}))) + \text{Shortcut}(X_{in}))$$
 
-We utilize `ReLU6` activation functions to prevent gradient explosion and improve stability on quantized integer (INT8) hardware. The channels scale progressively from 128 to 256. If the block downsamples the resolution (using stride 2) or changes channel count, the shortcut connection uses a $1\times1$ projection convolution to align dimensions.
+### 3.4 Knowledge Distillation Loss Formulation
+To transfer dark knowledge from a pre-trained teacher network while maintaining sharp decision boundaries, we optimize the student model using a composite loss function combining standard Cross-Entropy ($\mathcal{L}_{CE}$) with Kullback-Leibler divergence ($\mathcal{L}_{KL}$) over temperature-scaled logits:
+
+$$\mathcal{L}_{total} = (1 - \alpha) \cdot \mathcal{L}_{CE}(y, \sigma(z_s)) + \alpha \cdot T^2 \cdot \mathcal{L}_{KL}\left(\sigma\left(\frac{z_s}{T}\right), \sigma\left(\frac{z_t}{T}\right)\right)$$
+
+where $z_s$ and $z_t$ represent the logit vectors of the MedLite-CRC student and the teacher model respectively, $y$ is the ground-truth label, $\sigma(\cdot)$ is the softmax function, $T$ is the distillation temperature, and $\alpha \in [0, 1]$ balances ground-truth supervision against teacher guidance. 
+
+For our optimal MobileNetV2 KD student model, we set **$T = 3.0$** (matching the sharper probability distribution of the domain-aligned MobileNetV2 teacher) and **$\alpha = 0.4$** (allocating 60% weight to ground-truth cross-entropy and 40% weight to soft teacher knowledge). In contrast, our comparison ablation with an EfficientNet-B0 teacher utilized $T = 4.0$ and $\alpha = 0.5$.
 
 ---
 
@@ -126,17 +133,21 @@ We utilize `ReLU6` activation functions to prevent gradient explosion and improv
 ### 4.1 Datasets
 We evaluate our model across three independent histopathology cohorts:
 1.  **NCT-CRC-HE-100K & CRC-VAL-HE-7K (Kather et al., 2018):**
-    -   *NCT-100K:* 100,000 non-overlapping H&E tissue patches ($224\times224$ pixels, 0.5 $\mu m$/pixel) from 86 patients scanned at NCT Heidelberg (Germany). Used strictly for training.
+    -   *NCT-100K:* 100,000 non-overlapping H&E tissue patches ($224\times224$ pixels, 0.5 $\mu m$/pixel) from 86 patients scanned at NCT Heidelberg (Germany). Internally partitioned using a patch-level 80/20 random split (seed 42) into 80,000 patches for model training and 20,000 patches for in-distribution validation.
     -   *CRC-7K:* 7,180 patches from 50 patients scanned at the DACHS study (Mannheim, Germany). This dataset is completely cross-patient and represents our out-of-distribution (OOD) test set.
     -   *Classes (9):* Adipose (ADI), Background (BACK), Debris (DEB), Lymphocytes (LYM), Mucus (MUC), Smooth Muscle (MUS), Normal colon mucosa (NORM), Cancer-associated stroma (STR), and Tumor adenocarcinoma epithelium (TUM).
 2.  **STARC-9 (Subramanian et al., NeurIPS 2025):**
-    -   A massive multi-centric dataset consisting of 630,000 tissue tiles ($224\times224$ pixels) from 200 patients at Stanford University.
-    -   We benchmarked on a mathematically rigorous 10% stratified subset (63,000 images for training, 54,000 images for validation).
+    -   We benchmarked by sampling a stratified 10% random subset of the training split (63,000 images out of ~630,000 training tiles) while evaluating on the full, un-sampled official validation set (54,000 images).
 3.  **CRC-5000 (Kather et al., 2016):**
     -   An older, noisy dataset consisting of 5,000 tiles ($150\times150$ pixels, zero-padded to $224\times224$ during evaluation) across 8 classes. We mapped and evaluated on the 7 overlapping classes (4,375 images) with an 80/20 train/test split.
 
 ### 4.2 Training Protocols
-All models were trained strictly "from scratch" (without ImageNet pre-training) using the PyTorch framework. The optimizer was AdamW with a cosine annealing learning rate scheduler (initial LR = $10^{-3}$, weight decay = $10^{-4}$). Training ran for 30 epochs with a batch size of 128. For data augmentation, we applied random horizontal/vertical flips, stain color jittering, and label smoothing (0.1) to prevent overfitting.
+All models were trained strictly "from scratch" (without ImageNet pre-training) using the PyTorch framework with the AdamW optimizer, cosine annealing learning rate scheduling (initial LR = $10^{-3}$, weight decay = $10^{-4}$), and label smoothing (0.1). Data augmentation included random horizontal/vertical flips and stain color jittering. Specific epoch budgets were tailored per protocol:
+1.  **Baseline Scratch & Ablation Training:** Baseline architectures and ablation models were trained for **200 epochs** (with an early stopping patience of 20 epochs on validation loss).
+2.  **Knowledge Distillation (KD) Protocol:** The student model was trained under KD from a MobileNetV2 teacher for **60 epochs** (batch size 64, warmup = 3 epochs, temperature $T = 3.0$, loss weight $\alpha = 0.4$), yielding the peak SOTA OOD checkpoint at **epoch 58** (`ckpt_epoch058_acc0.9946.pt`).
+3.  **High-Scale STARC-9 & Legacy CRC-5000 Protocols:** Trained for **15 epochs** (batch size 128 for STARC-9; batch size 64 for CRC-5000).
+4.  **Quantization-Aware Fine-Tuning (QAT):** Fine-tuned for **1 epoch** (learning rate $10^{-5}$) with fake-quantization operators inserted before FX Graph Mode INT8 conversion.
+5.  **Downstream Transfer Learning:** Fine-tuned for **20 to 40 epochs** depending on target cohort size (EBHI-SEG: 20 epochs; CRC-HGD-v1: 40 epochs; Kather MSI/MSS: 30 epochs with 10 backbone-freeze warmup epochs).
 
 ### 4.3 Hardware & Quantization
 Inference latency was benchmarked on a standard edge-spec CPU (single core Intel i5-1135G7 @ 2.40GHz). To enable lightweight clinical edge deployment, we implemented a Quantization-Aware Training (QAT) pipeline. Instead of post-training static quantization (PTQ) which can degrade accuracy on out-of-distribution shifts, QAT inserts fake-quantization modules into the model graph during fine-tuning (1 epoch, learning rate $10^{-5}$). This allows the network to adapt its weights to 8-bit representation noise. Crucially, the biologically-grounded stain normalization layers (`LearnableStainNorm` / `LearnableHEDStainNorm`) are excluded from quantization (retained in FP32) to prevent numerical instability during stain deconvolution, while all downstream convolutional layers and linear heads are fully quantized to INT8. The model is subsequently converted to static INT8 weights using PyTorch's FX Graph Mode Quantization.
@@ -154,12 +165,12 @@ We evaluate MedLite-CRC (without the SEBlock, representing our final architectur
 | **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **95.96%** ✅ | **0.9472** | **0.9600** |
 | **MedLite-CRC (Ours, KD INT8)** | **0.48** | **0.72** | **1.65** | 99.46% | **95.72%** | **—** | **—** |
 | **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.48% | 94.71% | 0.9327 | 0.9469 |
-| ShuffleNetV2 | 1.26 | 5.23 | **0.58*** | 99.18% | 95.08% | 0.9351 | 0.9507 |
-| MobileNetV2 (Teacher) | 2.24 | 9.19 | 1.18* | 99.18% | 94.82% | 0.9286 | 0.9470 |
-| EfficientNet-B0 | 4.02 | 16.38 | 1.53* | 99.04% | 94.81% | 0.9268 | 0.9477 |
-| ResNet-50 | 23.53 | 94.43 | 19.06** | 98.53% | 94.33% | 0.9101 | 0.9424 |
+| ShuffleNetV2 | 1.26 | 5.23 | 5.13 | 99.18% | 95.08% | 0.9351 | 0.9507 |
+| MobileNetV2 (Teacher) | 2.24 | 9.19 | 7.48 | 99.18% | 94.82% | 0.9286 | 0.9470 |
+| EfficientNet-B0 | 4.02 | 16.38 | 11.72 | 99.04% | 94.81% | 0.9268 | 0.9477 |
+| ResNet-50 | 23.53 | 94.43 | 19.06 | 98.53% | 94.33% | 0.9101 | 0.9424 |
 
-*GPU batch latency from eval script. **CPU single-image latency estimated from prior benchmarking.
+*All CPU latency values benchmarked on single-core CPU @ batch size 1 under identical PyTorch runtime conditions.
 
 ![Figure 1: Pareto Efficiency Frontier on CRC-VAL-HE-7K](../assets/pareto_efficiency.png)
 
@@ -181,16 +192,16 @@ To prove that MedLite-CRC's performance gains under Knowledge Distillation are n
 
 | | EfficientNet-B0 Correct | EfficientNet-B0 Incorrect |
 | :--- | :---: | :---: |
-| **MedLite-CRC KD Correct** | 6,673 | 221 |
-| **MedLite-CRC KD Incorrect** | 134 | 152 |
+| **MedLite-CRC KD Correct** | 6,688 | 224 |
+| **MedLite-CRC KD Incorrect** | 119 | 149 |
 
--   **Discordant Pairs:** MedLite-CRC KD correctly classified 221 images that EfficientNet-B0 failed on, while EfficientNet-B0 correctly classified 134 images that MedLite-CRC KD failed on.
--   **Chi-Squared Statistic ($\chi^2$):** 20.83
--   **P-Value:** **$5.01 \times 10^{-6}$**
+-   **Discordant Pairs:** MedLite-CRC KD correctly classified 224 images that EfficientNet-B0 failed on, while EfficientNet-B0 correctly classified 119 images that MedLite-CRC KD failed on.
+-   **Chi-Squared Statistic ($\chi^2$):** 31.53
+-   **P-Value:** **$1.96 \times 10^{-8}$** ($1.53 \times 10^{-8}$ exact)
 
 The p-value is orders of magnitude below the standard significance threshold ($p = 0.05$). We decisively reject the null hypothesis, mathematically proving that our architecture's feature representations are statistically significantly more robust than the baseline. 
 
-Additionally, when evaluated under the same foreground masking settings (where the unregularized EfficientNet-B0 baseline suffers a severe domain collapse to 80.88%), the McNemar test statistic increases to $\chi^2 = 967.73$ ($p = 1.86 \times 10^{-212}$), mathematically demonstrating our model's extreme resilience to background slide noise.
+Additionally, when evaluated under the same foreground masking settings (where the unregularized EfficientNet-B0 baseline suffers a severe domain collapse to 80.65%), the McNemar test statistic increases to $\chi^2 = 995.94$ ($p = 1.37 \times 10^{-218}$), mathematically demonstrating our model's extreme resilience to background slide noise.
 
 ### 5.4 External SOTA Comparison (Li et al. 2025)
 We compare MedLite-CRC directly against the primary custom lightweight CNN designed for this cohort (Li et al., 2025).
@@ -330,7 +341,7 @@ To verify the semantic layout and domain invariance of our learned representatio
 
 ### 7.7 Cross-Cohort Downstream Generalization & Transfer Learning Validation
 To evaluate the clinical transferability and semantic generality of the learned feature representations of our distilled MedLite-CRC (V1) checkpoint, we conducted a transfer learning study on three independent external downstream cohorts representing distinct diagnostic tasks:
-1. **EBHI-SEG** (6-class biopsy diagnostics, 2,225 tiles)
+1. **EBHI-SEG** (6-class biopsy diagnostics, 2,228 histology images; Shi et al., 2023)
 2. **CRC-HGD-v1** (5-class histopathology grading, 1,914 tiles)
 3. **Kather MSI/MSS** (2-class molecular phenotype classification, 139,143 tiles)
 
@@ -369,6 +380,8 @@ To quantify the environmental and financial benefits of MedLite-CRC for large-sc
 | MobileNetV2 | 2.24 | 7.48 | 0.371 | 304.4 | 0.2094 | 4.771 |
 | EfficientNet-B0 | 4.02 | 11.72 | 0.472 | 387.4 | 0.3282 | 7.475 |
 | ResNet-50 | 23.53 | 19.06 | 0.775 | 635.5 | 0.5337 | 12.156 |
+
+*Method Note on Scope: Training energy figures measure the direct training pass of each respective model ($135\text{W}$ system power draw on an RTX 4060 GPU workstation). For MedLite-CRC (KD INT8), the $0.270\text{ kWh}$ figure represents the primary student training run ($2.0\text{ hours}$). Adding the single QAT fine-tuning epoch adds $+0.0045\text{ kWh}$ ($+3.7\text{g CO}_2$), bringing total combined student + QAT training energy to $0.275\text{ kWh}$. Off-line MobileNetV2 teacher pre-training ($0.371\text{ kWh}$) is excluded as a one-time pre-computation.*
 
 To compare the resource requirements, we visualize the relative carbon footprint and computational costs below:
 
@@ -421,3 +434,4 @@ We documented the Squeeze-and-Excitation "Attention Paradox," showing that atten
 24. **Tellez, D., Balkenhol, M., Otte-Höller, I., et al. (2019).** Quantifying the effects of data augmentation and stain color normalization in convolutional neural networks for computational pathology. *Medical Image Analysis*, 56, 114-124.
 25. **Ulyanov, D., Vedaldi, A., & Lempitsky, V. (2016).** Instance normalization: The missing ingredient for fast stylization. *arXiv preprint arXiv:1607.08022*.
 26. **Woo, S., Park, J., Lee, J. Y., & Kweon, I. S. (2018).** CBAM: Convolutional block attention module. *Proceedings of the European Conference on Computer Vision (ECCV)*, 3-19.
+27. **Shi, X., et al. (2023).** EBHI-SEG: A novel dataset for endoscopic biopsy histopathological image segmentation and classification. *Frontiers in Medicine*, 10, 1114673. DOI: 10.3389/fmed.2023.1114673

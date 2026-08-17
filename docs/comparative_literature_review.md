@@ -118,7 +118,7 @@ The STARC-9 dataset (NeurIPS 2025) contains 630,000 pathologist-verified high-qu
 
 ### Performance & Parameter Scale Comparison
 
-All literature models below were trained on the **full 630,000 STARC-9 training set** or fine-tuned from massive pre-trained foundation models. **MedLite-CRC** was trained on only a **10% stratified subset (63,000 images)**.
+All literature models below were trained on the **full 630,000 STARC-9 training set** or fine-tuned from massive pre-trained foundation models. **MedLite-CRC** was trained on a **stratified 10% sample of the training split (63,000 images out of ~630,000)** and evaluated on the full **54,000-image official validation set**.
 
 | Model / Architecture | Params (M) | GFLOPs | Pre-training Regime | Val Accuracy (on 54k Val-Large) |
 | :--- | :---: | :---: | :--- | :---: |

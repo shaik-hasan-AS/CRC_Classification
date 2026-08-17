@@ -56,7 +56,7 @@ When trained strictly from scratch (without ImageNet pre-training) on NCT-100K a
 
 ### 2.5 Cross-Cohort Generalization & Downstream Transfer Validation
 To establish the clinical utility and semantic transferability of the learned MedLite-CRC feature representations, we benchmarked our pre-trained model against scratch training on three distinct external pathological cohorts:
-- **EBHI-SEG** (6-class endoscopic biopsy, 2,225 tiles)
+- **EBHI-SEG** (6-class endoscopic biopsy, 2,228 histology images; Shi et al., 2023)
 - **CRC-HGD-v1** (5-class differentiation grading, 1,914 tiles)
 - **Kather MSI/MSS** (2-class Microsatellite Instability molecular classification, 139,143 tiles)
 
@@ -79,12 +79,12 @@ We compare the models under their respective configurations (MedLite-CRC KD at 9
 
 | | EfficientNet-B0 Correct | EfficientNet-B0 Incorrect |
 | :--- | :---: | :---: |
-| **MedLite-CRC KD Correct** | 6,673 | 221 |
-| **MedLite-CRC KD Incorrect** | 134 | 152 |
+| **MedLite-CRC KD Correct** | 6,688 | 224 |
+| **MedLite-CRC KD Incorrect** | 119 | 149 |
 
-- **Discordant Pairs:** MedLite-CRC KD correctly classified 221 images that the baseline failed on, while the baseline correctly classified 134 images that MedLite-CRC KD failed on.
-- **Chi-Squared Statistic ($\chi^2$):** 20.830
-- **P-Value:** **$5.01 \times 10^{-6}$**
+- **Discordant Pairs:** MedLite-CRC KD correctly classified 224 images that the baseline failed on, while the baseline correctly classified 119 images that MedLite-CRC KD failed on.
+- **Chi-Squared Statistic ($\chi^2$):** 31.534
+- **P-Value:** **$1.96 \times 10^{-8}$** ($1.53 \times 10^{-8}$ exact)
 
 Since $p < 0.05$, we decisively reject the null hypothesis, mathematically proving that our model's performance improvements are statistically significant.
 
@@ -93,13 +93,13 @@ When both models are evaluated under test-time background noise masking (foregro
 
 | | EfficientNet-B0 Masked Correct | EfficientNet-B0 Masked Incorrect |
 | :--- | :---: | :---: |
-| **MedLite-CRC KD Correct** | 5,743 | 1,148 |
-| **MedLite-CRC KD Incorrect** | 64 | 225 |
+| **MedLite-CRC KD Correct** | 5,731 | 1,166 |
+| **MedLite-CRC KD Incorrect** | 60 | 223 |
 
-- **Chi-Squared Statistic ($\chi^2$):** 967.730
-- **P-Value:** **$1.86 \times 10^{-212}$**
+- **Chi-Squared Statistic ($\chi^2$):** 995.942
+- **P-Value:** **$1.37 \times 10^{-218}$**
 
-Standard, unregularized CNN architectures collapse (EfficientNet-B0 drops to 80.88% accuracy) when background slide pixels are masked, while MedLite-CRC remains highly resilient, demonstrating superior morphological generalization.
+Standard, unregularized CNN architectures collapse (EfficientNet-B0 drops to 80.65% accuracy) when background slide pixels are masked, while MedLite-CRC remains highly resilient (96.06% accuracy), demonstrating superior morphological generalization.
 
 ---
 
