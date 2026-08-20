@@ -166,7 +166,7 @@ Evaluate the unaugmented, 11-Class Hybrid Model against the notoriously challeng
 
 **Methodology:**
 *   **Model Weights:** 11-Class Hybrid Model (`ckpt_epoch014_acc0.9976.pt`)
-*   **Test Set:** `CRC-5000_mapped` (4,375 images mapped to 11 classes)
+*   **Validation Cohort:** `CRC-5000_mapped` (4,375 images mapped to 11 classes)
 *   **Augmentation Status:** Model trained with Grayscale Dropout and Gaussian Foreground Masking DISABLED.
 
 **Results:**
@@ -202,7 +202,7 @@ We parameterized the `MedLiteCRC` architecture to accept boolean flags to toggle
 ### Scientific Interpretation of Results
 
 1. **Learnable Stain Adaptation Benefit:**
-   Introducing the learnable stain adaptation parameters (Ablation 2) yielded the highest overall classification accuracy of **94.64%** (+0.59% over Baseline) and weighted F1 of **0.9469** on the out-of-distribution 7k cross-patient test set. Since this layer learns to map variable source stainings to a standardized color space dynamically, it significantly improves cross-site generalization with zero latency or parameter overhead at inference time.
+   Introducing the learnable stain adaptation parameters (Ablation 2) yielded the highest overall classification accuracy of **94.64%** (+0.59% over Baseline) and weighted F1 of **0.9469** on the out-of-distribution 7k cross-patient validation cohort. Since this layer learns to map variable source stainings to a standardized color space dynamically, it significantly improves cross-site generalization with zero latency or parameter overhead at inference time.
 
 2. **Multi-Scale Convolutional Feature Extraction:**
    The multi-scale parallel branch (Ablation 3) achieved the highest Macro F1 score of **0.9325** (+0.70% over Baseline). By extracting features simultaneously using parallel `3x3`, `5x5`, and `7x7` depthwise separable receptive fields, the model becomes more robust to physical cellular scale variations across different patient scanners.
@@ -339,8 +339,8 @@ The student model trained with MobileNetV2 KD on CRC-5000 achieved:
 Following our finding that Squeeze-and-Excitation (SE) channel-attention was detrimental to cross-site generalization (Ablation 4), we hypothesized that a spatial-based attention mechanism might circumvent the stain-overfitting issues by forcing the model to focus purely on biological morphologies (like tumor nest geometry and cellular spacing) rather than color profiles. We integrated **Coordinate Attention (CA)**—which pools horizontal and vertical coordinates separately to preserve location sensitivity—to see if it could resolve Grad-CAM background noise spillover without degrading OOD accuracy.
 
 ### The Result (Negative)
-The experiment failed. When trained from scratch on NCT-100K and evaluated on the out-of-distribution `CRC-VAL-HE-7K` test set, the Coordinate Attention variant achieved:
-* **OOD Test Accuracy:** **93.44%** (compared to the attention-free baseline of **94.71%** and SEBlock of **93.82%**).
+The experiment failed. When trained from scratch on NCT-100K and evaluated on the out-of-distribution `CRC-VAL-HE-7K` validation cohort, the Coordinate Attention variant achieved:
+* **OOD Validation Accuracy:** **93.44%** (compared to the attention-free baseline of **94.71%** and SEBlock of **93.82%**).
 * **OOD Macro F1:** **0.9177** (compared to baseline **0.9327**).
 
 **Per-class breakdown:**
