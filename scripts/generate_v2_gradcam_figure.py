@@ -16,7 +16,7 @@ from data.transforms import get_val_transforms
 
 def main():
     # Load V2 config
-    config_path = "configs/kd_mobilenet_v2.yaml"
+    config_path = "configs/kd_mobilenet_teacher.yaml"
     with open(config_path, "r") as f:
         cfg = yaml.safe_load(f)
         
@@ -27,7 +27,7 @@ def main():
     model = build_model(cfg).to(device)
     
     # Load V2 fine-tuned checkpoint
-    checkpoint_path = "outputs/checkpoints_kd_v2_v2/ckpt_epoch002_acc0.9935.pt"
+    checkpoint_path = "outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt"
     print(f"Loading checkpoint: {checkpoint_path}")
     ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
     state = ckpt.get("model_state_dict", ckpt)
@@ -48,7 +48,7 @@ def main():
     classes_to_plot = ["STR", "MUS", "TUM", "LYM"]
     
     fig, axes = plt.subplots(len(classes_to_plot), 2, figsize=(10, 5 * len(classes_to_plot)))
-    plt.suptitle("MedLite-CRC (V2) Mitigated Grad-CAM Visualizations", fontsize=18, y=0.98)
+    plt.suptitle("MedLite-CRC (SOTA KD) Grad-CAM Visualizations", fontsize=18, y=0.98)
     
     # Set seed for reproducible image selection
     random.seed(42)
