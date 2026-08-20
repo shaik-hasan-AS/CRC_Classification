@@ -96,8 +96,8 @@ When both models are evaluated under test-time background noise masking (foregro
 | **MedLite-CRC KD Correct** | 5,731 | 1,166 |
 | **MedLite-CRC KD Incorrect** | 60 | 223 |
 
-- **Chi-Squared Statistic ($\chi^2$):** 997.22
-- **P-Value:** **$7.21 \times 10^{-219}$**
+- **Chi-Squared Statistic ($\chi^2$):** 995.94
+- **P-Value:** **$1.37 \times 10^{-218}$**
 
 Standard, unregularized CNN architectures collapse (EfficientNet-B0 drops to 80.65% accuracy) when background slide pixels are masked, while MedLite-CRC remains highly resilient (96.06% accuracy), demonstrating superior morphological generalization.
 

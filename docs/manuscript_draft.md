@@ -201,7 +201,14 @@ To prove that MedLite-CRC's performance gains under Knowledge Distillation are n
 
 The p-value is orders of magnitude below the standard significance threshold ($p = 0.05$). We decisively reject the null hypothesis, mathematically proving that our architecture's feature representations are statistically significantly more robust than the baseline. 
 
-Additionally, when evaluated under the same foreground masking settings (setting pixels > 0.85 brightness to 0 to simulate foreground extraction, where the unregularized EfficientNet-B0 baseline suffers a severe domain collapse to 80.75%), the McNemar test statistic increases to $\chi^2 = 997.22$ ($p = 7.21 \times 10^{-219}$), mathematically demonstrating our model's extreme resilience to background slide noise.
+Additionally, we evaluated both models under foreground masking conditions (setting background slide pixels > 0.85 brightness to 0 to simulate severe tissue extraction domain shifts). While the unregularized EfficientNet-B0 baseline suffers a catastrophic domain collapse (falling to **80.65%** accuracy), MedLite-CRC KD remains highly resilient (**96.06%** accuracy). The masked 2×2 contingency table confirms this divergence:
+
+| | EfficientNet-B0 Correct (Masked) | EfficientNet-B0 Incorrect (Masked) |
+| :--- | :---: | :---: |
+| **MedLite-CRC KD Correct (Masked)** | 5,731 | 1,166 |
+| **MedLite-CRC KD Incorrect (Masked)** | 60 | 223 |
+
+This performance disparity increases the test statistic drastically to $\chi^2 = 995.94$ ($p = 1.37 \times 10^{-218}$), mathematically demonstrating our model's extreme resilience to background slide noise and domain variation.
 
 ### 5.4 External SOTA Comparison (Li et al. 2025)
 We compare MedLite-CRC directly against the primary custom lightweight CNN designed for this cohort (Li et al., 2025).
@@ -378,7 +385,7 @@ During transfer learning, the backbone was frozen for an initial warmup period (
 Our experiments demonstrate that deep learning architectures for histopathology do not require massive parameter counts to achieve high accuracy. By restricting our parameter capacity to 0.48M, MedLite-CRC acts as a regularizer, forcing the network to learn generic, scale-invariant morphological features. This is confirmed by our superior performance on the massive multi-centric STARC-9 dataset (99.79%) and the noisy CRC-5000 cohort (92.00%).
 
 ### 8.1 Carbon Footprint & Computational Efficiency Analysis
-To quantify the environmental and financial benefits of MedLite-CRC for large-scale histopathological screening, we conducted a comprehensive computational efficiency and carbon footprint analysis. Calculations assume a national grid carbon intensity average of $0.82 \text{ kg CO}_2/\text{kWh}$ (representative of developing countries where edge deployment is most valuable). Training energy was measured on a workstation utilizing an RTX 4060 GPU ($85\text{W}$ TDP + $50\text{W}$ system overhead), and inference was benchmarked on a standard edge-spec CPU ($28\text{W}$ TDP).
+To quantify the environmental and financial benefits of MedLite-CRC for large-scale histopathological screening, we conducted a comprehensive computational efficiency and carbon footprint analysis. Calculations assume a grid carbon intensity average of $0.82 \text{ kg CO}_2/\text{kWh}$, representing the Indian national grid emission factor as reported by the Central Electricity Authority (CEA), Government of India (CO2 Baseline Database for the Indian Power Sector). This serves as a representative baseline for developing countries where edge deployment is most valuable. Training energy was measured on a workstation utilizing an RTX 4060 GPU ($85\text{W}$ TDP + $50\text{W}$ system overhead), and inference was benchmarked on a standard edge-spec CPU ($28\text{W}$ TDP).
 
 | Model Configuration | Parameters (M) | CPU Latency (ms) | Training Energy (kWh) | Training $\text{CO}_2$ (g) | Inference Energy (J/img) | Inference $\text{CO}_2$ (g/100k img) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
