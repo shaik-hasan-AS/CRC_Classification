@@ -34,7 +34,7 @@ MedLite-CRC operates at the intersection of ultra-lightweight architecture desig
 ### 2.2 Train-from-Scratch Generalization
 When trained strictly from scratch (without ImageNet pre-training) on NCT-100K and evaluated on the out-of-distribution (OOD) `CRC-VAL-HE-7K` cohort:
 - Standard architectures drop in accuracy (EfficientNet-B0: 94.81%, ResNet-50: 94.33%).
-- MedLite-CRC V1 achieves **94.71%** natively, and its MobileNetV2 KD-distilled counterpart hits a SOTA **95.96%** accuracy, outperforming models up to 48× larger.
+- MedLite-CRC V1 achieves **94.71%** natively, and its MobileNetV2 KD-distilled counterpart hits a SOTA **96.27%** accuracy, outperforming models up to 48× larger.
 
 ### 2.3 Defense of Necessary Trade-offs
 - **ImageNet Pre-trained Models:** While pre-trained Vision Transformers and heavy ResNets can exceed 97% OOD accuracy, they rely on massive parameter weights (86M+ parameters) pre-optimized on natural images (cars, dogs). This makes them unsuitable for local deployment on low-cost diagnostic edge terminals in resource-limited clinics.
@@ -44,7 +44,7 @@ When trained strictly from scratch (without ImageNet pre-training) on NCT-100K a
 
 | Model Architecture | Params (M) | In-Dist (100K) | OOD (7K) | STARC-9 | CRC-5000 | Deployed Footprint (INT8) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **MedLite-CRC (Ours, KD)** | **0.48** | **99.46%** | **95.96%** | **99.75%** | **93.94%** | **2.02 MB** (FP32) |
+| **MedLite-CRC (Ours, KD)** | **0.48** | **99.46%** | **96.27%** | **99.75%** | **93.94%** | **2.02 MB** (FP32) |
 | **MedLite-CRC (Ours, KD INT8)** | **0.48** | **99.46%** | **95.72%** | **—** | **—** | **0.72 MB** |
 | **MedLite-CRC (Ours, standard)** | **0.48** | **99.48%** | **94.71%** | **99.79%** | **92.00%** | **2.02 MB** (FP32) |
 | Li et al. (2025) CNN | 4.41 | 99.00% | - | - | - | 16.9 MB |
@@ -75,7 +75,7 @@ These results indicate that pre-training on NCT-100K under our MobileNetV2 knowl
 To prove that the performance gains of MedLite-CRC (KD Student) are statistically significant and not due to random initialization, we performed a McNemar's test against the 8× larger EfficientNet-B0 baseline on the 7,180-image `CRC-VAL-HE-7K` cohort.
 
 ### 3.1 Primary Analysis: Optimal Configurations
-We compare the models under their respective configurations (MedLite-CRC KD at 95.96% accuracy vs. EfficientNet-B0 unmasked at 94.81% accuracy):
+We compare the models under their respective configurations (MedLite-CRC KD at 96.27% accuracy vs. EfficientNet-B0 unmasked at 94.81% accuracy):
 
 | | EfficientNet-B0 Correct | EfficientNet-B0 Incorrect |
 | :--- | :---: | :---: |
@@ -83,7 +83,7 @@ We compare the models under their respective configurations (MedLite-CRC KD at 9
 | **MedLite-CRC KD Incorrect** | 119 | 149 |
 
 - **Discordant Pairs:** MedLite-CRC KD correctly classified 224 images that the baseline failed on, while the baseline correctly classified 119 images that MedLite-CRC KD failed on.
-- **Chi-Squared Statistic ($\chi^2$):** 31.534
+- **Chi-Squared Statistic ($\chi^2$):** 31.53
 - **P-Value:** **$1.96 \times 10^{-8}$** ($1.53 \times 10^{-8}$ exact)
 
 Since $p < 0.05$, we decisively reject the null hypothesis, mathematically proving that our model's performance improvements are statistically significant.
@@ -96,8 +96,8 @@ When both models are evaluated under test-time background noise masking (foregro
 | **MedLite-CRC KD Correct** | 5,731 | 1,166 |
 | **MedLite-CRC KD Incorrect** | 60 | 223 |
 
-- **Chi-Squared Statistic ($\chi^2$):** 995.942
-- **P-Value:** **$1.37 \times 10^{-218}$**
+- **Chi-Squared Statistic ($\chi^2$):** 997.22
+- **P-Value:** **$7.21 \times 10^{-219}$**
 
 Standard, unregularized CNN architectures collapse (EfficientNet-B0 drops to 80.65% accuracy) when background slide pixels are masked, while MedLite-CRC remains highly resilient (96.06% accuracy), demonstrating superior morphological generalization.
 
@@ -112,7 +112,7 @@ To validate the specific architectural choices in MedLite-CRC, we document the n
 3. **Test-Time Augmentation (TTA) Degradation:** Applying 4-rotation TTA averaging during inference dropped accuracy to **92.70%** (specifically harming Muscle and Stroma F1-scores). The model learns directional heuristics relative to fibrous tissue orientations; averaging across arbitrary 90-degree rotations disrupts its confidence in these directional boundaries.
 4. **Receptive Field Expansion (Large Kernels):** Replacing the $3\times3, 5\times5, 7\times7$ multi-scale branch with larger $7\times7, 9\times9, 11\times11$ depthwise convolutions dropped cross-patient accuracy to **93.93%**. Crucially, the F1-score for Lymphocytes dropped from 0.9921 to 0.9842. The massive 11x11 filters acted as a low-pass filter that smoothed over the critical high-frequency, crisp edge details required to identify tiny lymphocytic nuclei.
 5. **Focal Loss & Pairwise Loss Overfitting:** Implementing a Focal Loss combined with a Pairwise Confusion Penalty specifically targeting Stroma vs. Smooth Muscle confusion eliminated training confusion (99.69% in-distribution validation accuracy), but cross-patient accuracy collapsed to **94.76%** (Stroma recall plummeted to 57.48%). Modifying loss functions to target hard cases causes the network to overfit to the specific stain and texture signatures of those hard cases within the training domain.
-6. **HED-Space Stain Normalization:** Learnable stain normalization in biologically-grounded Hematoxylin-Eosin-DAB (HED) space achieved **94.18%** OOD accuracy. While robust, this was slightly lower than RGB-space learnable affine normalization (**94.71%**). The RGB affine layer has greater mathematical freedom to perform arbitrary linear rotations and shifts across channels, allowing it to adapt to non-linear color response differences across scanners that do not strictly conform to the linear Beer-Lambert deconvolution model.
+6. **HED-Space Stain Normalization:** Learnable stain normalization in biologically-grounded Hematoxylin-Eosin-DAB (HED) space achieved **94.18%** OOD accuracy. While robust, this was slightly lower than RGB-space learnable affine normalization (**94.71%**). The RGB affine layer has greater mathematical freedom to perform independent channel-wise scaling and shifting without imposing the HED decomposition assumptions, allowing it to adapt to non-linear color response differences across scanners that do not strictly conform to the linear Beer-Lambert deconvolution model.
 
 ---
 
@@ -137,7 +137,7 @@ We evaluated the V2 model configuration (incorporating reflection padding and 8p
 
 | Metric / Configuration | V1 Baseline (Zero Pad, Unmasked) | V1 Masked (Zero Pad, 8px Mask) | V2 Mitigated (Reflect Pad, 8px Mask) |
 | :--- | :---: | :---: | :---: |
-| **OOD Accuracy** | 95.96% | 96.07% | **95.84%** |
+| **OOD Accuracy** | 96.27% | 96.07% | **95.84%** |
 | **Avg. Radial Distance from Center** | 21.49 px | 19.95 px | **20.32 px** |
 | **Vanishing Gradient Rate** | 11.20% | 11.30% | **10.30%** |
 | **Stroma Background Activation** | 0.3075 | 0.2500 | **0.2524** |

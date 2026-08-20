@@ -26,7 +26,7 @@ data:
     - TUM   # Colorectal Adenocarcinoma Epithelium
 
   augmentation:
-    use_foreground_masking: true # Mask out bright background with noise
+    use_foreground_masking: false # Mask out bright background with noise
     mask_threshold: 0.85
     grayscale_prob: 0.3          # Color dropout to force texture learning
     use_stain_augment: true      # key for stain robustness

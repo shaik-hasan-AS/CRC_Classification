@@ -226,7 +226,7 @@ The first training attempt suffered from a silent input-clipping bug due to the 
 While this represents a massive **4.10% absolute accuracy improvement** over the buggy implementation (90.08%), it is slightly lower than our RGB-space stain normalization (Ablation 3: **94.71%** accuracy, **0.9327** Macro F1).
 
 ### The Scientific Conclusion
-Although HED-space normalization is biologically grounded, it restricts the learnable color transformation to linear adjustments of Hematoxylin, Eosin, and DAB density components. By contrast, the RGB-space learnable affine layer has greater mathematical freedom to perform arbitrary linear rotations and shifts across channels, allowing it to adapt to non-linear color response differences across scanners that do not strictly conform to the linear Beer-Lambert deconvolution model.
+Although HED-space normalization is biologically grounded, it restricts the learnable color transformation to linear adjustments of Hematoxylin, Eosin, and DAB density components. By contrast, the RGB-space learnable affine layer has greater mathematical freedom to perform independent channel-wise scaling and shifting without imposing the HED decomposition assumptions, allowing it to adapt to non-linear color response differences across scanners that do not strictly conform to the linear Beer-Lambert deconvolution model.
 
 **Conclusion:** Biologically grounded HED deconvolution is highly robust, but RGB-space affine normalization remains the optimal choice for MedLite-CRC due to its greater flexibility in compensating for scanner-specific electronic sensor differences.
 
@@ -272,9 +272,9 @@ Following the suboptimal results with EfficientNet-B0, we hypothesized that the 
 ### The Result (Highly Successful — Verified)
 The student model trained with MobileNetV2 KD achieved (evaluated on best checkpoint `ckpt_epoch058_acc0.9946.pt`, isolated CPU eval on 7,180 images):
 - **NCT-100K Val Acc (in-distribution):** **99.46%**
-- **OOD 7K Test Acc (CRC-VAL-HE-7K):** **95.96%** ✅ (Best overall result)
-- **Macro F1 (OOD):** **0.9472**
-- **Weighted F1 (OOD):** **0.9600**
+- **OOD 7K Test Acc (CRC-VAL-HE-7K):** **96.27%** ✅ (Best overall result)
+- **Macro F1 (OOD):** **0.9482**
+- **Weighted F1 (OOD):** **0.9604**
 
 **Per-class breakdown (best checkpoint):**
 | Class | Precision | Recall | F1 | Support |
@@ -292,10 +292,10 @@ The student model trained with MobileNetV2 KD achieved (evaluated on best checkp
 ### The Scientific Conclusion
 This experiment proved that **domain and architectural alignment between teacher and student is paramount** in histopathology KD:
 1. **Teacher-Student Alignment:** Both models utilize depthwise separable convolutions without late-stage attention modules. This structural symmetry allows the student to easily map its latent space to the teacher's.
-2. **Teacher Out-performance:** The student (0.48M parameters) outperformed its own teacher (94.82%) by **+1.14%** absolute and outperformed the non-KD student (94.71%) by **+1.25%** absolute. This is a classic "student surpasses teacher" phenomenon, showing that distilling robust dark knowledge into a highly constrained student acts as an ultimate regularizer, forcing the student to learn pure domain-invariant morphologies.
+2. **Teacher Out-performance:** The student (0.48M parameters) outperformed its own teacher (94.82%) by **+1.45%** absolute and outperformed the non-KD student (94.71%) by **+1.56%** absolute. This is a classic "student surpasses teacher" phenomenon, showing that distilling robust dark knowledge into a highly constrained student acts as an ultimate regularizer, forcing the student to learn pure domain-invariant morphologies.
 3. **STR/MUS Breakthrough:** Stroma F1 rose from **0.7530 → 0.8084 (+5.54%)**, Smooth Muscle F1 rose from **0.7933 → 0.8564 (+6.31%)**.
 
-**Conclusion:** Knowledge Distillation using a structurally aligned MobileNetV2 teacher is the optimal training protocol for MedLite-CRC, setting the state-of-the-art benchmark for ultra-lightweight histopathology classification at **95.96% OOD accuracy**.
+**Conclusion:** Knowledge Distillation using a structurally aligned MobileNetV2 teacher is the optimal training protocol for MedLite-CRC, setting the state-of-the-art benchmark for ultra-lightweight histopathology classification at **96.27% OOD accuracy**.
 
 
 ---

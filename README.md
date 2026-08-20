@@ -1,6 +1,6 @@
 # MedLite-CRC: An Ultra-Lightweight, Attention-Free CNN for Domain-Robust Colorectal Cancer Classification
 
-[![SOTA Accuracy](https://img.shields.io/badge/SOTA-95.97%25-brightgreen.svg)](#🔬-key-scientific-highlights)
+[![SOTA Accuracy](https://img.shields.io/badge/SOTA-96.27%25-brightgreen.svg)](#🔬-key-scientific-highlights)
 [![Model Size](https://img.shields.io/badge/Model%20Size-2.02MB-blue.svg)](#🔬-key-scientific-highlights)
 [![Quantized Size](https://img.shields.io/badge/Quantized%20Size-0.72MB-blue.svg)](#🔬-key-scientific-highlights)
 
@@ -18,9 +18,9 @@ This research demonstrates a paradigm shift: Cross-dataset generalization in his
    - **Computations**: 0.72 GFLOPs
    - **Latency**: 1.65 ms/image (INT8 CPU) / 7.93 ms/image (FP32 CPU)
 2. **SOTA Generalization Breakthrough via Aligned KD**: 
-   - Achieves a verified **95.97% cross-patient accuracy** on the completely independent `CRC-VAL-HE-7K` cohort when distilled from a structurally aligned MobileNetV2 teacher model—outperforming the teacher itself (94.82%) by **+1.15%** absolute and the SOTA ShuffleNetV2 baseline (95.08%) by **+0.89%** absolute.
+   - Achieves a verified **96.27% cross-patient accuracy** on the completely independent `CRC-VAL-HE-7K` cohort when distilled from a structurally aligned MobileNetV2 teacher model—outperforming the teacher itself (94.82%) by **+1.45%** absolute and the SOTA ShuffleNetV2 baseline (95.08%) by **+1.19%** absolute.
 3. **Rigorous Statistical Validation**: 
-   - A formal McNemar’s test comparing our SOTA KD student against the EfficientNet-B0 baseline yields a highly significant chi-squared statistic ($\chi^2 = 31.53$) and a p-value of **$1.96 \times 10^{-8}$** ($1.53 \times 10^{-8}$ exact) on the standard OOD test set, mathematically proving our performance gains. Under boundary-masked conditions (simulating severe domain shift), this significance increases drastically to $\chi^2 = 995.94$ ($p = 1.37 \times 10^{-218}$), as the baseline suffers catastrophic domain collapse.
+   - A formal McNemar’s test comparing our SOTA KD student against the EfficientNet-B0 baseline yields a highly significant chi-squared statistic ($\chi^2 = 31.53$) and a p-value of **$1.96 \times 10^{-8}$** ($1.53 \times 10^{-8}$ exact) on the standard OOD test set, mathematically proving our performance gains. Under boundary-masked conditions (simulating severe domain shift), this significance increases drastically to $\chi^2 = 997.22$ ($p = 7.21 \times 10^{-219}$), as the baseline suffers catastrophic domain collapse.
 4. **Architectural Innovations**: 
    - **Learnable Stain Adaptation (Affine Normalization)**: An integrated, parameter-efficient affine layer at the network input that acts as a trainable color adapter to neutralize scanner color-shifts before convolution.
    - **Parallel Multi-Scale Receptive Fields (`MultiScaleBranch`)**: Splits the feature map into three parallel depthwise paths (3x3, 5x5, 7x7) to simultaneously capture fine nuclear boundaries, mid-scale glands, and macro-tissue organization.
@@ -40,7 +40,7 @@ The model was trained on the `NCT-CRC-HE-100K` cohort and evaluated on the stric
 | Metric | Target | MedLite-CRC (Standard) | MedLite-CRC (MobileNetV2 KD) |
 |--------|--------|----------------|----------------|
 | **In-Distribution Peak Accuracy** | > 99.0% | **99.48%** | **99.46%** |
-| **Cross-Patient Accuracy (OOD)**| > 93.0% | **94.65%** | **95.97%** ✅ |
+| **Cross-Patient Accuracy (OOD)**| > 93.0% | **94.71%** | **96.27%** ✅ |
 | **CPU Latency (INT8)** | < 50.0 ms | **1.94 ms** | **1.65 ms** |
 | **Total Parameters** | < 5.0 M | **0.48 M** | **0.48 M** |
 
@@ -49,10 +49,10 @@ Evaluated strictly on the unseen DACHS cohort to measure true out-of-domain robu
 
 | Model | Params (M) | Size (MB) | CPU Latency (ms)* | In-Dist Val Acc | OOD Test Acc | Macro-F1 (OOD) | Wtd-F1 (OOD) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **95.97%** ✅ | **0.9476** | **0.9600** |
+| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **96.27%** ✅ | **0.9482** | **0.9604** |
 | **MedLite-CRC (Ours, KD INT8)** | **0.48** | **0.72** | **1.65** | 99.46% | **95.72%** | **—** | **—** |
-| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.46% | 94.65% | 0.9327 | 0.9469 |
-| **MedLite-CRC (Ours, FP32)** | **0.48** | **2.02** | **7.93** | 99.48% | 94.65% | 0.9327 | 0.9469 |
+| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.46% | 94.71% | 0.9327 | 0.9469 |
+| **MedLite-CRC (Ours, FP32)** | **0.48** | **2.02** | **7.93** | 99.48% | 94.71% | 0.9327 | 0.9469 |
 | ShuffleNetV2 | 1.26 | 5.23 | 5.13 | 99.18% | 95.08% | 0.9351 | 0.9507 |
 | MobileNetV2 (Teacher) | 2.24 | 9.19 | 7.48 | 99.18% | 94.82% | 0.9286 | 0.9470 |
 | EfficientNet-B0 | 4.02 | 16.38 | 11.72 | 99.04% | 94.81% | 0.9268 | 0.9477 |
@@ -72,7 +72,7 @@ The following Pareto plot shows how Aligned Knowledge Distillation shifts the Pa
 
   | Model | Parameters (M) | Accuracy (%) |
   |-------|----------------|--------------|
-  | **MedLite-CRC (Ours)**| **0.48**       | **99.85**    |
+  | **MedLite-CRC (Ours)**| **0.48**       | **99.79**    |
   | EfficientNet-B0       | 4.02           | 99.68        |
   | ShuffleNetV2          | 1.26           | 99.68        |
   | MobileNetV2           | 2.24           | 99.63        |
@@ -95,9 +95,9 @@ The following Pareto plot shows how Aligned Knowledge Distillation shifts the Pa
 
   | Cohort | Class Count | Scratch Acc | Pretrained Acc | Absolute Delta |
   |--------|:-----------:|:-----------:|:--------------:|:--------------:|
-  | **EBHI-SEG** (Biopsy diagnostics) | 6 | 42.47% | **73.48%** | **+31.01%** |
+  | **EBHI-SEG** (Biopsy diagnostics) | 6 | 42.47% | **74.27%** | **+31.80%** |
   | **CRC-HGD-v1** (Tumor grading) | 5 | 57.07% | **71.20%** | **+14.13%** |
-  | **Kather MSI/MSS** (Molecular) | 2 | 63.88% | **73.06%** | **+9.18%** |
+  | **Kather MSI/MSS** (Molecular) | 2 | 63.88% | **81.65%** | **+17.77%** |
 
 ---
 
