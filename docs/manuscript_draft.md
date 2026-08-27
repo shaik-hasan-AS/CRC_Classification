@@ -58,35 +58,30 @@ More recent learnable models, like StainNet (Kang et al., 2021), utilize shallow
 
 The core architecture of MedLite-CRC is designed to maximize feature representation under a strict parameter budget. The network consists of: an input Stain Adaptation layer, a Stem block, a parallel Multi-Scale Branch, three Depthwise Residual Blocks, and a classifier head. The model diagram is shown below:
 
-```
-Input (224×224×3) 
-   │
-   ▼
-[LearnableStainNorm]  <── 6 parameters (dynamic scale/bias)
-   │
-   ▼
-[Stem Block]          <── Conv 3x3 (stride 2) + DW Conv 3x3 (112×112×32)
-   │
-   ▼
-[MultiScaleBranch]    <── Parallel DWS branches (3x3, 5x5, 7x7) + Fuse 1x1
-   │
-   ▼
-[MaxPool 2x2]         <── (56×56×128)
-   │
-   ▼
-[DWResBlock 1]        <── DWS Residual, stride 1 (56×56×128)
-   │
-   ▼
-[DWResBlock 2]        <── DWS Residual, stride 2 (28×28×256)
-   │
-   ▼
-[DWResBlock 3]        <── DWS Residual, stride 2 (14×14×256)
-   │
-   ▼
-[AdaptiveAvgPool]     <── Global Average Pooling (1×1×256)
-   │
-   ▼
-[Classifier Head]     <── FC -> BN -> ReLU6 -> Dropout(0.4) -> FC -> Output (9 classes)
+```mermaid
+graph TD
+    In["Input <br/> 224×224×3"] --> LSN["LearnableStainNorm <br/> 6 parameters: dynamic scale/bias"]
+    LSN --> Stem["Stem Block <br/> Conv 3x3, stride 2 + DW Conv 3x3 <br/> 112×112×32"]
+    Stem --> MSB["MultiScaleBranch <br/> Parallel DWS branches (3x3, 5x5, 7x7) + Fuse 1x1"]
+    MSB --> MaxP["MaxPool 2x2 <br/> 56×56×128"]
+    MaxP --> DWR1["DWResBlock 1 <br/> DWS Residual, stride 1 <br/> 56×56×128"]
+    DWR1 --> DWR2["DWResBlock 2 <br/> DWS Residual, stride 2 <br/> 28×28×256"]
+    DWR2 --> DWR3["DWResBlock 3 <br/> DWS Residual, stride 2 <br/> 14×14×256"]
+    DWR3 --> AAP["AdaptiveAvgPool <br/> Global Average Pooling <br/> 1×1×256"]
+    AAP --> ClassHead["Classifier Head <br/> FC -> BN -> ReLU6 -> Dropout(0.4) -> FC <br/> Output (9 classes)"]
+
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef inputNode fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#000;
+    classDef normNode fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000;
+    classDef convNode fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000;
+    classDef poolNode fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000;
+    classDef classNode fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000;
+
+    class In inputNode;
+    class LSN normNode;
+    class Stem,MSB,DWR1,DWR2,DWR3 convNode;
+    class MaxP,AAP poolNode;
+    class ClassHead classNode;
 ```
 
 ### 3.1 Learnable Stain Normalization
