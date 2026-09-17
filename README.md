@@ -18,7 +18,7 @@ This research demonstrates a paradigm shift: Cross-dataset generalization in his
    - **Computations**: 0.72 GFLOPs
    - **Latency**: 1.65 ms/image (INT8 CPU) / 7.93 ms/image (FP32 CPU)
 2. **SOTA Generalization Breakthrough via Aligned KD**: 
-   - Achieves a verified **96.27% cross-patient accuracy** on the completely independent `CRC-VAL-HE-7K` cohort when distilled from a structurally aligned MobileNetV2 teacher model—outperforming the teacher itself (94.82%) by **+1.45%** absolute and the SOTA ShuffleNetV2 baseline (95.08%) by **+1.19%** absolute.
+   - Achieves a verified **96.27% cross-patient validation accuracy** on the external `CRC-VAL-HE-7K` development cohort when distilled from a structurally aligned MobileNetV2 teacher model—outperforming the teacher itself (94.82%) by **+1.45%** absolute and the SOTA ShuffleNetV2 baseline (95.08%) by **+1.19%** absolute.
 3. **Rigorous Statistical Validation**: 
    - A formal McNemar’s test comparing our SOTA KD student against the EfficientNet-B0 baseline yields a highly significant chi-squared statistic ($\chi^2 = 31.53$) and a p-value of **$1.96 \times 10^{-8}$** ($1.53 \times 10^{-8}$ exact) on the standard OOD development/validation cohort, mathematically proving our performance gains. Under boundary-masked conditions (simulating severe domain shift), this significance increases drastically to $\chi^2 = 995.94$ ($p = 1.37 \times 10^{-218}$), as the baseline suffers catastrophic domain collapse.
 4. **Architectural Innovations**: 
@@ -35,7 +35,7 @@ This research demonstrates a paradigm shift: Cross-dataset generalization in his
 
 ## 📊 Current Results & Evaluation
 
-The model was trained on the `NCT-CRC-HE-100K` cohort and evaluated on the strictly non-overlapping `CRC-VAL-HE-7K` validation cohort.
+The model was trained on the `NCT-CRC-HE-100K` cohort and validated on the strictly non-overlapping `CRC-VAL-HE-7K` external validation cohort.
 
 | Metric | Target | MedLite-CRC (Standard) | MedLite-CRC (MobileNetV2 KD) |
 |--------|--------|----------------|----------------|
@@ -45,7 +45,7 @@ The model was trained on the `NCT-CRC-HE-100K` cohort and evaluated on the stric
 | **Total Parameters** | < 5.0 M | **0.48 M** | **0.48 M** |
 
 ### Baseline Comparisons (NCT-100K to CRC-7K Cross-Patient)
-Evaluated strictly on the unseen DACHS cohort to measure true out-of-domain robustness.
+Validated on the external DACHS cohort to measure out-of-domain robustness.
 
 | Model | Params (M) | Size (MB) | CPU Latency (ms)* | In-Dist Val Acc | OOD Val Acc | Macro-F1 (OOD) | Wtd-F1 (OOD) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |

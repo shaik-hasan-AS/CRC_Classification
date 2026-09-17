@@ -11,7 +11,7 @@ This logbook serves as the single source of truth for all quantitative metrics, 
    - **Images:** 100,000 tiles (9 classes, balanced)
    - **Role:** Source training and internal validation baseline.
 
-2. **CRC-VAL-HE-7K** (Out-of-Distribution Cross-Patient Test Set):
+2. **CRC-VAL-HE-7K** (Out-of-Distribution Cross-Patient Validation Set):
    - **Origin:** Germany (completely distinct patients, different scanners/hospitals)
    - **Images:** 7,180 tiles (9 classes, unbalanced)
    - **Role:** Standard OOD benchmark for clinical generalization.
@@ -163,7 +163,7 @@ This logbook serves as the single source of truth for all quantitative metrics, 
 
 ## 🔬 5. Statistical Significance Metrics (McNemar's Chi-Square)
 
-*Validated on CRC-VAL-HE-7K test set (7,180 images)*
+*Validated on CRC-VAL-HE-7K validation set (7,180 images)*
 
 ### A. Normal Conditions (MedLite-CRC SOTA vs. EfficientNet-B0)
 - **Contingency Table:**
@@ -187,7 +187,7 @@ This logbook serves as the single source of truth for all quantitative metrics, 
 
 ## 🎲 6. Multi-Seed Robustness & Statistical Validation
 
-*Comparing Baseline from-scratch models vs. V2 SOTA KD models across 3 random seeds (42, 123, 999) on the CRC-VAL-HE-7K test set.*
+*Comparing Baseline from-scratch models vs. V2 SOTA KD models across 3 random seeds (42, 123, 999) on the CRC-VAL-HE-7K validation set.*
 
 ### A. Baseline Model (From-Scratch / Ablation 3 / No KD)
 - **Seed 42:** Accuracy = 93.76%, Macro-F1 = 0.9214
@@ -239,8 +239,8 @@ All trials utilized consistent hyperparameter configurations (`epochs: 20` for H
 
 ## 📚 8. Competitive Benchmark Against Published Literature
 
-### A. NCT-CRC-HE-100K (Train) & CRC-VAL-HE-7K (OOD Test) Benchmark
-This table compares the parameter footprint and out-of-distribution test accuracy of **MedLite-CRC V2** against other representative models in literature trained on the exact same NCT-100K training dataset and evaluated on the CRC-VAL-HE-7K validation cohort:
+### A. NCT-CRC-HE-100K (Train) & CRC-VAL-HE-7K (OOD Validation) Benchmark
+This table compares the parameter footprint and out-of-distribution validation accuracy of **MedLite-CRC V2** against other representative models in literature trained on the exact same NCT-100K training dataset and evaluated on the CRC-VAL-HE-7K validation cohort:
 
 | Study & Citation | Model Architecture | Params (M) | Disk Size (MB) | OOD Accuracy (7K) |
 | :--- | :--- | :---: | :---: | :---: |

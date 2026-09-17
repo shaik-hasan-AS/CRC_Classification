@@ -10,7 +10,7 @@ Deep learning has revolutionized automated histopathological diagnosis, but stan
 
 To overcome domain shift and scanner-specific biases (e.g., JPEG artifacts and H&E stain variations), we introduce two novel modules: an end-to-end differentiable, six-parameter **Learnable Stain Adaptation Layer** and a **Depthwise Separable Multi-Scale Branch** (capturing 3×3, 5×5, and 7×7 receptive fields simultaneously). 
 
-We evaluate MedLite-CRC across three distinct datasets: NCT-CRC-HE-100K, STARC-9, and CRC-5000. Under standard training conditions, MedLite-CRC achieves a peak in-distribution accuracy of **99.48%** and an out-of-distribution, cross-patient validation accuracy of **94.71%** on the unseen CRC-VAL-HE-7K cohort. By introducing a Knowledge Distillation (KD) framework with a structurally aligned MobileNetV2 teacher model, MedLite-CRC generalizes exceptionally well, achieving a verified out-of-distribution accuracy of **96.27%** on the best checkpoint—outperforming the teacher itself (94.82%) by **+1.45%** absolute and the state-of-the-art ShuffleNetV2 baseline (95.08%) by **+1.19%** absolute, while requiring up to 48× fewer parameters than ResNet-50.
+We evaluate MedLite-CRC across three distinct datasets: NCT-CRC-HE-100K, STARC-9, and CRC-5000. Under standard training conditions, MedLite-CRC achieves a peak in-distribution accuracy of **99.48%** and an out-of-distribution, cross-patient validation accuracy of **94.71%** on the external CRC-VAL-HE-7K development cohort. By introducing a Knowledge Distillation (KD) framework with a structurally aligned MobileNetV2 teacher model, MedLite-CRC generalizes exceptionally well, achieving a verified out-of-distribution accuracy of **96.27%** on the best checkpoint—outperforming the teacher itself (94.82%) by **+1.45%** absolute and the state-of-the-art ShuffleNetV2 baseline (95.08%) by **+1.19%** absolute, while requiring up to 48× fewer parameters than ResNet-50.
 
 Furthermore, we benchmark our architecture on the massive 630,000-image STARC-9 dataset (NeurIPS 2025), achieving **99.79%** accuracy, proving that dataset scale acts as a natural regularizer for highly constrained networks. 
 
@@ -45,7 +45,7 @@ Early methods for automated CRC classification relied on manual feature extracti
 Recently, Li et al. (2025) proposed a custom lightweight CNN designed specifically for the NCT-100K dataset. However, their model still requires **4.41M parameters** (16.9 MB) to hit 99.0% accuracy, leaving a significant gap for ultra-low memory edge nodes.
 
 ### 2.2 Dataset Biases in Digital Pathology
-The vulnerability of deep models to dataset-specific biases is a growing concern. Ignatov & Malivenko (2024) analyzed the NCT-CRC-HE-100K dataset and showed that simple models using only raw RGB color histograms could achieve over 82% classification accuracy. They proved that many models "cheat" by memorizing class-specific JPEG compression signatures and H&E color variations introduced during scanning. This highlights the need for out-of-distribution (OOD) cross-patient testing on independent cohorts (such as CRC-VAL-HE-7K) and rigorous interpretability pipelines.
+The vulnerability of deep models to dataset-specific biases is a growing concern. Ignatov & Malivenko (2024) analyzed the NCT-CRC-HE-100K dataset and showed that simple models using only raw RGB color histograms could achieve over 82% classification accuracy. They proved that many models "cheat" by memorizing class-specific JPEG compression signatures and H&E color variations introduced during scanning. This highlights the need for out-of-distribution (OOD) cross-patient validation on independent cohorts (such as CRC-VAL-HE-7K) and rigorous interpretability pipelines.
 
 ### 2.3 Stain Normalization and Domain Shift
 Stain variation across laboratories is the primary cause of domain shift in digital pathology. Classic stain normalization methods, such as Reinhard et al. (2001) (matching global color statistics) and Macenko et al. (2009) (color deconvolution), require selecting a static reference image, which is user-dependent and slow. 
@@ -171,7 +171,7 @@ We evaluate MedLite-CRC (without the SEBlock, representing our final architectur
 
 #### Analysis:
 1.  **Parameter Efficiency:** MedLite-CRC (0.48M params) is **48× smaller** than ResNet-50 and **8.4× smaller** than EfficientNet-B0.
-2.  **Generalization Breakthrough under Knowledge Distillation:** When trained with Knowledge Distillation from a structurally aligned MobileNetV2 teacher model, MedLite-CRC achieves a **verified 96.27%** cross-patient accuracy on `CRC-VAL-HE-7K` (isolated). **Teacher Out-performance:** The distilled student network (0.48M parameters) systematically out-performs the teacher itself (**94.82%**) by **+1.45%** absolute. This confirms the hypothesis that when dark knowledge is distilled into a heavily bottlenecked architecture, the student acts as a domain-noise filter rather than a pure mimic.
+2.  **Generalization Breakthrough under Knowledge Distillation:** When trained with Knowledge Distillation from a structurally aligned MobileNetV2 teacher model, MedLite-CRC achieves a **verified 96.27%** cross-patient validation accuracy on `CRC-VAL-HE-7K`. **Teacher Out-performance:** The distilled student network (0.48M parameters) systematically out-performs the teacher itself (**94.82%**) by **+1.45%** absolute. This confirms the hypothesis that when dark knowledge is distilled into a heavily bottlenecked architecture, the student acts as a domain-noise filter rather than a pure mimic.
 3.  **Baseline Standard Generalization:** Even without KD, MedLite-CRC (Ablation 3) achieves **94.71%** accuracy on the out-of-distribution set, outperforming ResNet-50 (94.33%) and matching EfficientNet-B0 (94.81%) while occupying **23.5× less disk space** in its quantized INT8 form (0.72 MB).
 
 ### 5.2 SOTA Confusion Matrix & Per-Class Performance
@@ -207,7 +207,7 @@ This performance disparity increases the test statistic drastically to $\chi^2 =
 
 ### 5.4 Comprehensive State-of-the-Art (SOTA) Comparison
 
-We compare MedLite-CRC against a broad spectrum of published models in the colorectal cancer (CRC) histopathology classification category. To evaluate both parameter efficiency and domain robustness, we report the parameter count, model size, ImageNet pre-training dependency, and accuracy on both the in-distribution `NCT-CRC-HE-100K` test set (ID Acc) and the out-of-distribution, cross-patient `CRC-VAL-HE-7K` cohort (OOD Acc).
+We compare MedLite-CRC against a broad spectrum of published models in the colorectal cancer (CRC) histopathology classification category. To evaluate both parameter efficiency and domain robustness, we report the parameter count, model size, ImageNet pre-training dependency, and accuracy on both the in-distribution `NCT-CRC-HE-100K` validation set (ID Acc) and the out-of-distribution, cross-patient `CRC-VAL-HE-7K` cohort (OOD Acc).
 
 | Study / Model | Architecture | Params (M) | Disk (MB) | Pre-trained? | ID Acc (100K) | OOD Acc (7K) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -223,7 +223,7 @@ We compare MedLite-CRC against a broad spectrum of published models in the color
 | **MedLite-CRC (Ours - KD SOTA)** | **MedLite-CRC (Distilled, FP32)** | **0.48** | **2.02** | **No** | **99.46%** | **96.27%** |
 | **MedLite-CRC (Ours - KD INT8)** | **MedLite-CRC (Distilled, INT8)** | **0.48** | **0.72** | **No** | **99.46%** | **95.72%** |
 
-*\*Note: Accuracies reported with an asterisk represent studies that evaluated the cross-patient `CRC-VAL-HE-7K` cohort using random cross-validation rather than zero-shot cross-scanner inference. This methodology causes patient-level data leakage, inflating OOD performance metrics as the models memorize patient-specific scanner color balances.*
+*\*Note: Accuracies reported with an asterisk represent studies that evaluated the cross-patient `CRC-VAL-HE-7K` cohort using random cross-validation rather than standard cross-scanner validation inference. This methodology causes patient-level data leakage, inflating OOD performance metrics as the models memorize patient-specific scanner color balances.*
 
 Our MedLite-CRC architecture (in its quantized INT8 form) requires **orders of magnitude fewer parameters** (0.48M vs. VGG-19's 143.6M or ResNet-50's 23.5M) and occupies **22.5× less disk space** than the most efficient competing custom CNN (Li et al., 2025), while maintaining highly competitive verified OOD cross-patient generalization capability (96.27% under KD formulation). Unlike several competing approaches, MedLite-CRC achieves these results entirely from scratch without relying on ImageNet pre-training biases.
 
@@ -248,9 +248,9 @@ To establish generalizability, we benchmarked MedLite-CRC and our baselines on S
 On the massive STARC-9 cohort, our 0.48M parameter model outperforms all heavier baselines, including ResNet-50. On the noisy CRC-5000 cohort, generic lightweight models (MobileNet, ShuffleNet) collapsed due to overfitting to noise, while MedLite-CRC tied with the 10× larger EfficientNet-B0 at 92.00%. By further applying our MobileNetV2 Knowledge Distillation (KD) framework, MedLite-CRC achieves a new SOTA accuracy of **93.94%** on the CRC-5000 cohort, surpassing the teacher model itself (89.00%) by +4.94% absolute and the EfficientNet-B0 baseline by +1.94% absolute. On the saturated STARC-9 cohort, applying MobileNetV2 KD achieves **99.75%**, which is virtually identical to our standard from-scratch accuracy (99.79%), verifying that KD is redundant when the dataset scale is sufficiently large to act as a natural regularizer. This confirms that the regularization benefits of structurally aligned histopathology KD generalize robustly to noisy datasets with severe compression artifacts.
 
 ### 5.6 Expected Calibration Error & Confidence Calibration
-In clinical deployment, a deep learning model's confidence must reflect its true predictive accuracy to support reliable decision-making. We evaluated the confidence calibration of MedLite-CRC (Ablation 3 configuration) on the out-of-distribution `CRC-VAL-HE-7K` cohort before and after temperature scaling. 
+In clinical deployment, a deep learning model's confidence must reflect its true predictive accuracy to support reliable decision-making. We evaluated the confidence calibration of MedLite-CRC (Ablation 3 configuration) on the out-of-distribution `CRC-VAL-HE-7K` validation cohort before and after temperature scaling. 
 
-To calibrate the model, we optimized a single scalar Temperature parameter ($T$) using Negative Log Likelihood (NLL) on the NCT-100K validation split, obtaining $T = 0.4359$. We then evaluated the Expected Calibration Error (ECE) using 15 bins on the unseen `CRC-VAL-HE-7K` dataset:
+To calibrate the model, we optimized a single scalar Temperature parameter ($T$) using Negative Log Likelihood (NLL) on the NCT-100K validation split, obtaining $T = 0.4359$. We then evaluated the Expected Calibration Error (ECE) using 15 bins on the external `CRC-VAL-HE-7K` dataset:
 - **Uncalibrated ECE:** $14.41\%$
 - **Calibrated ECE ($T = 0.4359$):** $1.68\%$
 - **Absolute Calibration Error Reduction:** $12.73\%$ (an $88\%$ relative reduction)

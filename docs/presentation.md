@@ -25,7 +25,7 @@ This means most published models are not learning to recognize cancer tissue —
 This is the **scanner domain shift problem**: training and testing on the same scanner gives artificially inflated results.
 
 #### Problem 3 — Papers Report Inflated Accuracy Due to Data Leakage
-Several peer papers (e.g., Li et al. 2025, MSRANetV2 2025) report 99%+ accuracy on the validation dataset (`CRC-VAL-HE-7K`). However, they achieved this by applying random cross-validation *directly on the 7K dataset* — which contains tiles from only 25 patients. This puts tiles from the **same patient** in both training and test sets. The model memorizes patient-specific staining signatures. This is patient-level data leakage and is clinically invalid.
+Several peer papers (e.g., Li et al. 2025, MSRANetV2 2025) report 99%+ accuracy on the validation dataset (`CRC-VAL-HE-7K`). However, they achieved this by applying random cross-validation *directly on the 7K dataset* — which contains tiles from only 25 patients. This puts tiles from the **same patient** in both training and validation sets. The model memorizes patient-specific staining signatures. This is patient-level data leakage and is clinically invalid.
 
 > **See:** [`docs/comparative_literature_review.md §4`](./comparative_literature_review.md) for the detailed critique.
 
@@ -180,7 +180,7 @@ Standard lightweight baselines (MobileNetV2 89%, ShuffleNetV2 87%) collapsed on 
 
 ### McNemar's Test — Proving Statistical Significance
 
-We compared MedLite-CRC (KD) against EfficientNet-B0 on the 7,180-image OOD test set:
+We compared MedLite-CRC (KD) against EfficientNet-B0 on the 7,180-image OOD validation set:
 
 | | EfficientNet-B0 Correct | EfficientNet-B0 Wrong |
 |---|:---:|:---:|

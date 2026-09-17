@@ -71,7 +71,7 @@ Our model struggled to discriminate between Stroma (STR) and Smooth Muscle (MUS)
 
 ### The Result (Negative)
 The experiment initially seemed like an incredible success. On the internal `NCT-CRC-HE-100K` validation split, the model achieved a near-perfect **99.69% accuracy** and a **0.9968 Macro-F1 score**. The Stroma vs. Muscle confusion was mathematically eliminated.
-However, when evaluated on the unseen, cross-patient dataset (`CRC-VAL-HE-7K`), the model's accuracy dropped to **94.76%**. Critically, the Stroma recall plummeted to **57.48%** and Muscle precision dropped to **76.72%**.
+However, when evaluated on the external, cross-patient validation dataset (`CRC-VAL-HE-7K`), the model's accuracy dropped to **94.76%**. Critically, the Stroma recall plummeted to **57.48%** and Muscle precision dropped to **76.72%**.
 
 ### The Scientific Conclusion
 The Focal Loss and Pairwise Confusion Penalty caused the model to severely **overfit to the source domain**. By heavily weighting the hardest Stroma examples in the training set, the network "memorized" the specific color profiles, scanning artifacts, and texture signatures of Stroma within the `NCT-CRC-HE-100K` cohort. When presented with Stroma from completely new patients with different H&E staining characteristics in the validation set, the model failed to generalize and defaulted to calling it Muscle.
@@ -144,7 +144,7 @@ Resolve the fatal domain shift between NCT-CRC-HE-100K and STARC-9 by combining 
 *   **Taxonomy:** 11 Classes (`ADI`, `BACK`, `BLD`, `DEB`, `LYM`, `MUC`, `MUS`, `NORM`, `NOR_STANFORD`, `STR`, `TUM`).
 *   **Hardware:** RTX 4060 (15 Epochs, ~25 mins/epoch).
 
-**Results on Out-Of-Distribution Benchmark (CRC-VAL-HE-7K):**
+**Results on Out-Of-Distribution Validation (CRC-VAL-HE-7K):**
 *   **Accuracy:** 93.50%
 *   **Weighted F1:** 0.9339
 
@@ -179,7 +179,7 @@ The model failed spectacularly, predicting almost every saturated patch as "Back
 ### The Trade-off in Computational Pathology
 We have empirically proven the absolute limits of Data-Scaling vs. Augmentation:
 1. **Structure-Forcing (Grayscale Dropout / Extreme Noise):** Forces the model to ignore color entirely. This provides extreme robustness to ancient, badly-stained datasets (like CRC-5000), but physically destroys its ability to learn delicate, modern cell structures (crashing performance on Lymphocytes and Stroma).
-2. **Data-Scaling (Massive Multi-Centric Data, No Augmentation):** Allows the network to perfectly learn delicate cellular morphologies (achieving 93.50% on unseen modern hospital data like CRC-VAL-HE-7K). However, without forced color blindness, it loses all generalization capabilities against extreme color shifts found in legacy datasets.
+2. **Data-Scaling (Massive Multi-Centric Data, No Augmentation):** Allows the network to perfectly learn delicate cellular morphologies (achieving 93.50% on external modern hospital validation data like CRC-VAL-HE-7K). However, without forced color blindness, it loses all generalization capabilities against extreme color shifts found in legacy datasets.
 
 ---
 
@@ -240,7 +240,7 @@ Knowledge Distillation (KD) transfers "dark knowledge" (soft class probability d
 ### The Result (Verified — Isolated Eval on ckpt_epoch027_acc0.9912.pt)
 The student model trained with KD from EfficientNet-B0 achieved (7,180 image isolated CPU eval):
 - **NCT-100K Val Acc (in-distribution):** **99.12%** (best val checkpoint epoch 27)
-- **OOD 7K Test Acc (CRC-VAL-HE-7K):** **94.35%** ✅
+- **OOD 7K Val Acc (CRC-VAL-HE-7K):** **94.35%** ✅
 - **Macro F1 (OOD):** **0.9262**
 - **Weighted F1 (OOD):** **0.9437**
 
@@ -272,7 +272,7 @@ Following the suboptimal results with EfficientNet-B0, we hypothesized that the 
 ### The Result (Highly Successful — Verified)
 The student model trained with MobileNetV2 KD achieved (evaluated on best checkpoint `ckpt_epoch058_acc0.9946.pt`, isolated CPU eval on 7,180 images):
 - **NCT-100K Val Acc (in-distribution):** **99.46%**
-- **OOD 7K Test Acc (CRC-VAL-HE-7K):** **96.27%** ✅ (Best overall result)
+- **OOD 7K Val Acc (CRC-VAL-HE-7K):** **96.27%** ✅ (Best overall result)
 - **Macro F1 (OOD):** **0.9482**
 - **Weighted F1 (OOD):** **0.9604**
 

@@ -6,7 +6,7 @@ This document consolidates the supplementary research analyses, experimental log
 
 ## 1. The 9 Colorectal Cancer Tissue Classes: Biological Breakdown
 
-To understand how the convolutional neural network processes tissue morphology, it is essential to map the biological characteristics of the 9 classes in the `NCT-CRC-HE-100K` and `CRC-VAL-HE-7K` cohorts:
+To understand how the convolutional neural network processes tissue morphology, it is essential to map the biological characteristics of the 9 classes in the `NCT-CRC-HE-100K` and `CRC-VAL-HE-7K` validation cohorts:
 
 1. **ADI (Adipose):** Fat tissue. Visually characterized by large, empty white vacuole bubbles with thin peripheral pink boundaries. High classification accuracy due to unique structural layout.
 2. **BACK (Background):** Empty slide glass containing only white space.
@@ -32,7 +32,7 @@ MedLite-CRC operates at the intersection of ultra-lightweight architecture desig
 - **MedLite-CRC (Ours):** Achieves **99.48%** in-distribution peak accuracy using only **0.48 Million parameters** (9.2× smaller) and occupies **0.72 MB** in INT8 format (23.5× smaller).
 
 ### 2.2 Train-from-Scratch Generalization
-When trained strictly from scratch (without ImageNet pre-training) on NCT-100K and evaluated on the out-of-distribution (OOD) `CRC-VAL-HE-7K` cohort:
+When trained strictly from scratch (without ImageNet pre-training) on NCT-100K and evaluated on the out-of-distribution (OOD) `CRC-VAL-HE-7K` validation cohort:
 - Standard architectures drop in accuracy (EfficientNet-B0: 94.81%, ResNet-50: 94.33%).
 - MedLite-CRC V1 achieves **94.71%** natively, and its MobileNetV2 KD-distilled counterpart hits a SOTA **96.27%** accuracy, outperforming models up to 48× larger.
 
@@ -72,7 +72,7 @@ These results indicate that pre-training on NCT-100K under our MobileNetV2 knowl
 
 ## 3. Statistical Significance (McNemar's Test)
 
-To prove that the performance gains of MedLite-CRC (KD Student) are statistically significant and not due to random initialization, we performed a McNemar's test against the 8× larger EfficientNet-B0 baseline on the 7,180-image `CRC-VAL-HE-7K` cohort.
+To prove that the performance gains of MedLite-CRC (KD Student) are statistically significant and not due to random initialization, we performed a McNemar's test against the 8× larger EfficientNet-B0 baseline on the 7,180-image `CRC-VAL-HE-7K` validation cohort.
 
 ### 3.1 Primary Analysis: Optimal Configurations
 We compare the models under their respective configurations (MedLite-CRC KD at 96.27% accuracy vs. EfficientNet-B0 unmasked at 94.81% accuracy):
@@ -133,7 +133,7 @@ We calculated the mathematical alignment score (overlap between the top-20% hott
 ### 5.2 V2 boundary Artifact Mitigation (Reflect Padding & Border Masking)
 Standard zero-padding in convolutional networks creates a sharp artificial contrast (discontinuity) at the margins of histopathology patches, causing the model to learn "border ring" artifacts (especially on low-density tissue like adipose).
 
-We evaluated the V2 model configuration (incorporating reflection padding and 8px border masking) on the `CRC-VAL-HE-7K` cohort:
+We evaluated the V2 model configuration (incorporating reflection padding and 8px border masking) on the `CRC-VAL-HE-7K` validation cohort:
 
 | Metric / Configuration | V1 Baseline (Zero Pad, Unmasked) | V1 Masked (Zero Pad, 8px Mask) | V2 Mitigated (Reflect Pad, 8px Mask) |
 | :--- | :---: | :---: | :---: |

@@ -11,7 +11,7 @@ Histopathology models are highly sensitive to dataset biases. We audit target be
 | Dataset / Cohort | Sample Count | Resolution | Staining & Scanner Domain | Target Generalization Validation |
 | :--- | :---: | :---: | :--- | :--- |
 | **NCT-CRC-HE-100K** | 100,000 tiles | $224\times224$ | NCT Heidelberg (Germany); multi-centric, normalized | **In-Distribution (ID)**: Evaluates classification within the same scanner domain. |
-| **CRC-VAL-HE-7K** | 7,180 tiles | $224\times224$ | DACHS Study (Mannheim, Germany); separate patients/scanners | **Out-of-Distribution (OOD)**: Cross-patient, cross-scanner clinical generalization. |
+| **CRC-VAL-HE-7K** | 7,180 tiles | $224\times224$ | DACHS Study (Mannheim, Germany); separate patients/scanners | **Out-of-Distribution (OOD)**: Cross-patient, cross-scanner clinical validation. |
 | **STARC-9** *(Stanford)* | 630,000 tiles | $256\times256$ | Stanford Medical Center; high-resolution scanners | **Scale Generalization**: Evaluates performance on large, pathologist-verified clinical data. |
 | **CRC-5000** *(Legacy)* | 5,000 tiles | $150\times150$ | Multi-source legacy slides; highly saturated, noisy | **Noise-Resilience**: Evaluates robustness to low-resolution and variable stain qualities. |
 
@@ -98,7 +98,7 @@ To understand how various models perform, we audit their underlying architecture
 ### A. The CRC-VAL-HE-7K Patient Data Leakage (Li et al. [2] & MSRANetV2 [14])
 * **Factual Critique:** Custom studies like Li et al. (2025) and MSRANetV2 (2025) report accuracies of **99.05%** on the validation cohort. However, close inspection of their methodology reveals they applied **5-fold stratified cross-validation directly on the CRC-VAL-HE-7K dataset** to evaluate their models.
 * **The Leakage Mechanism:** The `CRC-VAL-HE-7K` dataset contains 7,180 tiles extracted from only **25 patients**. When random cross-validation or standard 80/20 splits are applied directly to the 7K dataset, tiles from the *same patient* are distributed across both the training and validation splits. The models memorize patient-specific scanner color balances, section thicknesses, and scanning signatures, inflating accuracy. 
-* **The Reality:** A true out-of-distribution (OOD) validation requires training on `NCT-CRC-HE-100K` (86 patients, NCT Heidelberg scanner) and testing zero-shot on the entirely unseen `CRC-VAL-HE-7K` dataset (50 patients, Mannheim scanner). When evaluated under this strict clinic-level shift, custom lightweight models drop back to the ~94% baseline.
+* **The Reality:** A true out-of-distribution (OOD) validation requires training on `NCT-CRC-HE-100K` (86 patients, NCT Heidelberg scanner) and performing cross-patient validation on the external `CRC-VAL-HE-7K` dataset (50 patients, Mannheim scanner). When evaluated under this strict clinic-level shift, custom lightweight models drop back to the ~94% baseline.
 
 ### B. The In-Distribution Evaluation Trap (CRCCN-Net [4] & FabNet [15])
 * **Factual Critique:** Custom lightweight CNN models like **CRCCN-Net (Uddin et al., 2023)** and **FabNet (Amin & Ahn, 2023)** report high accuracies (96.26% and 99.00%) but completely omit OOD validation on the independent `CRC-VAL-HE-7K` dataset. They trained and tested using internal splits of `NCT-CRC-HE-100K`.

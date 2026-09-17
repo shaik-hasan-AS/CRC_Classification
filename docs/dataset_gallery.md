@@ -15,7 +15,7 @@ This gallery showcases sample patch-level and biopsy-level images for all pathol
 
 ---
 
-## CRC-VAL-HE-7K (Germany, Out-of-Distribution Test)
+## CRC-VAL-HE-7K (Germany, Out-of-Distribution Validation)
 | Class | Sample Image |
 | :--- | :--- |
 | **ADI** | ![ADI](../assets/val7k_adi.png) |
