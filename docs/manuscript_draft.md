@@ -263,7 +263,7 @@ Applying temperature scaling successfully aligns the model's confidence scores w
 
 ## 6. Ablation Studies & The Attention Paradox
 
-To systematically validate each component, we performed a leave-one-out ablation study on the `CRC-VAL-HE-7K` validation set.
+To systematically validate each component, we performed a leave-one-out ablation study on the `CRC-VAL-HE-7K` validation set. Each configuration in the principal ablation table was trained once with a fixed random seed (seed 42) due to computational constraints. However, to ensure the stability of our most critical claims, the Baseline CNN and the final KD MobileNetV2 SOTA configurations were strictly verified across three random seeds. The Baseline CNN yielded $94.05\\% \\pm 0.46\\%$, while the KD MobileNetV2 student yielded $95.73\\% \\pm 0.21\\%$, confirming that the accuracy gains from architectural improvements and Knowledge Distillation represent true structural advantages rather than variance artifacts.
 
 | Model Configuration | Parameters | GFLOPs | Size (disk) | Latency (ms) | Accuracy | Macro F1 | Wtd F1 |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
