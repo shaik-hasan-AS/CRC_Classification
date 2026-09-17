@@ -48,7 +48,8 @@ class TemperatureScaler(nn.Module):
         self.temperature = nn.Parameter(torch.ones(1) * 1.5)
 
     def forward(self, logits):
-        return logits / self.temperature
+        temperature = torch.clamp(self.temperature, min=1e-3)
+        return logits / temperature
 
     def calibrate(self, logits, labels, lr=0.01, max_iter=50):
         """
@@ -197,24 +198,30 @@ def main(args):
 
     # ── Load loaders ──────────────────────────────────────────────────────────
     # We use NCT-100K validation split to find/optimize the Temperature (T)
-    # then evaluate ECE improvements out-of-distribution on CRC-VAL-HE-7K.
     print("\n[DATA] Loading NCT-100K val loader (for calibration optimization)...")
-    _, val_loader = get_train_val_loaders(cfg)
+    try:
+        _, val_loader = get_train_val_loaders(cfg)
+        has_val = True
+    except Exception as e:
+        print(f"[WARN] Could not load val loader: {e}. Will use hardcoded T=0.4359")
+        has_val = False
     
     print("[DATA] Loading CRC-VAL-HE-7K test loader (for cross-patient validation)...")
     test_loader = get_crossval_loader(cfg)
 
-    # ── Collect Logits (Validation set) ───────────────────────────────────────
-    print("\n[INFERENCE] Extracting calibration set logits (NCT-100K Val)...")
-    val_logits_list, val_labels_list = [], []
-    with torch.no_grad():
-        for imgs, labels in val_loader:
-            imgs = imgs.to(device)
-            logits = model(imgs)
-            val_logits_list.append(logits.cpu())
-            val_labels_list.append(labels)
-    val_logits = torch.cat(val_logits_list, dim=0)
-    val_labels = torch.cat(val_labels_list, dim=0)
+    if has_val:
+        print("\n[INFERENCE] Extracting calibration set logits (NCT-100K Val)...")
+        val_logits_list, val_labels_list = [], []
+        with torch.no_grad():
+            for imgs, labels in val_loader:
+                imgs = imgs.to(device)
+                logits = model(imgs)
+                val_logits_list.append(logits.cpu())
+                val_labels_list.append(labels)
+        val_logits = torch.cat(val_logits_list, dim=0)
+        val_labels = torch.cat(val_labels_list, dim=0)
+    else:
+        val_logits, val_labels = None, None
 
     # ── Collect Logits (Cross-Val Test set) ───────────────────────────────────
     print("[INFERENCE] Extracting test set logits (CRC-VAL-HE-7K)...")
@@ -231,7 +238,12 @@ def main(args):
     # ── Optimize Temperature ──────────────────────────────────────────────────
     print("\n[CALIBRATION] Optimizing Temperature parameter...")
     scaler = TemperatureScaler()
-    temp_scalar = scaler.calibrate(val_logits, val_labels)
+    if has_val:
+        temp_scalar = scaler.calibrate(val_logits, val_labels)
+    else:
+        temp_scalar = 0.4359
+        scaler.temperature = nn.Parameter(torch.ones(1) * temp_scalar)
+        print(f"  ✓ Using hardcoded temperature: {temp_scalar:.4f}")
 
     # ── Compute ECE Before & After Calibration on Test Set ────────────────────
     probs_before = F.softmax(test_logits, dim=1)

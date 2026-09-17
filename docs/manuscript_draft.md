@@ -250,10 +250,10 @@ On the massive STARC-9 cohort, our 0.48M parameter model outperforms all heavier
 ### 5.6 Expected Calibration Error & Confidence Calibration
 In clinical deployment, a deep learning model's confidence must reflect its true predictive accuracy to support reliable decision-making. We evaluated the confidence calibration of MedLite-CRC (Ablation 3 configuration) on the out-of-distribution `CRC-VAL-HE-7K` validation cohort before and after temperature scaling. 
 
-To calibrate the model, we optimized a single scalar Temperature parameter ($T$) using Negative Log Likelihood (NLL) on the NCT-100K validation split, obtaining $T = -13.595$. We then evaluated the Expected Calibration Error (ECE) using 15 bins on the external `CRC-VAL-HE-7K` dataset:
-- **Uncalibrated ECE:** $14.41\%$
-- **Calibrated ECE ($T = -13.595$):** $1.68\\\%$
-- **Absolute Calibration Error Reduction:** $12.73\%$ (an $88\%$ relative reduction)
+To calibrate the model, we optimized a single scalar Temperature parameter ($T$) using Negative Log Likelihood (NLL) on the NCT-100K validation split, obtaining $T = 0.4359$. We then evaluated the Expected Calibration Error (ECE) using 15 bins on the external `CRC-VAL-HE-7K` dataset:
+- **Uncalibrated ECE:** $14.35\\%$
+- **Calibrated ECE ($T = 0.4359$):** $1.75\\\%$
+- **Absolute Calibration Error Reduction:** $12.61\\\%$ (an $88\%$ relative reduction)
 
 Applying temperature scaling successfully aligns the model's confidence scores with its actual predictive accuracy. This ensures that high confidence predictions correlate strongly with correct classifications, improving confidence calibration on the evaluated OOD cohort. The reliability diagram is illustrated below:
 
