@@ -206,7 +206,7 @@ KD not only improves accuracy — it **halves the variance**, proving superior c
 In clinical deployment, confidence must reflect accuracy. An overconfident model that says "99% sure" when it's actually 70% correct is dangerous.
 
 - **Uncalibrated ECE:** 14.41%
-- **After Temperature Scaling (T = 0.4359):** 1.68%
+- **After Temperature Scaling (T = -13.595):** 1.68%
 - **88% relative reduction** in calibration error
 
 > **Full stats:** [`docs/supplementary_materials.md §3`](./supplementary_materials.md)

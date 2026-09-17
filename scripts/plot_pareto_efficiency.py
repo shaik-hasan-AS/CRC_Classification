@@ -15,7 +15,7 @@ def main():
     models = {
         "MedLite-CRC (Standard)": {
             "params": 0.48,
-            "accuracy": 94.65,
+            "accuracy": 94.71,
             "latency": 7.93,
             "size": 2.02,
             "color": "#1f77b4",
@@ -24,7 +24,7 @@ def main():
         },
         "MedLite-CRC (MobileNetV2 KD)": {
             "params": 0.48,
-            "accuracy": 95.97,
+            "accuracy": 96.27,
             "latency": 7.93,
             "size": 2.02,
             "color": "#e377c2",

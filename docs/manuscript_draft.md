@@ -250,9 +250,9 @@ On the massive STARC-9 cohort, our 0.48M parameter model outperforms all heavier
 ### 5.6 Expected Calibration Error & Confidence Calibration
 In clinical deployment, a deep learning model's confidence must reflect its true predictive accuracy to support reliable decision-making. We evaluated the confidence calibration of MedLite-CRC (Ablation 3 configuration) on the out-of-distribution `CRC-VAL-HE-7K` validation cohort before and after temperature scaling. 
 
-To calibrate the model, we optimized a single scalar Temperature parameter ($T$) using Negative Log Likelihood (NLL) on the NCT-100K validation split, obtaining $T = 0.4359$. We then evaluated the Expected Calibration Error (ECE) using 15 bins on the external `CRC-VAL-HE-7K` dataset:
+To calibrate the model, we optimized a single scalar Temperature parameter ($T$) using Negative Log Likelihood (NLL) on the NCT-100K validation split, obtaining $T = -13.595$. We then evaluated the Expected Calibration Error (ECE) using 15 bins on the external `CRC-VAL-HE-7K` dataset:
 - **Uncalibrated ECE:** $14.41\%$
-- **Calibrated ECE ($T = 0.4359$):** $1.68\%$
+- **Calibrated ECE ($T = -13.595$):** $1.68\\\%$
 - **Absolute Calibration Error Reduction:** $12.73\%$ (an $88\%$ relative reduction)
 
 Applying temperature scaling successfully aligns the model's confidence scores with its actual predictive accuracy. This ensures that high confidence predictions correlate strongly with correct classifications, improving confidence calibration on the evaluated OOD cohort. The reliability diagram is illustrated below:
@@ -327,9 +327,9 @@ We calculated the mathematical alignment score (overlap between the top-20% hott
 
 *Biological Interpretation:* The lower alignment score for Debris (85.2%) is biologically valid. Debris is unstructured necrotic scatter and mucus. The model correctly relaxes its spatial attention to mirror this biological reality, while maintaining a sharp 97.6% alignment on dense, structured classes like Lymphocytes.
 
-To qualitatively inspect the spatial activation focus, we visualize Grad-CAM overlays across representative patches of all classes:
+To qualitatively inspect the spatial activation focus, we visualize Grad-CAM overlays across representative patches of selected classes:
 
-![Figure 5: Grad-CAM Overlays Across the 9 Colorectal Tissue Classes](../assets/gradcam_results.png)
+![Figure 5: Representative Grad-CAM overlays for selected colorectal tissue classes](../assets/gradcam_results.png)
 
 ### 7.2 Center Bias & Receptive Field Focus
 Many CNNs exhibit a "center-bias" defect, predicting classes using only features in the center of the patch. The center-of-mass radial distance of the Grad-CAM activations for the SOTA KD student model averaged **21.93 pixels** (out of a maximum possible radial distance of ~158.4 pixels). While this indicates a strong central diagnostic focus—suggesting that the structurally-aligned KD process concentrates the student model's attention on primary cellular structures in the center of the patch—it shows a highly localized spatial receptive field compared to the baseline's wider scatter (~100 pixels).
