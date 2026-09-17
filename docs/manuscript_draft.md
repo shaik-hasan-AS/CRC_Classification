@@ -1,4 +1,4 @@
-# MedLite-CRC: An Ultra-Lightweight, Attention-Free CNN for Domain-Robust Colorectal Cancer Classification
+# MedLite-CRC: An Ultra-Lightweight, Attention-Free CNN for Cross-Cohort Colorectal Histopathology Tissue Classification
 
 **Author:** Shaik Hasan A S
   
@@ -6,7 +6,7 @@
 ---
 
 ## Abstract
-Deep learning has revolutionized automated histopathological diagnosis, but standard state-of-the-art (SOTA) architectures are computationally heavy (11M to 30M+ parameters) and highly sensitive to scanner domain shift. In this study, we present **MedLite-CRC**, an ultra-lightweight Convolutional Neural Network (CNN) specifically designed for colorectal cancer (CRC) tissue classification on memory-constrained edge devices. MedLite-CRC consists of only **0.48 Million parameters** and has an INT8 quantized disk footprint of **0.72 MB**, delivering an inference latency of **1.65 ms** on standard edge CPUs. 
+Deep learning has revolutionized automated histopathology tissue classification, but standard state-of-the-art (SOTA) architectures are computationally heavy (11M to 30M+ parameters) and highly sensitive to scanner domain shift. In this study, we present **MedLite-CRC**, an ultra-lightweight Convolutional Neural Network (CNN) specifically designed for colorectal tissue classification on memory-constrained edge devices. MedLite-CRC consists of only **0.48 Million parameters** and has an INT8 quantized disk footprint of **0.72 MB**, delivering an inference latency of **1.65 ms** on standard edge CPUs. 
 
 To overcome domain shift and scanner-specific biases (e.g., JPEG artifacts and H&E stain variations), we introduce two novel modules: an end-to-end differentiable, six-parameter **Learnable Stain Adaptation Layer** and a **Depthwise Separable Multi-Scale Branch** (capturing 3×3, 5×5, and 7×7 receptive fields simultaneously). 
 
@@ -39,7 +39,7 @@ Our main contributions are:
 
 ## 2. Related Work
 
-### 2.1 Colorectal Cancer Classification
+### 2.1 Colorectal Histopathology Classification
 Early methods for automated CRC classification relied on manual feature extraction (e.g., local binary patterns, color histograms) followed by support vector machines. These were superseded by deep convolutional neural networks. While models like ResNet-50 and EfficientNet-B0 achieve near-perfect classification accuracy on public benchmarks, their large size makes them unsuited for edge deployment. 
 
 Recently, Li et al. (2025) proposed a custom lightweight CNN designed specifically for the NCT-100K dataset. However, their model still requires **4.41M parameters** (16.9 MB) to hit 99.0% accuracy, leaving a significant gap for ultra-low memory edge nodes.
@@ -354,7 +354,7 @@ To verify the semantic layout and domain invariance of our learned representatio
 ![Figure 7: t-SNE Projection of GAP Features Colored by Scanner/Patient Origin](../assets/tsne_scanner_origin.png)
 
 ### 7.7 Cross-Cohort Downstream Generalization & Transfer Learning Validation
-To evaluate the clinical transferability and semantic generality of the learned feature representations of our distilled MedLite-CRC (V1) checkpoint, we conducted a transfer learning study on three independent external downstream cohorts representing distinct diagnostic tasks:
+To evaluate the clinical transferability and semantic generality of the learned feature representations of our distilled MedLite-CRC (V1) checkpoint, we conducted a transfer learning study on three independent external downstream cohorts representing distinct downstream histopathology tasks:
 1. **EBHI-SEG** (6-class biopsy diagnostics, 2,228 histology images; Shi et al., 2023)
 2. **CRC-HGD-v1** (5-class histopathology grading, 1,914 tiles; Wang et al., 2026)
 3. **Kather MSI/MSS** (2-class molecular phenotype classification, 139,143 tiles)

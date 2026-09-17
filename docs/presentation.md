@@ -257,7 +257,7 @@ We extracted 256-dimensional feature vectors from all 7,180 test images and proj
 
 ## Part 7: Cross-Cohort Transfer Learning (Proving the Features Are Clinically General)
 
-This is perhaps the most clinically significant result. We took the pre-trained MedLite-CRC weights and fine-tuned them on **three completely different diagnostic tasks** with entirely different class taxonomies. We compared against training the same architecture from scratch.
+This is perhaps the most clinically significant result. We took the pre-trained MedLite-CRC weights and fine-tuned them on **three completely different downstream histopathology tasks** with entirely different class taxonomies. We compared against training the same architecture from scratch.
 
 ### The Three Downstream Cohorts
 

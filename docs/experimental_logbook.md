@@ -212,7 +212,7 @@ This logbook serves as the single source of truth for all quantitative metrics, 
 
 ## 🩺 7. Cross-Cohort Generalization & Transfer Learning Validation
 
-To evaluate the clinical transferability of the learned feature representations of our SOTA checkpoint, we fine-tuned MedLite-CRC (both from scratch and utilizing pretrained SOTA weights) on three external downstream cohorts representing different diagnostic tasks:
+To evaluate the clinical transferability of the learned feature representations of our SOTA checkpoint, we fine-tuned MedLite-CRC (both from scratch and utilizing pretrained SOTA weights) on three external downstream cohorts representing different downstream histopathology tasks:
 1. **EBHI-SEG** (6-class biopsy diagnostics, 2,228 images total; Shi et al., 2023)
 2. **CRC-HGD-v1** (5-class histopathology grading, 1,914 images total)
 3. **Kather MSI/MSS** (2-class molecular phenotype classification, 139,143 images total)
