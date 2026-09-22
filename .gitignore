@@ -17,4 +17,8 @@ __pycache__/
 *.pyc
 .antigravity/
 
+# Temporary generated files
+configs/temp_*.yaml
+
+
 

@@ -197,16 +197,16 @@ This logbook serves as the single source of truth for all quantitative metrics, 
   - **Mean Accuracy:** **94.05%** (± 0.46%)
   - **Mean Macro-F1:** **0.9238** (± 0.0060)
 
-### B. V2 SOTA Model (MobileNetV2 KD + Reflect Padding + 8px Border Mask)
-- **Seed 42:** Accuracy = 95.78%, Macro-F1 = 0.9453
-- **Seed 123:** Accuracy = 95.96%, Macro-F1 = 0.9472
-- **Seed 999:** Accuracy = 95.46%, Macro-F1 = 0.9408
+### B. KD SOTA Model (MobileNetV2 KD)
+- **Seed 42:** Accuracy = 96.27%, Macro-F1 = 0.9482
+- **Seed 43:** Accuracy = 96.44%, Macro-F1 = 0.9541
+- **Seed 44:** Accuracy = 96.70%, Macro-F1 = 0.9588
 - **Summary statistics:**
-  - **Mean Accuracy:** **95.73%** (± 0.21%)
-  - **Mean Macro-F1:** **0.9444** (± 0.0027)
+  - **Mean Accuracy:** **96.47%** (± 0.22%)
+  - **Mean Macro-F1:** **0.9537** (± 0.0053)
 
 > [!NOTE]
-> The V2 SOTA model not only increases out-of-distribution performance by **1.68% (absolute)**, but also halves the variance across random initializations (standard deviation drops from **0.46%** to **0.21%**), demonstrating superior convergence stability under knowledge distillation.
+> The fully-converged KD SOTA model increases out-of-distribution performance by **2.42% (absolute)** over the Baseline, and halves the variance across random initializations (standard deviation drops from **0.46%** to **0.22%**), demonstrating superior convergence stability under knowledge distillation.
 
 ---
 
@@ -254,7 +254,7 @@ This table compares the parameter footprint and out-of-distribution validation a
 | **Common Pathology Baselines** [4] | MobileNetV3-Small | 1.52M | 5.40 MB | **94.10%** |
 | **Standard Swin Transformer** [5] | Swin-T | 28.3M | 114.0 MB | **96.30%** |
 | **MedLite-CRC V2 (Ours - Standard)** | MedLite-CRC (Scratch) | **0.48M** | 2.02 MB | **94.71%** |
-| **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **2.02 MB (FP32)** | **95.96% (Mean: 95.73% ± 0.21%)** |
+| **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **2.02 MB (FP32)** | **96.70% (Mean: 96.47% ± 0.22%)** |
 | **MedLite-CRC V2 (Ours - KD INT8)** | MedLite-CRC + KD (INT8) | **0.48M** | **0.72 MB** | **95.72%** |
 
 ### B. CRC-5000 Cohort (8-Class Benchmark)

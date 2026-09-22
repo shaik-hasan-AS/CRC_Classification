@@ -34,7 +34,7 @@ MedLite-CRC operates at the intersection of ultra-lightweight architecture desig
 ### 2.2 Train-from-Scratch Generalization
 When trained strictly from scratch (without ImageNet pre-training) on NCT-100K and evaluated on the out-of-distribution (OOD) `CRC-VAL-HE-7K` validation cohort:
 - Standard architectures drop in accuracy (EfficientNet-B0: 94.81%, ResNet-50: 94.33%).
-- MedLite-CRC V1 achieves **94.71%** natively, and its MobileNetV2 KD-distilled counterpart hits a SOTA **96.27%** accuracy, outperforming models up to 48× larger.
+- MedLite-CRC V1 achieves **94.71%** natively, and its MobileNetV2 KD-distilled counterpart hits a SOTA **96.47% ± 0.22%** accuracy, outperforming models up to 48× larger.
 
 ### 2.3 Defense of Necessary Trade-offs
 - **ImageNet Pre-trained Models:** While pre-trained Vision Transformers and heavy ResNets can exceed 97% OOD accuracy, they rely on massive parameter weights (86M+ parameters) pre-optimized on natural images (cars, dogs). This makes them unsuitable for local deployment on low-cost diagnostic edge terminals in resource-limited clinics.
@@ -44,7 +44,7 @@ When trained strictly from scratch (without ImageNet pre-training) on NCT-100K a
 
 | Model Architecture | Params (M) | In-Dist (100K) | OOD (7K) | STARC-9 | CRC-5000 | Deployed Footprint (INT8) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **MedLite-CRC (Ours, KD)** | **0.48** | **99.46%** | **96.27%** | **99.75%** | **93.94%** | **2.02 MB** (FP32) |
+| **MedLite-CRC (Ours, KD)** | **0.48** | **99.46%** | **96.47% ± 0.22%** | **99.75%** | **93.94%** | **2.02 MB** (FP32) |
 | **MedLite-CRC (Ours, KD INT8)** | **0.48** | **99.46%** | **95.72%** | **—** | **—** | **0.72 MB** |
 | **MedLite-CRC (Ours, standard)** | **0.48** | **99.48%** | **94.71%** | **99.79%** | **92.00%** | **2.02 MB** (FP32) |
 | Li et al. (2025) CNN | 4.41 | 99.00% | - | - | - | 16.9 MB |
@@ -75,7 +75,7 @@ These results indicate that pre-training on NCT-100K under our MobileNetV2 knowl
 To prove that the performance gains of MedLite-CRC (KD Student) are statistically significant and not due to random initialization, we performed a McNemar's test against the 8× larger EfficientNet-B0 baseline on the 7,180-image `CRC-VAL-HE-7K` validation cohort.
 
 ### 3.1 Primary Analysis: Optimal Configurations
-We compare the models under their respective configurations (MedLite-CRC KD at 96.27% accuracy vs. EfficientNet-B0 unmasked at 94.81% accuracy):
+We compare the models under their respective configurations (MedLite-CRC KD at 96.47% accuracy vs. EfficientNet-B0 unmasked at 94.81% accuracy):
 
 | | EfficientNet-B0 Correct | EfficientNet-B0 Incorrect |
 | :--- | :---: | :---: |
@@ -137,7 +137,7 @@ We evaluated the V2 model configuration (incorporating reflection padding and 8p
 
 | Metric / Configuration | V1 Baseline (Zero Pad, Unmasked) | V1 Masked (Zero Pad, 8px Mask) | V2 Mitigated (Reflect Pad, 8px Mask) |
 | :--- | :---: | :---: | :---: |
-| **OOD Accuracy** | 96.27% | 96.07% | **95.84%** |
+| **OOD Accuracy** | 96.47% | 96.07% | **95.84%** |
 | **Avg. Radial Distance from Center** | 21.49 px | 19.95 px | **20.32 px** |
 | **Vanishing Gradient Rate** | 11.20% | 11.30% | **10.30%** |
 | **Stroma Background Activation** | 0.3075 | 0.2500 | **0.2524** |

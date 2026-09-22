@@ -197,7 +197,7 @@ Under masked conditions (foreground only — where EfficientNet-B0 collapses to 
 | Model | Mean Accuracy | Std Dev |
 |---|:---:|:---:|
 | Baseline (no KD) | 94.05% | ± 0.46% |
-| **SOTA (MobileNetV2 KD)** | **95.73%** | **± 0.21%** |
+| **SOTA (MobileNetV2 KD)** | **96.47%** | **± 0.22%** |
 
 KD not only improves accuracy — it **halves the variance**, proving superior convergence stability.
 
@@ -634,7 +634,7 @@ Prior KD work in medical imaging uses arbitrary teacher models. We empirically s
 #### 5. Honest, Rigorous Evaluation Protocol
 We are the only paper in this comparison that:
 - Trains on NCT-100K and tests **zero-shot** on CRC-VAL-7K (no leakage)
-- Reports multi-seed statistics (95.73% ± 0.21% over 3 seeds)
+- Reports multi-seed statistics (96.47% ± 0.22% over 3 fully converged seeds)
 - Validates on **4 independent datasets** (NCT/7K, STARC-9, CRC-5000, + 3 transfer cohorts)
 - Quantifies spatial interpretability with alignment scores (not just visual Grad-CAM)
 - Reports carbon footprint and inference energy
