@@ -4,7 +4,26 @@ This document consolidates the supplementary research analyses, experimental log
 
 ---
 
-## 1. The 9 Colorectal Cancer Tissue Classes: Biological Breakdown
+## 1. Consolidated Dataset Summary
+
+To ensure a rigorous and transparent evaluation protocol, the following table lists all datasets utilized across the pre-training, validation, ablation, and downstream transfer learning phases of this research. Patient-disjoint splits are explicitly highlighted to confirm the absence of data leakage during critical evaluations.
+
+| Dataset | Institution / Source | Patients | Images / Tiles | Classes | Resolution (px) | Mag. | Split Strategy | Patient-Disjoint? | Experimental Role |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **NCT-CRC-HE-100K** | NCT Heidelberg (Germany) | 86 | 100,000 | 9 | $224 \times 224$ (0.5 $\mu$m/px) | 20x | 100% Train | N/A (Train only) | Primary Model Training |
+| **CRC-VAL-HE-7K** | DACHS Study (Mannheim) | 50 | 7,180 | 9 | $224 \times 224$ (0.5 $\mu$m/px) | 20x | 100% Validation | **Yes** | OOD Dev/Ablation Eval |
+| **STARC-9** | Stanford University | 200 | 684,000 (630k Train / 54k Val) | 9 | $256 \times 256$ (0.25 $\mu$m/px) | 40x | Official splits | **Yes** (Official) | Scale-as-Regularizer Eval |
+| **CRC-5000** | Kather et al. (2016) | N/R | 5,000 | 7* | $150 \times 150$ | N/R | 80% Train / 20% Val | No (Image-level) | Noise/Artifact Robustness |
+| **EBHI-SEG** | Shi et al. (2023) | N/R | 2,228 | 6 | N/R (Resized $224^2$) | N/R | 80% Train / 20% Test | No (Image-level) | Transfer: Biopsy Diagnostics |
+| **CRC-HGD-v1** | Wang et al. (2026) | N/R | 1,914 | 5 | N/R (Resized $224^2$) | N/R | 80% Train / 20% Test | No (Image-level) | Transfer: Tissue Grading |
+| **Kather MSI/MSS** | TCGA Cohorts | N/R | 139,143 | 2 | N/R (Resized $224^2$) | 20x | Official Train / Test | **Yes** (Official) | Transfer: Molecular Phenotypes|
+
+*\*Note: CRC-5000 originally contains 8 classes; we mapped and evaluated on the 7 classes overlapping with MedLite-CRC.*
+*(N/R = Not Reported in original dataset literature)*
+
+---
+
+## 2. The 9 Colorectal Cancer Tissue Classes: Biological Breakdown
 
 To understand how the convolutional neural network processes tissue morphology, it is essential to map the biological characteristics of the 9 classes in the `NCT-CRC-HE-100K` and `CRC-VAL-HE-7K` validation cohorts:
 
