@@ -15,6 +15,7 @@ resnet = models.resnet50(weights=None).to(device)
 mobilenet = models.mobilenet_v2(weights=None).to(device)
 shufflenet = models.shufflenet_v2_x1_0(weights=None).to(device)
 efficientnet = models.efficientnet_b0(weights=None).to(device)
+mobilenetv3 = models.mobilenet_v3_small(weights=None).to(device)
 
 def measure(model, name):
     model.eval()
@@ -41,5 +42,6 @@ measure(medlite, "MedLite-CRC")
 measure(resnet, "ResNet50")
 measure(efficientnet, "EfficientNet-B0")
 measure(mobilenet, "MobileNetV2")
+measure(mobilenetv3, "MobileNetV3-Small")
 measure(shufflenet, "ShuffleNetV2")
 

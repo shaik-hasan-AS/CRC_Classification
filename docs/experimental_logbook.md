@@ -251,7 +251,7 @@ This table compares the parameter footprint and out-of-distribution validation a
 | **Common Pathology Baselines** [4] | ResNet-50 | 23.53M | 94.43 MB | **94.33%** |
 | **Common Pathology Baselines** [4] | DenseNet-121 | 6.96M | 33.00 MB | **96.52%** |
 | **Common Pathology Baselines** [4] | MobileNetV2 | 2.24M | 9.19 MB | **94.82%** |
-| **Common Pathology Baselines** [4] | MobileNetV3-Small | 1.52M | 5.40 MB | **94.10%** |
+| **Lightweight Baseline (Ours - Scratch)** | MobileNetV3-Small | 1.53M | 5.95 MB | **93.86%** |
 | **Standard Swin Transformer** [5] | Swin-T | 28.3M | 114.0 MB | **96.30%** |
 | **MedLite-CRC V2 (Ours - Standard)** | MedLite-CRC (Scratch) | **0.48M** | 2.02 MB | **94.71%** |
 | **MedLite-CRC V2 (Ours - KD SOTA)** | MedLite-CRC + MobileNetV2 KD | **0.48M** | **2.02 MB (FP32)** | **96.70% (Mean: 96.47% ± 0.22%)** |

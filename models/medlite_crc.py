@@ -511,6 +511,11 @@ def build_model(cfg) -> nn.Module:
         model.fc = nn.Linear(model.fc.in_features, num_classes)
         return model
 
+    if model_name == "MobileNetV3Small":
+        model = models.mobilenet_v3_small(weights=None)
+        model.classifier[3] = nn.Linear(model.classifier[3].in_features, num_classes)
+        return model
+
     raise ValueError(f"Unknown model: {model_name}")
 
 

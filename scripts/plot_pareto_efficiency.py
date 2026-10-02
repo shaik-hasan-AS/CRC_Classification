@@ -24,12 +24,21 @@ def main():
         },
         "MedLite-CRC (MobileNetV2 KD)": {
             "params": 0.48,
-            "accuracy": 96.27,
+            "accuracy": 96.47,
             "latency": 7.93,
             "size": 2.02,
             "color": "#e377c2",
             "marker": "P",
             "size_multiplier": 350,
+        },
+        "MobileNetV3-Small": {
+            "params": 1.53,
+            "accuracy": 93.86,
+            "latency": 6.09,
+            "size": 5.95,
+            "color": "#17becf",
+            "marker": "v",
+            "size_multiplier": 150,
         },
         "ShuffleNetV2": {
             "params": 1.26,
@@ -100,6 +109,7 @@ def main():
         xytext_offsets = {
             "MedLite-CRC (Standard)": (10, -18),
             "MedLite-CRC (MobileNetV2 KD)": (10, 5),
+            "MobileNetV3-Small": (10, -15),
             "ShuffleNetV2": (10, 5),
             "MobileNetV2": (10, -12),
             "EfficientNetB0": (10, 5),
@@ -143,7 +153,7 @@ def main():
     ax.text(
         models["MedLite-CRC (Standard)"]["params"] + 0.25, 
         (models["MedLite-CRC (Standard)"]["accuracy"] + models["MedLite-CRC (MobileNetV2 KD)"]["accuracy"]) / 2, 
-        "+1.32% Accuracy Gain via KD", 
+        "+1.76% Accuracy Gain via KD", 
         color="#e377c2", fontsize=9, fontweight="bold", va="center"
     )
 
@@ -154,7 +164,7 @@ def main():
     
     # Adjust axes limits to frame well
     ax.set_xlim(-1, 26)
-    ax.set_ylim(93.5, 96.5)
+    ax.set_ylim(93.5, 97.0)
 
     # Clean spine lines
     ax.spines["top"].set_visible(False)
