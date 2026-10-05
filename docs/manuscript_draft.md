@@ -1,329 +1,297 @@
 # MedLite-CRC: A Lightweight Attention-Free CNN for Cross-Cohort Colorectal Histopathology Tissue Classification
 
-**Author:** Shaik Hasan A S
-  
-
----
-
 ## Abstract
-Deep learning has revolutionized automated histopathology tissue classification, but standard state-of-the-art (SOTA) architectures are computationally heavy (11M to 30M+ parameters) and highly sensitive to scanner domain shift. In this study, we present **MedLite-CRC**, an ultra-lightweight Convolutional Neural Network (CNN) specifically designed for colorectal tissue classification on memory-constrained edge devices. MedLite-CRC consists of only **0.48 Million parameters** and has an INT8 quantized disk footprint of **0.72 MB**, delivering an inference latency of **1.65 ms** on standard edge CPUs. 
-
-To overcome domain shift and scanner-specific biases (e.g., JPEG artifacts and H&E stain variations), we introduce two novel modules: an end-to-end differentiable, six-parameter **Learnable Stain Adaptation Layer** and a **Depthwise Separable Multi-Scale Branch** (capturing 3×3, 5×5, and 7×7 receptive fields simultaneously). 
-
-We evaluate MedLite-CRC across three distinct datasets: NCT-CRC-HE-100K, STARC-9, and CRC-5000. Under standard training conditions, MedLite-CRC achieves a peak in-distribution accuracy of **99.48%** and an out-of-distribution, cross-patient validation accuracy of **94.71%** on the external CRC-VAL-HE-7K development cohort. By introducing a Knowledge Distillation (KD) framework with a structurally aligned MobileNetV2 teacher model, MedLite-CRC generalizes exceptionally well, achieving a verified out-of-distribution accuracy of **96.47% ± 0.22%** (across 3 independent seeds)—outperforming the teacher itself (94.82%) by **+1.65%** absolute and the state-of-the-art ShuffleNetV2 baseline (95.08%) by **+1.39%** absolute, while requiring up to 48× fewer parameters than ResNet-50.
-
-Furthermore, we benchmark our architecture on the massive 630,000-image STARC-9 dataset (NeurIPS 2025), achieving **99.75%** accuracy, proving that dataset scale acts as a natural regularizer for highly constrained networks. 
-
-Finally, we perform a rigorous statistical validation using McNemar's test ($p = 1.96 \times 10^{-8}$) and conduct a quantitative spatial Grad-CAM analysis to inspect potential model shortcuts. Our interpretability study reveals the "Attention Paradox": while the tested SE and Coordinate Attention variants improve training convergence, they overfit to scanner-specific staining channels, degrading cross-site generalization. Consequently, we establish the attention-free MedLite-CRC as the optimal architecture for robust cross-site clinical deployment.
-
----
+Colorectal histopathology tissue classification increasingly uses deep learning, but many high performing models are too large for clinical edge devices and can pick up scanner specific artifacts. We introduce MedLite-CRC, an attention-free convolutional neural network with 0.48 million parameters for cross-site tissue classification. It combines a 6-parameter trainable stain adaptation layer with a parallel depthwise separable multi-scale branch using 3×3, 5×5, and 7×7 receptive fields. We also distill knowledge from a structurally aligned MobileNetV2 teacher. The best MedLite-CRC model reaches 96.47% ± 0.22% accuracy (mean ± SD across three full 200-epoch training seeds) on the cross-patient CRC-VAL-HE-7K cohort. Because we use this cohort for architectural ablation and model selection, we report it as a development/validation cohort rather than as an untouched final test set. After INT8 quantization, accuracy is 95.72%, with 1.65 ms CPU latency and a 0.72 MB disk footprint. Under the same foreground-masking procedure, the paired difference from the unregularized baseline is χ² = 995.94, p = 1.37 × 10⁻²¹⁸. With the architecture fixed before the benchmark runs, we also trained and evaluated the model on the STARC-9 and CRC-5000 splits, obtaining 99.75% and 93.94%, respectively. The pre-trained weights also transfer to other histopathology tasks, improving biopsy tissue classification by up to 31.8% over training from scratch. Overall, the results support the hypothesis that a small parameter budget can reduce domain overfitting and make the model practical as a compact feature extractor for low-power hardware.
 
 ## 1. Introduction
-Colorectal cancer (CRC) remains one of the leading causes of cancer-related mortality worldwide. The gold standard for CRC diagnosis involves the microscopic analysis of Hematoxylin and Eosin (H&E) stained tissue slides by expert pathologists. Over the past decade, the digitization of clinical slides into Whole Slide Images (WSIs) has enabled the application of deep learning for automated tissue classification, tumor localization, and patient stratification.
+Pathologists diagnose colorectal cancer from Hematoxylin and Eosin (H&E) stained tissue slides. Digitization has made it possible to automate tissue classification with convolutional neural networks, but strong benchmark results do not always translate to clinical deployment. Large models can require GPU resources that are difficult to provide in rural clinics or on edge devices. H&E staining and scanner characteristics also vary between hospitals, so a model trained at one site may perform poorly at another. Recent work has shown that over-parameterized models can exploit non-biological signals: Ignatov and Malivenko (2024), for example, found class-dependent JPEG compression artifacts and background color signatures in commonly used benchmarks. Patient-level leakage is another concern because it can make validation scores look better than they really are.
 
-Despite high accuracy rates (>98%) on public benchmarks, the clinical translation of these deep models faces three major challenges:
-1.  **Computational Complexity:** Standard SOTA networks (e.g., ResNet-50, Swin Transformers) require high-end GPU clusters for inference. This excludes their deployment on low-cost edge terminals (such as microcontrollers or low-spec CPUs) in rural clinics or resource-limited environments.
-2.  **Scanner-Specific Domain Shift:** public histopathological datasets are often collected using single scanners at specific medical centers. When models are tested on datasets from other hospitals (cross-site evaluation), their performance collapses due to varying scanner sensors, slice thicknesses, and local staining chemistries.
-3.  **Dataset Biases and Shortcutting:** As demonstrated by Ignatov & Malivenko (2024), popular benchmarks like `NCT-CRC-HE-100K` contain severe, class-dependent JPEG compression artifacts and color imbalances. Deeper networks often achieve high accuracy by memorizing these non-biological low-level artifacts, rather than learning true histopathological morphology.
+MedLite-CRC addresses these constraints with an attention-free network containing 0.48 million parameters. The model occupies 0.72 MB after INT8 quantization and reaches 1.65 ms per image on the CPU used in our benchmark; its estimated inference energy is 11.5x lower than ResNet-50 (He et al., 2016) (Section 8.1). The central design choice is to keep the model small rather than giving it enough capacity to memorize the training data.
 
-To address these challenges, we propose **MedLite-CRC**, an ultra-lightweight, edge-deployable CNN of **0.48 million parameters** (2.02 MB in FP32, 0.72 MB in INT8). Instead of relying on massive parameter capacity to memorize features, we constrain the model's capacity, forcing it to focus strictly on the most robust morphological structures. 
+The architecture has three main components:
+* A 6-parameter affine layer at the input learns to compensate for color shifts during training.
+* A parallel depthwise separable branch processes three receptive-field sizes at once, targeting structures such as nuclei, glands, and fibrous tissue.
+* Knowledge distillation from a MobileNetV2 teacher (Sandler et al., 2018) transfers soft class probabilities to the student. Because both networks use depthwise separable, attention-free convolutions, the teacher and student have similar feature extraction structures.
 
-Our main contributions are:
-- We design a highly parameterized multi-scale branch utilizing depthwise separable convolutions to capture nuclei (3×3), glands (5×5), and fibrous connective tissue (7×7) simultaneously at low FLOP cost.
-- We propose a learnable, end-to-end differentiable input stain adaptation layer that dynamically adjusts per-channel affine parameters, acting as a zero-overhead color normalization step during inference.
-- We demonstrate that a strict parameter constraint acts as a natural regularizer. When evaluated on STARC-9 (630,000 images), MedLite-CRC (0.48M parameters) outperforms ResNet-50 (23.5M parameters) trained from scratch.
-- We report the "Attention Paradox" under domain shift, proving that the tested channel-attention mechanisms (Squeeze-and-Excitation) overfit to site-specific noise channels and degrade out-of-distribution accuracy.
-- We conduct a quantitative Grad-CAM spatial alignment study to ensure our network attends to valid cellular morphology rather than negative slide space or scanner center-biases.
-
----
+We evaluated MedLite-CRC on several cohorts. On CRC-VAL-HE-7K, the cross-patient external validation cohort, the best single-seed model (seed 42) reaches 96.27% accuracy and outperforms the EfficientNet-B0 baseline (χ² = 31.53, p = 1.96 × 10⁻⁸) and the MobileNetV2 teacher; averaged across three full-convergence seeds, mean accuracy is 96.47% ± 0.22%. Since we also used CRC-VAL-HE-7K for architectural ablation and model selection, we treat it as a development/validation cohort rather than a pristine final test set. With the same foreground mask applied to both models, the paired difference becomes larger (χ² = 995.94, p = 1.37 × 10⁻²¹⁸). The model reaches 99.79% on the held-out STARC-9 benchmark and 93.94% on the held-out CRC-5000 evaluation split. In the attention ablations, both SE and Coordinate Attention reduced cross-site accuracy. The results are consistent with the possibility that these modules amplify scanner-dependent features, although the experiments do not show that scanner-specific overfitting is the only cause. Finally, the pre-trained weights transfer to other tasks, including biopsy classification and tumor grading, where they improve substantially over training from scratch.
 
 ## 2. Related Work
 
-### 2.1 Colorectal Histopathology Classification
-Early methods for automated CRC classification relied on manual feature extraction (e.g., local binary patterns, color histograms) followed by support vector machines. These were superseded by deep convolutional neural networks. While models like ResNet-50 and EfficientNet-B0 achieve near-perfect classification accuracy on public benchmarks, their large size makes them unsuited for edge deployment. 
+### 2.1 Colorectal Cancer Classification
+Early colorectal cancer classification systems relied on handcrafted features, including local binary patterns and color histograms, combined with classifiers such as support vector machines. CNNs have largely replaced those pipelines. ResNet-50 (He et al., 2016) and EfficientNet-B0 (Tan & Le, 2019) can reach near perfect scores on public benchmarks, but their size makes them less suitable for low-resource edge deployment.
 
-Recently, Li et al. (2025) proposed a custom lightweight CNN designed specifically for the NCT-100K dataset. However, their model still requires **4.41M parameters** (16.9 MB) to hit 99.0% accuracy, leaving a significant gap for ultra-low memory edge nodes.
+Li et al. (2025) proposed a lightweight CNN for NCT-100K. Their model uses 4.41M parameters and occupies 16.9 MB, even though it reaches 99.0% accuracy. That leaves a large difference in memory requirements compared with the sub-million parameter setting targeted here.
 
 ### 2.2 Dataset Biases in Digital Pathology
-The vulnerability of deep models to dataset-specific biases is a growing concern. Ignatov & Malivenko (2024) analyzed the NCT-CRC-HE-100K dataset and showed that simple models using only raw RGB color histograms could achieve over 82% classification accuracy. They proved that many models "cheat" by memorizing class-specific JPEG compression signatures and H&E color variations introduced during scanning. This highlights the need for out-of-distribution (OOD) cross-patient validation on independent cohorts (such as CRC-VAL-HE-7K) and rigorous interpretability pipelines.
+Digital pathology models can learn signals that are specific to a dataset rather than to tissue morphology. Ignatov and Malivenko (2024) showed that a model using only raw RGB color histograms can reach more than 82% accuracy on NCT-CRC-HE-100K. Their analysis also identified class-dependent JPEG compression patterns and H&E color differences introduced during scanning. These findings fit with the broader observation that ImageNet-trained CNNs often rely on texture unless training encourages shape and structural information (Geirhos et al., 2019). This makes independent cohorts such as CRC-VAL-HE-7K useful for checking whether a model retains performance outside its training distribution.
 
 ### 2.3 Stain Normalization and Domain Shift
-Stain variation across laboratories is the primary cause of domain shift in digital pathology. Classic stain normalization methods, such as Reinhard et al. (2001) (matching global color statistics) and Macenko et al. (2009) (color deconvolution), require selecting a static reference image, which is user-dependent and slow. 
+Stain variation between laboratories is a major source of domain shift in digital pathology. Reinhard et al. (2001) normalize global color statistics, while Macenko et al. (2009) uses color deconvolution; both approaches require a chosen reference or transformation. That choice can depend on the user and can add processing cost at scale. Tellez et al. (2019) also showed that stain normalization and augmentation choices affect CNN performance, which motivates a learnable alternative that can be optimized with the classification task.
 
-More recent learnable models, like StainNet (Kang et al., 2021), utilize shallow networks to learn style transfer. However, these add computational overhead. RandStainNA (Shen et al., 2022) introduces random stain augmentation during training to force color-invariant learning. Our learnable stain adaptation layer builds on these ideas by introducing a minimal, 6-parameter differentiable affine layer directly at the input, optimized end-to-end for the final classification task.
-
----
+Learnable methods such as StainNet (Kang et al., 2021) use shallow networks for stain style transfer, but they add computation. RandStainNA (Shen et al., 2022) instead uses random stain augmentation to encourage stain-agnostic features. Our approach follows the same goal with a much smaller mechanism: a six-parameter differentiable affine transform placed at the input and trained together with the classifier.
 
 ## 3. Proposed Methodology: MedLite-CRC
 
-The core architecture of MedLite-CRC is designed to maximize feature representation under a strict parameter budget. The network consists of: an input Stain Adaptation layer, a Stem block, a parallel Multi-Scale Branch, three Depthwise Residual Blocks, and a classifier head. The model diagram is shown below:
+MedLite-CRC is built around a strict parameter budget. The individual components used here, affine color adaptation, depthwise-separable convolution, multi-scale feature extraction, residual connections, and knowledge distillation, are each established techniques; we do not claim novelty for these primitives individually. The contribution is their joint integration into a single sub-million-parameter architecture, evaluated under cross-cohort and deployment constraints rather than in isolation. The network contains an input stain adaptation layer, a stem, a parallel multi-scale branch, three depthwise residual blocks, and a classifier head. The main tensor flow is shown below:
 
-```mermaid
-graph TD
-    In["Input <br/> 224×224×3"] --> LSN["LearnableStainNorm <br/> 6 parameters: dynamic scale/bias"]
-    LSN --> Stem["Stem Block <br/> Conv 3x3, stride 2 + DW Conv 3x3 <br/> 112×112×32"]
-    Stem --> MSB["MultiScaleBranch <br/> Parallel DWS branches (3x3, 5x5, 7x7) + Fuse 1x1"]
-    MSB --> MaxP["MaxPool 2x2 <br/> 56×56×128"]
-    MaxP --> DWR1["DWResBlock 1 <br/> DWS Residual, stride 1 <br/> 56×56×128"]
-    DWR1 --> DWR2["DWResBlock 2 <br/> DWS Residual, stride 2 <br/> 28×28×256"]
-    DWR2 --> DWR3["DWResBlock 3 <br/> DWS Residual, stride 2 <br/> 14×14×256"]
-    DWR3 --> AAP["AdaptiveAvgPool <br/> Global Average Pooling <br/> 1×1×256"]
-    AAP --> ClassHead["Classifier Head <br/> FC -> BN -> ReLU6 -> Dropout(0.4) -> FC <br/> Output (9 classes)"]
-
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    classDef inputNode fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#000;
-    classDef normNode fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000;
-    classDef convNode fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000;
-    classDef poolNode fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000;
-    classDef classNode fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000;
-
-    class In inputNode;
-    class LSN normNode;
-    class Stem,MSB,DWR1,DWR2,DWR3 convNode;
-    class MaxP,AAP poolNode;
-    class ClassHead classNode;
+```text
+Input (224x224x3)
+-> Learnable Stain/Color Adaptation (6 parameters, dynamic scale/bias)
+-> Stem Block: Conv 3x3 (stride 2) + DW Conv 3x3 -> 112x112x32
+-> MultiScaleBranch: parallel DWS branches (3x3, 5x5, 7x7) + 1x1 fuse
+-> MaxPool 2x2 -> 56x56x128
+-> DWResBlock 1: DWS residual, stride 1 -> 56x56x128
+-> DWResBlock 2: DWS residual, stride 2 -> 28x28x256
+-> DWResBlock 3: DWS residual, stride 2 -> 14x14x256
+-> Adaptive Average Pool -> 1x1x256
+-> Classifier Head: FC -> BN -> ReLU6 -> Dropout(0.4) -> FC -> 9-class output
 ```
 
-### 3.1 Learnable Stain Normalization
-The H&E staining process introduces significant variance in color density across different scanners and hospital labs. To neutralize this dynamically, we place a `LearnableStainNorm` layer at the absolute input of the network. The layer applies a trainable per-channel affine transformation:
+### 3.1 Learnable Stain/Color Adaptation
+H&E staining produces substantial color and density differences across scanners and laboratories. We therefore place a LearnableStainNorm layer at the network input. The layer applies a trainable per channel affine transform in RGB space: Severe inter-laboratory stain variation is not fully eliminated by this mechanism, so performance under substantially different staining protocols remains an open deployment consideration.
 
-$$\hat{X}_{c,x,y} = X_{c,x,y} \cdot \gamma_c + \beta_c$$
+`X̂(c,x,y) = X(c,x,y) · γc + βc`
 
-where $X$ is the input image patch, $c \in \{R, G, B\}$ denotes the color channel, and $\gamma_c$ and $\beta_c$ are learnable channel scale and bias parameters initialized to 1 and 0 respectively. 
+where X is the input patch, c ∈ {R, G, B} denotes the color channel, and γc and βc are learnable scale and bias parameters, initialized to 1 and 0 respectively.
 
-During backpropagation, these parameters adapt to standardize the color distribution of the source scanner to an optimized latent space. Because it contains only 6 parameters, it adds zero parameter overhead and can be mathematically fused into the first convolutional layer during deployment, resulting in zero inference cost.
+We also tested LearnableHEDStainNorm, which applies the same affine transform after converting the input to Hematoxylin-Eosin-DAB (HED) space. In this single-seed comparison, the RGB version reached 94.71% OOD validation accuracy, compared with 94.18% for the HED version (Section 6.5, Finding 6). The RGB transform can scale and shift each channel independently without imposing the HED decomposition and its Beer-Lambert assumptions. We therefore use the RGB version in the final model and keep the HED version as an ablation.
 
-### 3.2 Depthwise Separable Multi-Scale Branch (`MultiScaleBranch`)
-Histopathology tissue contains structures of varying scales. Nuclear aberrations occur at a micro-scale, glands at a mid-scale, and stromal/muscle fibers at a macro-scale. Drawing inspiration from the Inception module (Szegedy et al., 2015), we propose a parallel branching structure. 
+During training, the six parameters adapt the input color distribution to the source data. They add very little to the parameter count. In the FP32 deployment path, the affine transform can be folded into the first convolution, so it adds no separate inference operation. For INT8 deployment, we keep it as a small FP32 operation before the quantized backbone, rather than folding it into an INT8 convolution. This avoids the numerical issue discussed in Section 3.1 while adding negligible overhead.
 
-To remain within our strict parameter budget, we replace the dense convolutions of the standard Inception block with Depthwise Separable (DWS) convolutions. The input is split into three parallel paths:
-- **Branch 1 (Fine Scale):** DWS Conv with a $3\times3$ kernel to capture high-frequency details (nuclear boundaries, chromatin texture).
-- **Branch 2 (Medium Scale):** DWS Conv with a $5\times5$ kernel to capture glandular margins and cellular arrangements.
-- **Branch 3 (Coarse Scale):** DWS Conv with a $7\times7$ kernel to capture macro-level tissue textures (fibrous bundles, mucus pools).
+### 3.2 Depthwise Separable Multi-Scale Branch (MultiScaleBranch)
+Histopathology contains structures at different spatial scales. Nuclear changes are small, glands occupy an intermediate scale, and stromal or muscle fibers span larger regions. We use a parallel structure inspired by the Inception module (Szegedy et al., 2015), but replace its dense convolutions with depthwise separable convolutions (Chollet, 2017) to keep the model small. The input is split into three paths:
+* Branch 1 (fine scale): a 3×3 depthwise separable convolution targets nuclear boundaries and chromatin texture.
+* Branch 2 (medium scale): a 5×5 depthwise separable convolution targets glandular margins and cellular arrangement.
+* Branch 3 (coarse scale): a 7×7 depthwise separable convolution targets larger patterns such as fibrous bundles and mucus pools.
 
-The outputs of the three branches are concatenated along the channel dimension and fused using a $1\times1$ pointwise convolution to mix the multi-scale features:
+The three outputs are concatenated along the channel dimension and combined with a 1×1 pointwise convolution (Lin et al., 2013). This mixes information across the branches without the cost of dense multi-scale convolutions:
 
-$$X_{fused} = \text{Conv}_{1\times1}(\text{Concat}(X_{3\times3}, X_{5\times5}, X_{7\times7}))$$
+`Xfused = Conv1×1(Concat(X3×3, X5×5, X7×7))`
 
-This DWS factorization reduces parameters by approximately 8× compared to dense multi-scale kernels, allowing the model to capture wide receptive fields at a fraction of the compute cost.
+Using depthwise separable convolutions reduces the parameter count by roughly 8x compared with dense multi-scale kernels while retaining the larger receptive fields.
 
-### 3.3 Depthwise Separable Residual Blocks (`DWResBlock`)
-Following multi-scale extraction, feature maps are processed by three Depthwise Separable Residual Blocks (`DWResBlock`). Each block consists of two sequential DWS convolutions with a skip connection:
+### 3.3 Depthwise Separable Residual Blocks (DWResBlock)
+After the multi-scale branch, the feature maps pass through three Depthwise Separable Residual Blocks. Each block contains two depthwise separable convolutions with batch normalization (Ioffe & Szegedy, 2015) and a skip connection:
 
-$$X_{out} = \text{ReLU6}(\text{BN}(\text{DWS}_{2}(\text{DWS}_{1}(X_{in}))) + \text{Shortcut}(X_{in}))$$
+`Xout = ReLU6(BN(DWS2(DWS1(Xin))) + Shortcut(Xin))`
 
-### 3.4 Knowledge Distillation Loss Formulation
-To transfer dark knowledge from a pre-trained teacher network while maintaining sharp decision boundaries, we optimize the student model using a composite loss function combining standard Cross-Entropy ($\mathcal{L}_{CE}$) with Kullback-Leibler divergence ($\mathcal{L}_{KL}$) over temperature-scaled logits:
+ReLU6 bounds the activation values and is convenient for INT8 quantization. The channel width increases from 128 to 256 across the three blocks. When a block changes the spatial resolution or channel count, a 1×1 projection convolution adjusts the shortcut to the required dimensions.
 
-$$\mathcal{L}_{total} = (1 - \alpha) \cdot \mathcal{L}_{CE}(y, \sigma(z_s)) + \alpha \cdot T^2 \cdot \mathcal{L}_{KL}\left(\sigma\left(\frac{z_s}{T}\right), \sigma\left(\frac{z_t}{T}\right)\right)$$
+### 3.4 Knowledge Distillation Objective
+For the MobileNetV2 distillation experiments in Sections 5 and 6.6, we combine the standard cross-entropy loss with a knowledge-distillation loss following Hinton et al. (2015):
 
-where $z_s$ and $z_t$ represent the logit vectors of the MedLite-CRC student and the teacher model respectively, $y$ is the ground-truth label, $\sigma(\cdot)$ is the softmax function, $T$ is the distillation temperature, and $\alpha \in [0, 1]$ balances ground-truth supervision against teacher guidance. 
+`Ltotal = (1 − α) · LCE(y, ŷ) + α · Tkd² · LKL(pS(Tkd), pT(Tkd))`
 
-For our optimal MobileNetV2 KD student model, we set **$T = 3.0$** (matching the sharper probability distribution of the domain-aligned MobileNetV2 teacher) and **$\alpha = 0.4$** (allocating 60% weight to ground-truth cross-entropy and 40% weight to soft teacher knowledge). In contrast, our comparison ablation with an EfficientNet-B0 teacher utilized $T = 4.0$ and $\alpha = 0.5$.
-
----
+Here, LCE is the cross-entropy loss for the ground-truth label y, and LKL is the Kullback-Leibler divergence between the softened student and teacher distributions. Tkd is the temperature applied to both models before the softmax, and α controls the relative weight of the two losses. For the best MobileNetV2 KD model, α = 0.4 and Tkd = 3.0, giving 60% hard-label cross-entropy and 40% soft KL divergence. Section 4.2 gives the remaining training details. Tkd should not be confused with the calibration temperature T in Section 5.6: the former is used during distillation, while the latter is fitted after training to calibrate confidence.
 
 ## 4. Experimental Setup
 
 ### 4.1 Datasets
-We evaluate our model across three independent histopathology cohorts:
-1.  **NCT-CRC-HE-100K & CRC-VAL-HE-7K (Kather et al., 2018):**
-    -   *NCT-100K:* 100,000 non-overlapping H&E tissue patches ($224\times224$ pixels, 0.5 $\mu m$/pixel) from 86 patients scanned at NCT Heidelberg (Germany). Internally partitioned using a patch-level 80/20 random split (seed 42) into 80,000 patches for model training and 20,000 patches for in-distribution validation. (Note: Because this split is patch-level, it is not cross-patient. Future work should enforce a WSI-disjoint internal split if patient identifiers can be recovered).
-    -   *CRC-7K:* 7,180 patches from 50 patients scanned at the DACHS study (Mannheim, Germany). This dataset is completely cross-patient. We treated this as an out-of-distribution (OOD) development and evaluation cohort for model selection and ablation testing.
-    -   *Classes (9):* Adipose (ADI), Background (BACK), Debris (DEB), Lymphocytes (LYM), Mucus (MUC), Smooth Muscle (MUS), Normal colon mucosa (NORM), Cancer-associated stroma (STR), and Tumor adenocarcinoma epithelium (TUM).
-2.  **STARC-9 (Subramanian et al., NeurIPS 2025):**
-    -   We sampled 63,000 tiles from the available STARC-9 training data using stratified sampling with seed 42 and evaluated on the full 54,000-tile official validation split to evaluate how dataset scale acts as a regularizer. STARC-9 provides $256\times256$ tiles at 0.25 $\mu m$/pixel; all tiles were resized to $224\times224$ to match the MedLite-CRC input resolution.
-3.  **CRC-5000 (Kather et al., 2016):**
-    -   An older, noisy dataset consisting of 5,000 tiles ($150\times150$ pixels, zero-padded to $224\times224$ during evaluation) across 8 original classes. We mapped and evaluated on the 7 overlapping classes (4,375 images) with an 80/20 train/validation split. The CRC-5000 split is image-level rather than patient/slide-level. Specifically, the CRC-5000 classes mapped to MedLite-CRC as follows: Background $\rightarrow$ BACK, Adipose $\rightarrow$ ADI, Debris $\rightarrow$ DEB, Immune cells $\rightarrow$ LYM, Normal mucosal glands $\rightarrow$ NORM, Stroma $\rightarrow$ STR, Tumor epithelium $\rightarrow$ TUM (MedLite-CRC's MUC and MUS classes are not present in CRC-5000).
+We evaluate MedLite-CRC on three main histopathology cohorts:
+
+**NCT-CRC-HE-100K and CRC-VAL-HE-7K** (Kather et al., 2018). NCT-100K contains 100,000 non-overlapping H&E patches (224×224 pixels, 0.5 micrometers/pixel) from 86 patients scanned at NCT Heidelberg, Germany. We split NCT-100K at the patch level into 80,000 training patches and 20,000 in-distribution validation patches using an 80/20 random split with seed 42 (`torch.utils.data.random_split`). The latter set provides the NCT-100K validation accuracy in Table 5.1. Because the split is at the patch level, patches from the same patient can occur in both subsets, so this internal validation set does not remove patient-level leakage. We reserve the term cross-patient for CRC-VAL-HE-7K, which contains 7,180 patches from 50 distinct patients in the DACHS study, held in the NCT Biobank (Heidelberg, Germany), with no patient overlap with NCT-100K. We evaluate CRC-VAL-HE-7K zero-shot as an external, cross-patient cohort. However, because it also guides architectural ablation and model selection, we report it as a development/validation cohort rather than as an untouched final test set. Both cohorts contain nine classes: Adipose (ADI), Background (BACK), Debris (DEB), Lymphocytes (LYM), Mucus (MUC), Smooth Muscle (MUS), Normal colon mucosa (NORM), Cancer-associated stroma (STR), and Tumor adenocarcinoma epithelium (TUM). The internal NCT-100K validation split is patch-level and can contain patches from the same patients in both subsets, while CRC-5000 uses an image-level split; therefore these evaluations should not be interpreted as fully patient-disjoint clinical tests.
+
+**STARC-9** (Subramanian et al., NeurIPS 2025). STARC-9 contains 630,000 tissue tiles from 200 patients at Stanford University, with nine classes. The original tiles are 256×256 pixels at 0.25 micrometers/pixel and were resized to 224×224 for MedLite-CRC. We sampled exactly 63,000 tiles from the official training split, with 7,000 tiles per class and random seed 42, and evaluated on the complete 54,000-tile official validation split. Because the architecture was kept fixed while the training cohort changed, this experiment tests performance under a larger training-data regime but does not isolate dataset size as a causal factor.
+
+**CRC-5000** (Kather et al., 2016). This older dataset contains 5,000 tiles at 150×150 pixels across eight classes; we zero-pad the images to 224×224 for evaluation. We retain the seven classes that map directly to the NCT-100K/CRC-VAL-HE-7K labels: Adipose to ADI, Background to BACK, Debris to DEB, Lymphocytes to LYM, Normal mucosa to NORM, Stroma to STR, and Tumor to TUM. Complex Stroma has no mapping and is excluded. Mucus and Smooth Muscle also have no counterpart in CRC-5000 and are therefore excluded. The resulting 4,375-image mapped set uses an 80/20 image-level train/test split. Since this split is not patient- or slide-level, it should not be treated as a patient-disjoint evaluation.
+
+Section 7.7 uses three additional external cohorts, EBHI-SEG, CRC-HGD-v1, and Kather MSI/MSS, for transfer-learning experiments. They are also included in the Data Availability statement.
+
+**Table 4.1. Consolidated dataset summary across all cohorts used for training, development/validation, and transfer-learning experiments.**
+| Dataset | Institution / Source | Patients | Images / Tiles | Classes | Resolution (px) | Magnification | Split Strategy | Patient-Disjoint? | Experimental Role |
+| :--- | :--- | :---: | :---: | :---: | :--- | :---: | :--- | :--- | :--- |
+| **NCT-CRC-HE-100K** | NCT Heidelberg (Germany) | 86 | 100,000 | 9 | 224×224 (0.5 µm/px) | 20x | 80% Train / 20% In-Dist. Val (patch-level, seed 42) | No (patch-level) | Primary Model Training |
+| **CRC-VAL-HE-7K** | DACHS Study, NCT Biobank (Heidelberg) | 50 | 7,180 | 9 | 224×224 (0.5 µm/px) | 20x | 100% Validation | Yes | External Dev/Validation + Ablation |
+| **STARC-9** | Stanford University | 200 | 684,000 (630k Train / 54k Val) | 9 | 256×256 (0.25 µm/px) | 40x | Official split (sampled 63k train / full 54k val) | Yes (official) | Training-Scale Generalization Eval |
+| **CRC-5000** | Kather et al. (2016) | Not reported | 5,000 (4,375 after class mapping) | 7 (mapped from 8) | 150×150 (zero-padded to 224×224) | N/R | 80% Train / 20% Test (image-level) | No (image-level) | Noise/Artifact Robustness |
+| **EBHI-SEG** | Shi et al. (2023) | Not reported | 2,228 | 6 | N/R (resized to 224×224) | N/R | 80% Train / 20% Test (image-level) | No (image-level) | Transfer: Biopsy Classification |
+| **CRC-HGD-v1** | Wang et al. (2026) | Not reported | 1,914 | 5 | N/R (resized to 224×224) | N/R | 80% Train / 20% Test (image-level) | No (image-level) | Transfer: Tissue Grading |
+| **Kather MSI/MSS** | TCGA Cohorts | Not reported | 139,143 | 2 | N/R (resized to 224×224) | 20x | Official Train/Test split | Yes (official) | Transfer: Molecular Phenotype |
 
 ### 4.2 Training Protocols
-All models were trained strictly "from scratch" (without ImageNet pre-training) using the PyTorch framework with the AdamW optimizer, cosine annealing learning rate scheduling (initial LR = $10^{-3}$, weight decay = $10^{-4}$), and label smoothing (0.1). Data augmentation included random horizontal/vertical flips and stain color jittering. Specific epoch budgets were tailored per protocol:
-1.  **Baseline Scratch & Ablation Training:** Baseline architectures and ablation models were trained for **200 epochs** (with an early stopping patience of 20 epochs on validation loss).
-2.  **Knowledge Distillation (KD) Protocol:** The student model was trained under KD from a MobileNetV2 teacher for **60 epochs** (batch size 64, warmup = 3 epochs, temperature $T = 3.0$, loss weight $\alpha = 0.4$), yielding the peak SOTA OOD checkpoint at **epoch 58** (`ckpt_epoch058_acc0.9946.pt`).
-3.  **High-Scale STARC-9 & Legacy CRC-5000 Protocols:** Trained for **15 epochs** (batch size 128 for STARC-9; batch size 64 for CRC-5000).
-4.  **Quantization-Aware Fine-Tuning (QAT):** Fine-tuned for **1 epoch** (learning rate $10^{-5}$) with fake-quantization operators inserted before FX Graph Mode INT8 conversion.
-5.  **Downstream Transfer Learning:** Fine-tuned for **20 to 40 epochs** depending on target cohort size (EBHI-SEG: 20 epochs; CRC-HGD-v1: 40 epochs; Kather MSI/MSS: 30 epochs with 10 backbone-freeze warmup epochs).
+All student and baseline models were trained from scratch in PyTorch without ImageNet pre-training. For knowledge distillation, the EfficientNet-B0 and MobileNetV2 teachers were trained separately as described in Section 6.6, then frozen during student training. We used AdamW (Loshchilov & Hutter, 2019), cosine learning-rate annealing, label smoothing of 0.1, and random horizontal and vertical flips with stain color jittering. The effect of label smoothing on calibration is discussed in Section 5.6. Other training settings varied by protocol:
 
-### 4.3 Hardware & Quantization
-Inference latency was benchmarked on a standard edge-spec CPU (single core Intel i5-1135G7 @ 2.40GHz). To enable lightweight clinical edge deployment, we implemented a Quantization-Aware Training (QAT) pipeline. Instead of post-training static quantization (PTQ) which can degrade accuracy on out-of-distribution shifts, QAT inserts fake-quantization modules into the model graph during fine-tuning (1 epoch, learning rate $10^{-5}$). This allows the network to adapt its weights to 8-bit representation noise. Crucially, the biologically-grounded stain normalization layers (`LearnableStainNorm` / `LearnableHEDStainNorm`) are excluded from quantization (retained in FP32) to prevent numerical instability during stain deconvolution, while all downstream convolutional layers and linear heads are fully quantized to INT8. The model is subsequently converted to static INT8 weights using PyTorch's FX Graph Mode Quantization.
+* Baseline and ablation models were trained for up to 200 epochs with an initial learning rate of 1e-3 and weight decay of 1e-4. Early stopping used a patience of 20 epochs based on validation loss.
+* For knowledge distillation, the student was trained for 60 epochs with a MobileNetV2 teacher, using batch sizes of 64 for training and 128 for evaluation. The learning rate was warmed up linearly for 3 epochs, with Tkd = 3.0 and α = 0.4. Checkpoint selection and early stopping were driven exclusively by accuracy on the NCT-CRC-HE-100K in-distribution validation split; CRC-VAL-HE-7K accuracy was logged periodically for monitoring but never used to select a checkpoint or trigger early stopping. The peak checkpoint was epoch 58, which reached 99.46% on the NCT-100K validation split (`ckpt_epoch058_acc0.9946.pt`, where the filename encodes this in-distribution validation accuracy, not the CRC-VAL-HE-7K result).
+* For the STARC-9 and CRC-5000 benchmark runs, the architecture was fixed in advance. STARC-9 used exactly 63,000 training tiles, sampled at 7,000 per class with seed 42, and the full 54,000-tile validation split. Models were trained for 15 epochs, with batch size 128 for STARC-9 and 64 for CRC-5000, then evaluated on their respective held-out validation or test splits. These results therefore measure the fixed architecture under different training-data regimes rather than zero-shot transfer from NCT-100K.
+* Quantization-aware fine-tuning used one epoch at a learning rate of 1e-5, with fake-quantization operators inserted before FX Graph Mode INT8 conversion.
+* For downstream transfer learning, we fine-tuned for 20 to 40 epochs depending on cohort size: 20 epochs for EBHI-SEG, 40 for CRC-HGD-v1, and 30 for Kather MSI/MSS, with a 10-epoch backbone-freeze warmup.
 
----
+### 4.3 Hardware and Quantization
+We measured CPU inference latency for MedLite-CRC and the four baselines on the same AMD Ryzen 7 7840HS processor (8 cores, 16 threads, up to 5.14 GHz), with 16 GB RAM and Ubuntu Linux (x86_64). Each model ran single-threaded at batch size 1, and the reported latency is the average over 500 warmed-up runs. This protocol is used for the CPU latency values in Table 5.1 and Section 8.1. We note that the Ryzen 7 7840HS is a laptop-class x86 CPU rather than an embedded or edge-class device; our "edge deployment" claims are therefore an inference from parameter count, model size, and CPU latency on consumer hardware, not a demonstrated deployment on representative edge hardware such as a Raspberry Pi 5, Jetson Orin Nano, or other ARM-based system. We did not have access to such hardware for this study and leave direct edge-device benchmarking (latency, RAM, power draw, and FP32 versus INT8 performance on-device) to future work. For deployment, we use quantization-aware training (QAT) rather than post-training static quantization (PTQ), which can reduce accuracy under distribution shifts. QAT inserts fake-quantization modules during a one-epoch fine-tuning pass so the weights can adapt to 8-bit quantization noise. The stain adaptation layer remains in FP32, while the downstream convolutional and linear layers are quantized to INT8. We then convert the model to static INT8 weights with PyTorch FX Graph Mode Quantization.
 
-## 5. Quantitative Results & Comparison
+### 4.4 Reproducibility
+Training and evaluation used Python 3.14.4, PyTorch 2.12.0 (+cu130), and TorchVision 0.27.0 (+cu130) on an NVIDIA GeForce RTX 4060 Laptop GPU (driver version 595.91.07); CPU latency benchmarking used the AMD Ryzen 7 7840HS system described above. Class indices follow the standard PyTorch ImageFolder alphabetical mapping: 0=ADI, 1=BACK, 2=DEB, 3=LYM, 4=MUC, 5=MUS, 6=NORM, 7=STR, 8=TUM. The exact code, trained weights, benchmarking scripts, INT8 quantization scripts, 3-seed validation scripts, and Grad-CAM analysis scripts are available in the project repository, including a single interactive script (`scripts/replicate_all.sh`) intended to let reviewers reproduce the benchmarking and quantization results directly. The results reported in this manuscript correspond to Git commit `008b7fcd875ae62eb4f90ecb5d978273e08dba8a`.
 
-### 5.1 Baseline Comparisons (NCT-100K to CRC-VAL-HE-7K)
-We evaluate MedLite-CRC (without the SEBlock, representing our final architecture) against standard baselines trained under identical conditions on the NCT-100K training set.
+## 5. Quantitative Results and Comparison
 
+### 5.1 Baseline Comparisons (NCT-100K to CRC-VAL-HE-7K External Validation Cohort)
+We compare the final MedLite-CRC architecture, without the SEBlock, with ShuffleNetV2, MobileNetV2, EfficientNet-B0, and ResNet-50. All models were trained under the same conditions on the NCT-100K training set.
 
-| Model | Parameters (M) | Size (MB) | CPU Latency (ms) | NCT-100K Val Acc | OOD 7K Test Acc | Macro-F1 (OOD) | Wtd-F1 (OOD) |
+**Table 5.1. Baseline comparison of MedLite-CRC and reference architectures on the NCT-100K in-distribution validation split and CRC-VAL-HE-7K development/validation cohort.**
+| Model | Parameters (M) | Size (MB) | CPU Latency (ms) | NCT-100K Val Acc | OOD Validation Acc | Macro-F1 (External Validation) | Wtd-F1 (External Validation) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **96.47% ± 0.22%** ✅ | **0.9537** | **0.9639** |
 | **MedLite-CRC (Ours, KD INT8)** | **0.48** | **0.72** | **1.65** | 99.46% | **95.72%** | **—** | **—** |
 | **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.48% | 94.71% | 0.9327 | 0.9469 |
-| MobileNetV3-Small | 1.53 | 5.95 | 6.09 | 98.20% | 93.86% | 0.9289 | 0.9381 |
 | ShuffleNetV2 | 1.26 | 5.23 | 5.13 | 99.18% | 95.08% | 0.9351 | 0.9507 |
 | MobileNetV2 (Teacher) | 2.24 | 9.19 | 7.48 | 99.18% | 94.82% | 0.9286 | 0.9470 |
 | EfficientNet-B0 | 4.02 | 16.38 | 11.72 | 99.04% | 94.81% | 0.9268 | 0.9477 |
 | ResNet-50 | 23.53 | 94.43 | 19.06 | 98.53% | 94.33% | 0.9101 | 0.9424 |
+| MobileNetV3-Small | 1.53 | 5.95 | 6.09 | 98.20% | 93.86% | 0.9289 | 0.9381 |
 
-To ensure a rigorous comparison within the ultra-lightweight regime, we benchmarked MedLite-CRC against a baseline MobileNetV3-Small (1.53M parameters). MedLite-CRC (KD) drastically outperformed the MobileNetV3-Small baseline in out-of-distribution generalization (96.47% vs. 93.86% accuracy), despite utilizing over 3× fewer parameters and achieving faster CPU inference latency (1.65 ms vs. 6.09 ms when quantized).
+Each configuration in Table 5.1 was originally trained once with a fixed random seed (seed 42). To assess the stability of these ablation results, we additionally trained the Baseline CNN, Baseline + Stain Adaptation, Baseline + Stain + MultiScale (Final), and the MobileNetV2 KD model across three full-convergence seeds (42, 43, 44); results are reported as mean ± SD in Table 5.1. The Baseline CNN was stable across seeds (94.05% ± 0.46%), and the final KD model was highly stable (96.47% ± 0.22%). In contrast, the intermediate architecture-only configurations showed substantial seed variance: Baseline + Stain Adaptation averaged 92.98% ± 1.66%, which is below the Baseline CNN mean rather than above it, and Baseline + Stain + MultiScale averaged 93.98% ± 1.12%, statistically indistinguishable from the Baseline CNN alone. We therefore do not claim that the stain adaptation or multi-scale components individually and reliably improve accuracy over the plain baseline; the single-seed point estimates reported for these configurations elsewhere in the text (94.64% and 94.71%, respectively) should be read as individual run outcomes rather than representative performance. The SEBlock and Coordinate Attention negative findings (Ablations 4 and 5) were not re-verified across seeds and remain single-seed results, though their deltas from Ablation 3's mean are small enough to also be within the observed seed variance. The clearest and most seed-robust finding in this study is that the full pipeline, including knowledge distillation, substantially and reliably outperforms the baseline (+2.42 points, 96.47% vs. 94.05%, both as 3-seed means), even though the intermediate architectural contribution in isolation is noisier than a single-seed ablation table can reveal.
 
-*All CPU latency values benchmarked on single-core CPU @ batch size 1 under identical PyTorch runtime conditions.
+All CPU latency values use the same single-core, batch-size-1 PyTorch setup described in Section 4.3.
+
+For reproducibility, the headline 96.47% ± 0.22% external-validation accuracy, 0.9537 Macro-F1, and 0.9639 Weighted-F1 reported for the MedLite-CRC KD model are the mean ± SD across three full 200-epoch training seeds (42, 43, 44). The detailed per-image analyses in this paper (McNemar's test, confusion matrix, per-class metrics, Grad-CAM and t-SNE analyses) use the single canonical checkpoint `ckpt_epoch058_acc0.9946.pt` from seed 42, which reached 96.27% accuracy; this checkpoint is used consistently wherever a specific model's predictions are analyzed.
+
+CRC-VAL-HE-7K is an external validation/development cohort rather than a pristine final test set because it was used for architectural ablation and model selection. For STARC-9 and CRC-5000, the architecture was fixed before training; the models were then trained on each cohort's training split and evaluated on its held-out validation or test split.
 
 ![Figure 1: Pareto Efficiency Frontier on CRC-VAL-HE-7K](../assets/pareto_efficiency.png)
 
-#### Analysis:
-1.  **Parameter Efficiency:** MedLite-CRC (0.48M params) is **48× smaller** than ResNet-50 and **8.4× smaller** than EfficientNet-B0.
-2.  **Generalization Breakthrough under Knowledge Distillation:** When trained with Knowledge Distillation from a structurally aligned MobileNetV2 teacher model, MedLite-CRC achieves a **verified 96.47% ± 0.22%** cross-patient validation accuracy on `CRC-VAL-HE-7K`. **Teacher Out-performance:** The distilled student network (0.48M parameters) systematically out-performs the teacher itself (**94.82%**) by **+1.65%** absolute. This confirms the hypothesis that when dark knowledge is distilled into a heavily bottlenecked architecture, the student acts as a domain-noise filter rather than a pure mimic.
-3.  **Baseline Standard Generalization:** Even without KD, MedLite-CRC (Ablation 3) achieves **94.71%** accuracy on the out-of-distribution set, outperforming ResNet-50 (94.33%) and matching EfficientNet-B0 (94.81%) while occupying **23.5× less disk space** in its quantized INT8 form (0.72 MB).
+**Analysis**
+* **Parameter efficiency**: MedLite-CRC has 0.48M parameters, making it 49x smaller than ResNet-50 (23.53M) and 8.4x smaller than EfficientNet-B0.
+* **Generalization with knowledge distillation**: The MobileNetV2-distilled MedLite-CRC reaches 96.27% on CRC-VAL-HE-7K using the seed-42 checkpoint plotted here, `ckpt_epoch058_acc0.9946.pt` (mean across three full-convergence seeds: 96.47% ± 0.22%). This is 1.45 percentage points above the MobileNetV2 teacher (94.82%) and 1.19 points above ShuffleNetV2 (95.08%). Because CRC-VAL-HE-7K was used for model selection, we describe this result as external validation rather than as a final test estimate.
+* **Without KD**, MedLite-CRC (Ablation 3) reaches 93.98% ± 1.12% (mean across three seeds) on the CRC-VAL-HE-7K external validation cohort. That is slightly above ResNet-50 (94.33%) and close to EfficientNet-B0 (94.81%), while the INT8 model occupies 0.72 MB compared with 16.38 MB for EfficientNet-B0, a 22.75x difference in disk space.
 
-### 5.2 SOTA Confusion Matrix & Per-Class Performance
-To inspect the specific classification strengths and weaknesses of the SOTA MobileNetV2 KD student, we visualize its normalized confusion matrix and per-class performance metrics on the 7,180-image `CRC-VAL-HE-7K` validation cohort:
+### 5.2 Best-Performing Configuration: Confusion Matrix and Per-Class Performance
+For the best-performing MobileNetV2 KD student, we report a normalized confusion matrix and per-class metrics on all 7,180 CRC-VAL-HE-7K images.
 
 ![Figure 2: Normalized Confusion Matrix of SOTA MedLite-CRC (KD)](../assets/cm_publication_ready.png)
-
 ![Figure 3: Per-Class Precision, Recall, and F1-Score of SOTA MedLite-CRC (KD)](../assets/per_class_metrics_bar.png)
 
-
 ### 5.3 Statistical Significance (McNemar's Test)
-To prove that MedLite-CRC's performance gains under Knowledge Distillation are not due to random initialization or domain splitting, we performed a McNemar's test comparing the MobileNetV2 KD-distilled MedLite-CRC student against the 8× larger baseline EfficientNet-B0 on the 7,180-image `CRC-VAL-HE-7K` validation cohort under their respective optimal setups (KD student without masking vs. EfficientNet-B0 baseline without masking). The contingency table is reported below:
+We used McNemar's test (McNemar, 1947) to compare the paired predictions of MedLite-CRC and EfficientNet-B0 on the same 7,180-image CRC-VAL-HE-7K cohort. This test requires per-image predictions from a single model, so we use the canonical seed-42 checkpoint (`ckpt_epoch058_acc0.9946.pt`), which achieved 96.27% accuracy; EfficientNet-B0 achieved 94.81%. Because both models were evaluated on exactly the same unmasked images, the paired comparison is appropriate. The contingency table is given below:
 
+**Table 5.2. Paired contingency table for McNemar's test comparing MedLite-CRC (MobileNetV2 KD) with EfficientNet-B0 on the CRC-VAL-HE-7K development/validation cohort.**
 | | EfficientNet-B0 Correct | EfficientNet-B0 Incorrect |
 | :--- | :---: | :---: |
 | **MedLite-CRC KD Correct** | 6,688 | 224 |
 | **MedLite-CRC KD Incorrect** | 119 | 149 |
 
--   **Discordant Pairs:** MedLite-CRC KD correctly classified 224 images that EfficientNet-B0 failed on, while EfficientNet-B0 correctly classified 119 images that MedLite-CRC KD failed on.
--   **Chi-Squared Statistic ($\chi^2$):** 31.53
--   **P-Value:** **$1.96 \times 10^{-8}$** ($1.53 \times 10^{-8}$ exact)
+Among the discordant pairs, MedLite-CRC KD correctly classified 224 images that EfficientNet-B0 missed, while EfficientNet-B0 correctly classified 119 images that MedLite-CRC KD missed.
 
-The p-value is orders of magnitude below the standard significance threshold ($p = 0.05$). We decisively reject the null hypothesis, mathematically proving that our architecture's feature representations are statistically significantly more robust than the baseline. 
+* **Chi-squared statistic (Yates' continuity correction)**: 31.53
+* **P-value**: 1.96 x 10⁻⁸ (exact binomial: 1.53 x 10⁻⁸)
 
-Additionally, we evaluated both models under foreground masking conditions (setting background slide pixels > 0.85 brightness to 0 to simulate severe tissue extraction domain shifts). While the unregularized EfficientNet-B0 baseline suffers a catastrophic domain collapse (falling to **80.65%** accuracy), MedLite-CRC KD remains highly resilient (**96.06%** accuracy). The masked 2×2 contingency table confirms this divergence:
+The paired McNemar test gives p < 0.05, indicating a detectable difference in the two models' paired error rates on this cohort. Since CRC-VAL-HE-7K also influenced architectural ablation and model selection, this result is descriptive rather than confirmatory evidence from an untouched test set. McNemar's test concerns paired prediction errors; it does not establish representation quality or biological validity.
 
+As a separate robustness analysis, we applied the same foreground mask to both models. Under masking, EfficientNet-B0 reaches 80.65% accuracy and MedLite-CRC KD reaches 96.06%. The paired McNemar statistic is χ² = 995.94 (p = 1.37 × 10⁻²¹⁸). The masked 2×2 contingency table is reported in Table 5.3.
+
+**Table 5.3. Masked paired contingency table for McNemar's test.**
 | | EfficientNet-B0 Correct (Masked) | EfficientNet-B0 Incorrect (Masked) |
 | :--- | :---: | :---: |
 | **MedLite-CRC KD Correct (Masked)** | 5,731 | 1,166 |
 | **MedLite-CRC KD Incorrect (Masked)** | 60 | 223 |
 
-This performance disparity increases the test statistic drastically to $\chi^2 = 995.94$ ($p = 1.37 \times 10^{-218}$), mathematically demonstrating our model's extreme resilience to background slide noise and domain variation.
+### 5.4 External Comparison (Li et al. 2025)
+We compare MedLite-CRC with the custom lightweight CNN reported by Li et al. (2025) for this cohort.
 
-### 5.4 Comprehensive State-of-the-Art (SOTA) Comparison
+**Table 5.4. External comparison with the lightweight CNN reported by Li et al. (2025).**
+| Model | Parameters (M) | Model Size (MB) | Peak In-Dist Accuracy (%) |
+|---|:---:|:---:|:---:|
+| MedLite-CRC (Ours, KD INT8) | 0.48 | 0.72 | 99.46% |
+| Li et al. (2025) CNN | 4.41 | 16.90 | 99.00% |
 
-We compare MedLite-CRC against a broad spectrum of published models in the colorectal cancer (CRC) histopathology classification category. To evaluate both parameter efficiency and domain robustness, we report the parameter count, model size, ImageNet pre-training dependency, and accuracy on both the in-distribution `NCT-CRC-HE-100K` validation set (ID Acc) and the out-of-distribution, cross-patient `CRC-VAL-HE-7K` cohort (OOD Acc).
+MedLite-CRC reaches 99.46% peak accuracy versus 99.00% for the Li et al. model, while using 9.2x fewer parameters and 23.5x less disk space after quantization.
 
-| Study / Model | Architecture | Params (M) | Disk (MB) | Pre-trained? | ID Acc (100K) | OOD Acc (7K) |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| Kather et al. (2019) | VGG-19 | 143.60 | 548.00 | Yes | 98.70% | 94.30% |
-| Li et al. (2025) | Custom CNN | 4.41 | 16.90 | No | 99.00% | *99.05%\** |
-| Ignatov & Malivenko (2024) | EfficientNet-B0 | 4.02 | 16.00 | Yes | 99.87% | 97.70% |
-| Uddin et al. (2023) | CRCCN-Net | ~3.00 | - | No | 96.26% | *Not Evaluated* |
-| MSRANetV2 (2025) | ResNet50V2 + Attention | 25.60 | - | Yes | 99.02% | *99.05%\** |
-| FabNet (2023) | Custom Hierarchical CNN | ~8.00 | - | No | 99.00% | *Not Evaluated* |
-| Baseline | DenseNet-121 | 6.96 | 33.00 | No | 99.10% | 96.52% |
-| Baseline | Swin Transformer-T | 28.30 | 114.00 | No | 99.20% | 96.30% |
-| **MedLite-CRC (Ours - FP32)** | **MedLite-CRC (Scratch)** | **0.48** | **2.02** | **No** | **99.48%** | **94.71%** |
-| **MedLite-CRC (Ours - KD SOTA)** | **MedLite-CRC (Distilled, FP32)** | **0.48** | **2.02** | **No** | **99.46%** | **96.47%** |
-| **MedLite-CRC (Ours - KD INT8)** | **MedLite-CRC (Distilled, INT8)** | **0.48** | **0.72** | **No** | **99.46%** | **95.72%** |
+### 5.4.1 State-of-the-Art Comparison
+Table 5.5 compares MedLite-CRC with representative recent colorectal histopathology classifiers, including both high-accuracy benchmark models and lightweight approaches. The literature contains reported accuracies above 99% on NCT-CRC-HE-100K and CRC-VAL-HE-7K, but these values arise from different splits, preprocessing pipelines, feature-selection procedures, and evaluation protocols. Accordingly, Table 5.5 is a contextual literature comparison rather than a strict accuracy leaderboard. The most direct evidence for the proposed efficiency claim is the controlled baseline comparison in Table 5.1, where all models are evaluated under the same experimental setup.
 
-*\*Note: Accuracies reported with an asterisk represent studies that evaluated the cross-patient `CRC-VAL-HE-7K` cohort using random cross-validation rather than standard cross-scanner validation inference. This methodology causes patient-level data leakage, inflating OOD performance metrics as the models memorize patient-specific scanner color balances.*
+**Table 5.5. Representative state-of-the-art results for colorectal histopathology image classification.**
+| Study / Model | Dataset / Evaluation | Accuracy (%) | Parameters | Notes |
+| :--- | :--- | :---: | :---: | :--- |
+| Tsai & Tao [41] — ResNet-50 | NCT-CRC-HE-100K; CRC-VAL-HE-7K | 99.69; 99.32 | N/R | Internal NCT / external CRC-VAL results; protocol differs from ours |
+| Ghosh et al. [36] — Ensemble CNN | NCT-CRC-HE-100K + CRC-VAL-HE-7K | 96.1 | N/R | Reported combined-cohort benchmark |
+| Shawesh & Chen [37] — ResNet-50 | NCT-CRC-HE-100K + CRC-VAL-HE-7K | 97.7 | N/R | Reported combined-cohort benchmark |
+| Tanveer et al. [38] — TransNetV | NCT-CRC-HE-100K + CRC-VAL-HE-7K | 98.5 | N/R | Reported combined-cohort benchmark |
+| Intissar & Yassine [39] — VGG-16/19, InceptionV3, ResNet-50 | NCT-CRC-HE-100K + CRC-VAL-HE-7K | 98.8 | N/R | Best reported combined-cohort value |
+| Firildak et al. [40] — CNNReFeatureBlock | NCT-CRC-HE-100K + CRC-VAL-HE-7K | 99.1 | N/R | Reported combined-cohort benchmark |
+| Kumar et al. [42] — CRCCN-Net | NCT-CRC-HE-100K | 96.26 | N/R | Single-dataset result; merged-dataset 99.21% is not directly comparable |
+| Fadafen & Rezaee [43] — dResNet + DeepSVM | NCT-CRC-HE-100K | 99.76 | N/R | Single-dataset result; hybrid feature-selection/ensemble pipeline |
+| Sharkas & Attallah [44] — Color-CADx | NCT-CRC-HE-100K | 99.3 | N/R | 70/30 or 60/40 split; DCT + ANOVA + SVM feature pipeline |
+| Li et al. [15] — Lightweight CNN | NCT-CRC-HE-100K + CRC-VAL-HE-7K | 99.0 ± 0.3 | 4.41 M | Published lightweight model; merged-data evaluation |
+| **MedLite-CRC (Ours)** [35] — MobileNetV2 KD | CRC-VAL-HE-7K; cross-patient development/validation | **96.27** | **0.48 M** | Best single seed (42); 3-seed mean 96.47% ± 0.22%; not an untouched final test set |
 
-Our MedLite-CRC architecture (in its quantized INT8 form) requires **orders of magnitude fewer parameters** (0.48M vs. VGG-19's 143.6M or ResNet-50's 23.5M) and occupies **22.5× less disk space** than the most efficient competing custom CNN (Li et al., 2025), while maintaining highly competitive verified OOD cross-patient generalization capability (96.47% under KD formulation). Unlike several competing approaches, MedLite-CRC achieves these results entirely from scratch without relying on ImageNet pre-training biases.
+Sources: benchmark values are taken from the cited primary studies [15, 36–44]. MedLite-CRC is reported from the canonical checkpoint evaluated in this manuscript [35]. Parameter counts are shown only where they were available and directly reported in the cited work; N/R denotes not reported. The CRC-VAL-HE-7K result for MedLite-CRC is treated as a development/validation result because the cohort also informed architectural ablation and model selection.
 
-### 5.5 Multi-Cohort Benchmarking (STARC-9 & CRC-5000)
-To establish generalizability, we benchmarked MedLite-CRC and our baselines on STARC-9 and CRC-5000. All models were trained from scratch.
+*Interpretation for model positioning*. The literature demonstrates that raw patch-level accuracy on these benchmarks can be very high, including 99.69% internal and 99.32% external accuracy with ResNet-50 in Tsai and Tao [41], 99.76% with the dResNet/DeepSVM pipeline of Fadafen and Rezaee [43], and 99.3% with Color-CADx [44]. These results show that MedLite-CRC should not be positioned as the highest-accuracy classifier. Instead, its contribution is the accuracy–efficiency trade-off: the proposed 0.48M-parameter student achieves 96.47% ± 0.22% (mean across three seeds) on the cross-patient development/validation cohort and, in the controlled comparison of Table 5.1, exceeds the larger MobileNetV2, ShuffleNetV2, EfficientNet-B0, and ResNet-50 baselines while remaining suitable for INT8 edge inference. This distinction avoids conflating benchmark saturation with deployment efficiency and makes the comparison more scientifically interpretable.
 
-*   **STARC-9 (Stanford multi-centric cohort):**
-    -   **MedLite-CRC (Ours, standard): 99.79%**
-    -   **MedLite-CRC (Ours, MobileNetV2 KD): 99.75%**
-    -   EfficientNet-B0: 99.68%
-    -   ShuffleNetV2: 99.68%
-    -   MobileNetV2: 99.63%
-    -   ResNet-50: 99.60%
-*   **CRC-5000 (Noisy clinical cohort):**
-    -   **MedLite-CRC (Ours, MobileNetV2 KD): 93.94%**
-    -   **MedLite-CRC (Ours, standard): 92.00%**
-    -   EfficientNet-B0: 92.00%
-    -   ResNet-50: 89.43%
-    -   MobileNetV2: 89.00%
-    -   ShuffleNetV2: 87.14%
+### 5.5 Multi-Cohort Benchmarking (STARC-9 and CRC-5000)
+We next evaluate MedLite-CRC on held-out STARC-9 and CRC-5000 splits to examine performance beyond the CRC-VAL-HE-7K development/validation cohort. The architecture was fixed before these runs. STARC-9 uses 63,000 stratified training tiles, 7,000 per class with seed 42, and the complete 54,000-tile official validation split.
 
-On the massive STARC-9 cohort, our 0.48M parameter model outperforms all heavier baselines, including ResNet-50. On the noisy CRC-5000 cohort, generic lightweight models (MobileNet, ShuffleNet) collapsed due to overfitting to noise, while MedLite-CRC tied with the 10× larger EfficientNet-B0 at 92.00%. By further applying our MobileNetV2 Knowledge Distillation (KD) framework, MedLite-CRC achieves a new SOTA accuracy of **93.94%** on the CRC-5000 cohort, surpassing the teacher model itself (89.00%) by +4.94% absolute and the EfficientNet-B0 baseline by +1.94% absolute. On the saturated STARC-9 cohort, applying MobileNetV2 KD achieves **99.75%**, which is virtually identical to our standard from-scratch accuracy (99.79%), verifying that KD is redundant when the dataset scale is sufficiently large to act as a natural regularizer. This confirms that the regularization benefits of structurally aligned histopathology KD generalize robustly to noisy datasets with severe compression artifacts.
+* **STARC-9 (Stanford multi-centric cohort)**: MedLite-CRC (standard) 99.79%, MedLite-CRC (MobileNetV2 KD) 99.75%, EfficientNet-B0 99.68%, ShuffleNetV2 99.68%, MobileNetV2 99.63%, ResNet-50 99.60%.
+* **CRC-5000 (noisy clinical cohort)**: MedLite-CRC (MobileNetV2 KD) 93.94%, MedLite-CRC (standard) 92.00%, EfficientNet-B0 92.00%, ResNet-50 89.43%, MobileNetV2 89.00%, ShuffleNetV2 87.14%.
 
-### 5.6 Expected Calibration Error & Confidence Calibration
-In clinical deployment, a deep learning model's confidence must reflect its true predictive accuracy to support reliable decision-making. We evaluated the confidence calibration of MedLite-CRC (Ablation 3 configuration) on the out-of-distribution `CRC-VAL-HE-7K` validation cohort before and after temperature scaling. 
+On the large STARC-9 validation split, the 0.48M-parameter MedLite-CRC outperforms the larger baselines under the protocol described in Section 4.2. On the noisier CRC-5000 test split, MobileNetV2 and ShuffleNetV2 perform worse, while the standard MedLite-CRC matches EfficientNet-B0 at 92.00%. Knowledge distillation raises MedLite-CRC to 93.94%, which is 4.94 points above the MobileNetV2 teacher and 1.94 points above EfficientNet-B0. On STARC-9, KD reaches 99.75%, very close to the 99.79% obtained without KD. This small difference suggests that KD contributes less when the training cohort is much larger. These results extend the evaluation beyond CRC-VAL-HE-7K, although the CRC-5000 image-level split is still a limitation because it is not patient- or slide-disjoint.
 
-To calibrate the model, we optimized a single scalar Temperature parameter ($T$) using Negative Log Likelihood (NLL) on the NCT-100K validation split, obtaining $T = 0.4359$. We then evaluated the Expected Calibration Error (ECE) using 15 bins on the external `CRC-VAL-HE-7K` dataset:
-- **Uncalibrated ECE:** $14.35\\%$
-- **Calibrated ECE ($T = 0.4359$):** $1.75\\\%$
-- **Absolute Calibration Error Reduction:** $12.61\\\%$ (an $88\%$ relative reduction)
+### 5.6 Expected Calibration Error and Confidence Calibration
+For clinical decision support, confidence should reflect how often predictions are correct. We therefore evaluated MedLite-CRC (Ablation 3) on CRC-VAL-HE-7K before and after temperature scaling (Guo et al., 2017).
 
-Applying temperature scaling successfully aligns the model's confidence scores with its actual predictive accuracy. This ensures that high confidence predictions correlate strongly with correct classifications, improving confidence calibration on the evaluated OOD cohort. The reliability diagram is illustrated below:
+We fitted one temperature parameter, T, by minimizing negative log-likelihood on the NCT-100K validation split. The fitted value was T = 0.4359. We then measured Expected Calibration Error (ECE) using 15 bins on CRC-VAL-HE-7K:
+* Uncalibrated ECE: 14.41%
+* Calibrated ECE (T = 0.4359): 1.68%
+* Absolute reduction: 12.73 points (an 88% relative reduction)
+
+Because T < 1 sharpens the softmax output, the calibrated model becomes more confident rather than less confident. This is opposite to the T > 1 correction often used for overconfident models. We associate the difference with the 0.1 label smoothing used during training (Section 4.2), which can leave the uncalibrated model underconfident. After scaling, confidence follows observed accuracy much more closely on the evaluated cohort. This improves calibration on that cohort, but it does not establish clinical safety without prospective validation.
 
 ![Figure 4: Reliability Diagram and ECE Calibration](../assets/calibration_diagram.png)
 
----
+## 6. Ablation Studies and the Attention Paradox
+We used a leave-one-out ablation study on CRC-VAL-HE-7K to examine the contribution of the main architectural components.
 
-## 6. Ablation Studies & The Attention Paradox
-
-To systematically validate each component, we performed a leave-one-out ablation study on the `CRC-VAL-HE-7K` validation set. Each configuration in the principal ablation table below was first trained once with a fixed random seed (seed 42) to establish the baseline convergence topology. 
-
-To ensure the stability and statistical rigor of our most critical claims, all core configurations (Baseline, Config 2, Config 3, and KD SOTA) were then strictly verified across three independent random seeds. All verification seeds were fully trained to convergence (up to 200 epochs with early stopping) and checkpoint selection relied exclusively on the in-distribution `NCT-CRC-HE-100K` validation split, ensuring zero data leakage to the evaluation cohort. 
-
-The Baseline CNN yielded a 3-seed mean of $94.05\% \pm 0.46\%$. Adding Stain Adaptation (Config 2) resulted in a mean of $92.98\% \pm 1.66\%$, highlighting severe convergence instability across random initializations. Adding the MultiScale Branch (Config 3) improved the mean to $93.98\% \pm 1.12\%$, partially stabilizing the architecture. Ultimately, the KD MobileNetV2 student yielded a hyper-stable **$96.47\% \pm 0.22\%$** mean across three independent, fully-converged seeds. The seed-averaged KD performance ($96.47\%$) exceeds the Baseline CNN mean ($94.05\%$) by **+2.42%** absolute, and exceeds the final attention-free standard architecture mean ($93.98\%$) by **+2.49%** absolute—well outside the observed seed variance—definitively confirming that the Knowledge Distillation gain acts as a robust structural regularizer.
-
-| Model Configuration | Parameters | GFLOPs | Size (disk) | Latency (ms) | Accuracy (Seed 42) | Macro F1 | Wtd F1 |
+**Table 6.1. Leave-one-out ablation results for the principal MedLite-CRC architectural components and variants.**
+| Model Configuration | Parameters | GFLOPs | Size (disk) | Latency (ms)* | Accuracy (Seed 42) | Macro F1 | Wtd F1 |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **1. Baseline CNN** | 0.453M | 0.349 | 1.89 MB | **0.664** | 94.05% | 0.9257 | 0.9410 |
 | **2. Baseline + Stain Adaptation** | 0.453M | 0.349 | 1.89 MB | **0.658** | **94.64%** | 0.9319 | **0.9468** |
 | **3. Baseline + Stain + MultiScale ← Final Architecture** | 0.482M | 0.726 | 2.02 MB | 0.845 | 94.71% | **0.9327** | 0.9469 |
 | **4. + SEBlock (Negative Finding)** | **0.490M** | **0.726** | **2.05 MB** | 0.788 | 93.82% | 0.9233 | 0.9396 |
 | **5. + Coordinate Attention (Negative Finding)** | 0.488M | 0.726 | 2.05 MB | 0.850 | 93.44% | 0.9177 | 0.9349 |
+* Latency in this table is a relative forward-pass GPU microbenchmark used only to compare configurations 1 to 5 under the same conditions. It is not the CPU deployment latency reported in Table 5.1 and Section 8.1, so the two measurements should not be compared directly.
 
-### 6.1 Learnable Stain Adaptation Benefit:
-Comparing Configuration 1 and 2, adding the learnable stain adaptation parameters yields the highest overall accuracy of **94.64%** (+0.59% over Baseline). Because this layer learns to map variable source colors to a standardized latent space dynamically, it significantly improves cross-site generalization with zero parameter or latency overhead during deployment.
+### 6.1 Learnable Stain Adaptation Benefit
+Adding the learnable stain adaptation layer (Configuration 2 versus Configuration 1) raises accuracy from 94.05% to 94.64%, a gain of 0.59 points. The ablation latency changes from 0.664 ms to 0.658 ms, which is not a measurable deployment cost. The layer contains only six trainable scalars and can be fused into the first convolution in the FP32 path (Section 3.1).
 
-### 6.2 Multi-Scale Convolutional Feature Extraction:
-Comparing Configuration 2 and 3, adding the parallel multi-scale branch yields the highest Macro F1 score of **0.9325** (+0.70% over Baseline). The multi-scale path extracts features simultaneously using parallel `3x3`, `5x5`, and `7x7` receptive fields, making the model highly robust to scale variations introduced by different scanner sensors.
+### 6.2 Multi-Scale Convolutional Feature Extraction
+Adding the parallel multi-scale branch (Configuration 3 versus Configuration 2) raises Macro-F1 from 0.9319 to 0.9327, a gain of 0.08 points. Relative to Configuration 1 (0.9257), the two additions together improve Macro-F1 by 0.70 points. The 3×3, 5×5, and 7×7 branches give the model access to structures at different spatial scales.
 
-### 6.3 The Squeeze-and-Excitation "Attention Paradox"
-Integrating late-stage Squeeze-and-Excitation (SE) attention blocks (Ablation 4) consistently degraded cross-dataset validation accuracy to **93.82%** — a significant −0.89% drop from the attention-free Ablation 3.
+### 6.3 The Squeeze-and-Excitation Attention Paradox
+Adding late-stage Squeeze-and-Excitation (SE) blocks (Hu et al., 2018) reduces external accuracy to 93.82%, a single-seed result 0.16 points below the 3-seed mean of the attention-free Ablation 3 (93.98% ± 1.12%); given that variance, this delta is not distinguishable from noise.
 
-While SE blocks improve training convergence and score highly on the source in-distribution validation split (99.52%), their channel-reweighting coefficients overfit to the specific H&E dye balances and scanner noise profiles of the source scanner (NCT-100K). When tested on a completely unseen clinical center (Mannheim cohort), these attention maps encode non-biological channel correlations, consistently degrading generalization. This highlights a critical design warning for lightweight medical CNNs: channel-attention mechanisms in small models trigger domain-specific shortcut learning that reduces robustness on unseen scanners. Consequently, the SEBlock is permanently removed from the final architecture. **MedLite-CRC's final deployed configuration corresponds exclusively to Ablation 3 (LearnableStainNorm + MultiScaleBranch + DWResBlocks), which achieves the optimal balance of parameter efficiency and cross-site generalization.**
+SE improves convergence and performs well on the NCT-100K in-distribution validation split (99.52%), but its channel-reweighting coefficients may be adapting to the H&E color balance and scanner characteristics of the source cohort. On the separate DACHS validation cohort, those learned correlations do not transfer as well. The same pattern appears in the Coordinate Attention experiment in Section 6.4. Together, the two results are consistent with channel and spatial attention encouraging domain-specific shortcuts in this constrained setting, although we did not directly prove that mechanism. We therefore removed SE from the final architecture. The deployed model is Ablation 3, combining LearnableStainNorm, MultiScaleBranch, and DWResBlocks.
 
 ### 6.4 The Coordinate Attention and Spatial Attention Paradox
-We also explored whether spatial-based attention could overcome the limitations of channel attention. Coordinate Attention (Ablation 5) factorizes channel attention into horizontal and vertical 1D pooling operations, encoding direction- and coordinate-aware spatial details. However, when evaluated on the out-of-distribution Mannheim validation cohort, the Coordinate Attention model degraded accuracy further to **93.44%** (-1.27% drop from Ablation 3). 
+We also tested Coordinate Attention to see whether a spatially aware attention mechanism would behave differently. Coordinate Attention (Hou et al., 2021) uses separate horizontal and vertical pooling operations to encode location information. On CRC-VAL-HE-7K, it reduces accuracy to 93.44%, a single-seed result 0.54 points below the 3-seed mean of Ablation 3 (93.98% ± 1.12%); as with the SEBlock result, this is within the observed seed variance.
 
-This drop is driven by two factors:
-1. **Overfitting to Absolute Scanner Layouts:** Unlike objects in natural images, histopathology tissue layout is orientation-invariant and arbitrary. Forcing location-sensitivity via absolute horizontal/vertical coordinates causes the model to memorize scanner-specific spatial noise, dye gradients, and edge heuristics of the training center.
-2. **Textural Information Loss:** The 1D pooling operations smooth out local structural variations, blurring critical high-frequency boundaries (such as fine-grained nuclear margins and stroma collagen waves). This is evidenced by a severe drop in discriminative performance on fine fibrous tissues: Stroma (STR) F1-score dropped from **0.7530 down to 0.7203**, and Smooth Muscle (MUS) F1 dropped from **0.7933 down to 0.7867**.
+Two effects may explain the drop:
+1. **Overfitting to absolute scanner layout.** Histopathology patches do not have a fixed orientation in the way many natural-image objects do. Encoding absolute horizontal and vertical position can therefore expose the model to scanner-specific spatial patterns, dye gradients, or edge effects.
+2. **Loss of local texture.** The 1D pooling operations smooth some fine structure, including nuclear boundaries and collagen patterns. The largest drops occur for fibrous tissues: Stroma F1 falls from 0.7530 to 0.7203, while Smooth Muscle F1 falls from 0.7933 to 0.7867.
 
-Consequently, both channel- and spatial-attention modules are rejected in favor of the more robust attention-free multi-scale design.
+Both tested attention mechanisms perform worse than the simpler attention-free multi-scale design. We did not evaluate CBAM separately. Since its channel and spatial components each underperform in our experiments, we cannot claim that CBAM would improve on Ablation 3.
 
 ### 6.5 Additional Negative Findings
-We document five key design failures during development to guide future researchers:
-1.  **CutMix Failure:** We attempted to apply CutMix augmentation (alpha=1.0) to resolve Stroma vs. Smooth Muscle confusion. Cross-patient validation accuracy dropped from 94.5% to **91.09%** (Stroma F1 fell to 0.64). Histopathology tissue represents continuous sheets. Forcefully introducing hard, square artificial boundaries via CutMix causes the network to learn these sharp artificial edges as shortcuts rather than the biological texture of the actual tissue.
-2.  **V2 Architectural Scaling:** Upgrading the base channels from 32 (0.48M params, V1) to 48 (1.08M params, V2) with SiLU activations caused generalization to drop to **91.94%** (despite near-perfect training convergence of 99.98%). This confirms that over-parameterization causes the network to memorize scanner artifacts. The parameter constraint of V1 acts as a crucial "natural regularizer".
-3.  **Test-Time Augmentation (TTA) Degradation:** Applying a 4-rotation TTA averaging during inference dropped accuracy to **92.70%** (specifically harming Muscle and Stroma F1-scores). The model learns directional heuristics relative to fibrous tissue orientations; averaging across arbitrary 90-degree rotations disrupts its confidence in these directional boundaries.
-4.  **Receptive Field Expansion (Large Kernels):** Replacing the $3\times3, 5\times5, 7\times7$ multi-scale branch with larger $7\times7, 9\times9, 11\times11$ depthwise convolutions dropped cross-patient accuracy to **93.93%**. Crucially, the F1-score for Lymphocytes dropped from 0.9921 to 0.9842. The massive 11x11 filters acted as a low-pass filter that smoothed over the critical high-frequency, crisp edge details required to identify tiny lymphocytic nuclei.
-5.  **Focal Loss & Pairwise Loss Overfitting:** We implemented a Focal Loss combined with a Pairwise Confusion Penalty specifically targeting Stroma vs. Smooth Muscle logits. While this eliminated confusion on the training set (99.69% in-distribution validation accuracy), cross-patient accuracy collapsed to **94.76%** (Stroma recall plummeted to 57.48%). Modifying loss functions to target hard cases causes the network to overfit to the specific stain and texture signatures of those hard cases within the training domain.
+Six additional design choices did not improve the model during development. We report them here because they help define the limits of the current architecture:
+* **CutMix failure.** Adding CutMix augmentation (Yun et al., 2019; alpha = 1.0) to address Stroma versus Smooth Muscle confusion reduced cross-patient accuracy from 94.5% to 91.09%, with Stroma F1 falling to 0.64. The square boundaries introduced by CutMix may encourage the model to use artificial edges rather than tissue texture.
+* **Wide-channel scaling variant.** Increasing the base width from 32 channels (0.48M parameters) to 48 channels (1.08M parameters) and using SiLU reduced generalization to 91.94%, despite 99.98% training accuracy. This result is consistent with the tighter channel budget acting as a regularizer. This experiment is separate from the reflection-padding mitigation in Section 7.5.
+* **Test-time augmentation degradation.** Averaging predictions over four rotations reduced accuracy to 92.70%, with the largest F1 losses in Muscle and Stroma. The result suggests that the model uses directional cues associated with fibrous tissue orientation, so averaging over arbitrary 90° rotations can remove useful information.
+* **Receptive-field expansion.** Replacing the 3×3, 5×5, and 7×7 branches with 7×7, 9×9, and 11×11 depthwise convolutions reduced cross-patient accuracy to 93.93%. Lymphocyte F1 fell from 0.9921 to 0.9842, consistent with the larger filters smoothing the fine edges needed to identify small lymphocytic nuclei.
+* **Focal loss and pairwise loss overfitting.** Combining Focal Loss (Lin et al., 2017) with a Pairwise Confusion Penalty for Stroma versus Smooth Muscle reduced the training confusion to 99.69% in-distribution accuracy, but cross-patient accuracy fell to 94.76% and Stroma recall fell to 57.48%. The loss may be concentrating too strongly on hard examples and their domain-specific stain and texture patterns.
+* **HED-space stain/color adaptation.** Applying the learnable affine transform after conversion to Hematoxylin-Eosin-DAB space reached 94.18% OOD accuracy in this single-seed comparison, slightly below the 94.71% obtained with RGB at the same seed. The RGB layer has more freedom to scale and shift the observed scanner color channels, whereas the HED representation imposes the additional structure of the color decomposition.
 
 ### 6.6 Knowledge Distillation and Teacher-Student Alignment
-To investigate the impact of Knowledge Distillation (KD) on ultra-lightweight models under domain shift, we trained the MedLite-CRC student (0.48M parameters) using two different pre-trained teacher architectures:
-- **EfficientNet-B0 Teacher (4.02M parameters):** Distilling soft probability distributions from this teacher degraded out-of-distribution accuracy on `CRC-VAL-HE-7K` to a verified **94.35%** (a -0.27% reduction compared to Ablation 3 without KD). EfficientNet-B0 relies heavily on Squeeze-and-Excitation attention maps and Swish activations. This mismatch in representation style and the transfer of teacher-specific scanner bias restricted the student from learning robust morphology.
-- **MobileNetV2 Teacher (2.24M parameters):** Distilling from this teacher led to a massive generalization breakthrough, achieving a **verified 96.47% ± 0.22% OOD accuracy** (+1.76% absolute over Ablation 3, best checkpoint). Both MobileNetV2 and our student architecture rely on attention-free, depthwise separable convolutions. This high degree of architecturally aligned design allowed the student to seamlessly ingest the teacher's soft class-distribution information. Under this aligned setup, the student outperformed its own teacher by **+1.65%** absolute on unseen domains, demonstrating that distilling structured dark knowledge into a highly parameter-constrained model acts as an ultimate regularizer. Notably, the two historically difficult classes — Stroma (STR F1: 0.7530 → 0.8084) and Smooth Muscle (MUS F1: 0.7933 → 0.8564) — saw their largest improvements under this regime.
+We also tested knowledge distillation with two pre-trained teachers to see how the teacher architecture affects a 0.48M-parameter student under domain shift.
+* **EfficientNet-B0 teacher** (4.02M parameters): distillation from this teacher reduced OOD validation accuracy on CRC-VAL-HE-7K to 94.35%, 0.36 points below Ablation 3 without KD. The teacher uses Squeeze-and-Excitation and Swish activations, so its feature representation differs from the student. The result is also consistent with the possibility that teacher-specific scanner bias is being transferred.
+* **MobileNetV2 teacher** (2.24M parameters): distillation from MobileNetV2 raises OOD validation accuracy to 96.47% ± 0.22% (mean across three full 200-epoch seeds: 96.27%, 96.44%, 96.70%), a 2.49-point gain over Ablation 3's 3-seed mean (93.98% ± 1.12%). Both models use attention-free depthwise separable convolutions, giving the student a closer architectural match to the teacher. The student also exceeds its teacher by 1.45 points on CRC-VAL-HE-7K at the seed-42 checkpoint used for detailed analysis. Stroma F1 improves from 0.7530 to 0.8084 and Smooth Muscle F1 from 0.7933 to 0.8564 (seed-42 checkpoint). These results support the use of an architecturally aligned teacher in this setting, and the low seed variance (SD = 0.22%) suggests the gain is not highly sensitive to initialization.
 
-
----
-
-
-## 7. Interpretability & Spatial Bias Analysis
-
-To validate that MedLite-CRC is learning valid biological morphology rather than exploiting low-level shortcuts (as warned by Ignatov & Malivenko, 2024), we developed an automated pipeline to analyze the spatial activation maps of the final convolutional block.
+## 7. Interpretability and Spatial Bias Analysis
+We used an automated Grad-CAM pipeline to examine whether the model's spatial activations are concentrated on tissue rather than obvious low-level shortcuts. The analysis was motivated by the dataset-bias concerns discussed by Ignatov and Malivenko (2024).
 
 ### 7.1 Quantitative Grad-CAM Tissue Alignment
-We calculated the mathematical alignment score (overlap between the top-20% hottest pixels of the Grad-CAM activation map and an algorithmically generated target tissue mask based on background brightness thresholds):
+For each Grad-CAM (Selvaraju et al., 2017) map, we took the top 20% hottest pixels and measured how many fell inside an automatically generated tissue mask. The mask was created by thresholding image brightness to separate tissue from bright background; it was not drawn by a pathologist. The alignment score is the fraction of the hottest Grad-CAM pixels that fall inside this mask:
 
+**Table 7.1. Quantitative Grad-CAM tissue-alignment scores using the automatically generated tissue mask.**
 | Class | Alignment Score | Assessment |
 |---|:---:|---|
 | Lymphocytes (LYM) | **97.6%** | Perfect alignment, focusing on dense nuclei groups |
@@ -332,136 +300,143 @@ We calculated the mathematical alignment score (overlap between the top-20% hott
 | Normal Mucosa (NORM) | **96.0%** | High alignment, tracking neat glandular walls |
 | Debris (DEB) | **85.2%** | Relaxed attention, diffusing into necrotic zones |
 
-*Biological Interpretation:* The lower alignment score for Debris (85.2%) is biologically valid. Debris is unstructured necrotic scatter and mucus. The model correctly relaxes its spatial attention to mirror this biological reality, while maintaining a sharp 97.6% alignment on dense, structured classes like Lymphocytes.
-
-To qualitatively inspect the spatial activation focus, we visualize Grad-CAM overlays across representative patches of selected classes:
+The Debris score is lower at 85.2%, which is compatible with the heterogeneous appearance of necrotic debris and mucus. Because the target mask is generated from image brightness rather than pathologist annotations, however, these scores should not be treated as proof of biologically correct localization. For dense classes such as Lymphocytes, alignment reaches 97.6%.
 
 ![Figure 5: Representative Grad-CAM overlays for selected colorectal tissue classes](../assets/gradcam_results.png)
 
-### 7.2 Center Bias & Receptive Field Focus
-Many CNNs exhibit a "center-bias" defect, predicting classes using only features in the center of the patch. The center-of-mass radial distance of the Grad-CAM activations for the SOTA KD student model averaged **21.93 pixels** (out of a maximum possible radial distance of ~158.4 pixels). While this indicates a strong central diagnostic focus—suggesting that the structurally-aligned KD process concentrates the student model's attention on primary cellular structures in the center of the patch—it shows a highly localized spatial receptive field compared to the baseline's wider scatter (~100 pixels).
+### 7.2 Center Bias and Receptive Field Focus
+Center bias is a known issue in CNNs, where predictions can depend too heavily on features near the patch center. For the best-performing KD student, the Grad-CAM center-of-mass radial distance averages 21.93 pixels, compared with a maximum possible distance of about 158.4 pixels. The baseline shows a much wider scatter of about 100 pixels. This pattern suggests that the KD student concentrates its strongest activations closer to central cellular structures, although the metric alone does not establish why.
 
-### 7.3 Mitigation of the "Negative Space" Shortcut
-While the standard baseline model suffered from a "negative space shortcut" (where average background activation of 0.198 was higher than the tissue activation of 0.137), knowledge distillation has successfully resolved this issue. For the SOTA KD student model, the average activation on the actual cellular tissue (**0.3255**) is mathematically higher than the activation on the empty white slide background (**0.3054**). This indicates that structural alignment via KD successfully forces the network to focus on the physical cellular fibers rather than empty background shapes, making it significantly more robust to sections of varying thickness.
+### 7.3 Mitigation of the Negative Space Shortcut
+The standard baseline also showed a negative-space shortcut: mean background activation was 0.198, higher than the 0.137 measured on tissue. For the best KD student, the ordering reverses, with 0.3255 on cellular tissue and 0.3054 on empty white background. This is consistent with KD shifting activation toward tissue, but it does not by itself prove that the model is using biological morphology or that it will remain robust to changes in section thickness.
 
-### 7.4 The Vanishing Gradient & Global Heuristic Shortcuts
-During automated evaluation, we observed that in **11.10%** of highly confident correct predictions, the Grad-CAM pipeline returned perfectly empty `[0, 0, 0...]` matrices. The zero Grad-CAM outputs indicate that the final convolutional representation does not provide a localized gradient signal for these predictions. We hypothesize that in these cases, the network bypasses local morphological features entirely and relies on global color averages or early-layer texture shortcuts to make its decision. This finding highlights that high OOD generalization does not guarantee a network is using complex biological structures.
+### 7.4 The Vanishing Gradient and Global Heuristic Shortcuts
+In automated evaluation, 11.10% of highly confident correct predictions produced an all-zero Grad-CAM map. In those cases, the final convolutional feature maps do not yield a localized gradient signal, so this method cannot attribute the prediction to a particular region. One possible explanation is that the model falls back on global color statistics or early-layer texture cues, but we did not test that mechanism directly. High external-validation accuracy therefore does not mean that every prediction is based on complex biological structure.
 
 ### 7.5 The Zero-Padding Border Artifact Trap (Boundary Over-Activation)
-Qualitative and quantitative analysis of misclassified samples (specifically whitespace-heavy adipose tissue patches, `True: ADI | Pred: MUS`) revealed a prominent "border ring" or perfect square outline of high activations tracing the outer boundaries of the 224x224 input patch. This is a zero-padding edge artifact. Standard convolutional layers pad borders with zeros to preserve spatial dimensions, creating a sharp artificial contrast/discontinuity at the edge of the patch. In depthwise separable convolutions (where spatial filtering happens per channel independently), these boundary artifacts are baked directly into the feature maps and get amplified as they pass through the Stem, MultiScale branch, and DWResBlocks. In the absence of strong biological features in low-density tissue samples (such as adipose lipid vacuoles), the model classifies based on these border artifacts. We separated our investigation and mitigation of this artifact into two approaches. First, for our standard models, we applied **Grad-CAM border masking** by ignoring the outer 8 pixels of the heatmaps during spatial evaluation to prevent the artifact from skewing localization metrics. Second, we trained a **reflection-padding model variant** (V2 configuration) which replaces the default zero-padding with reflection padding (`padding_mode='reflect'`) across all convolutional layers. Post-mitigation evaluation of the V2 variant showed an 18% relative reduction in background noise activation (from 0.3075 down to 0.2524) and stabilized the localizable activations (reducing the vanishing gradient rate from 11.20% down to 10.30%) while preserving the model's high OOD classification performance (95.84% accuracy, closely mapping the 96.47% baseline SOTA).
+The padding and masking mitigation in this section is called MedLite-CRC-Reflect throughout the paper to distinguish it from the unrelated wide-channel scaling variant in Section 6.5. The section contains two separate changes: (A) a Grad-CAM evaluation mask and (B) a retrained reflection-padding model.
 
-### 7.6 Dimensionality Reduction & Feature Embedding Separation
-To verify the semantic layout and domain invariance of our learned representations, we extracted 256-dimensional Global Average Pooling (GAP) feature vectors for the `CRC-VAL-HE-7K` validation cohort using the optimized MedLite-CRC (Ablation 3) checkpoint and projected them to 2D using t-SNE.
-- **Class Separation:** The t-SNE projection colored by tissue class (illustrated below) shows highly compact, well-separated clusters with distinct boundaries, particularly for dense classes like Lymphocytes (LYM) and Normal Mucosa (NORM). This visual separation confirms the model's high semantic classification capacity.
+In misclassified, whitespace-heavy adipose patches (true class ADI, predicted class MUS), we found a strong activation ring along the 224×224 patch boundary. This pattern comes from zero padding. Zero padding introduces an artificial discontinuity at the edge, and the depthwise separable convolutions can carry that signal through the Stem, MultiScale branch, and DWResBlocks. In low-density tissue such as adipose, where strong biological features may be sparse, the model can therefore rely on the border signal.
+
+(A) **Grad-CAM border masking (analysis-only fix)**. We masked the outer 8 pixels of the feature maps during Grad-CAM evaluation so that the border artifact would not dominate the spatial metric. This changes the analysis only; it does not alter the trained model or its predictions.
+
+(B) **Reflection padding (model fix: MedLite-CRC-Reflect)**. We also retrained a separate variant using reflection padding (`padding_mode='reflect'`) in all convolutional layers and fine-tuned it for 3 epochs. This changes the model weights and is therefore distinct from the analysis-only masking above. When both changes were used in the mitigation experiment, background-noise activation fell by 18% relative, from 0.3075 to 0.2524, and the vanishing-gradient rate fell from 11.20% to 10.30%. External-validation accuracy was 95.84% after the three fine-tuning epochs, close to the 96.27% reached by the seed-42 canonical checkpoint used throughout this section (3-seed mean: 96.47% ± 0.22%).
+
+### 7.6 Dimensionality Reduction and Feature Embedding Separation
+We extracted 256-dimensional Global Average Pooling (GAP) features from CRC-VAL-HE-7K using the optimized MedLite-CRC (Ablation 3) checkpoint and projected them to two dimensions with t-SNE (Van der Maaten & Hinton, 2008).
+
+When colored by tissue class, the t-SNE plot shows compact clusters with clear separation for several classes, especially Lymphocytes and Normal Mucosa. This is consistent with the model learning class-relevant representations.
+
+When the same points are colored by scanner or patient origin, profiles from different origins are mixed within the tissue clusters rather than forming separate origin-specific groups. This is consistent with weaker scanner-specific clustering and may indicate more scanner-invariant features, but the t-SNE plot alone cannot establish domain invariance.
 
 ![Figure 6: t-SNE Projection of GAP Features Colored by Tissue Class](../assets/tsne_class_separation.png)
-
-- **Scanner Invariance:** Crucially, when coloring the same projection by scanner/patient origin (illustrated below), we observed complete mixing of different scanner profiles within each tissue cluster. The lack of scanner-specific sub-clustering is consistent with reduced scanner-specific clustering, indicating that our dynamic stain normalization and architectural constraints force the model to learn more scanner-invariant histopathological morphologies.
- 
 ![Figure 7: t-SNE Projection of GAP Features Colored by Scanner/Patient Origin](../assets/tsne_scanner_origin.png)
 
-### 7.7 Cross-Cohort Downstream Generalization & Transfer Learning Validation
-To evaluate the clinical transferability and semantic generality of the learned feature representations of our distilled MedLite-CRC (V1) checkpoint, we conducted a transfer learning study on three independent external downstream cohorts representing distinct downstream histopathology tasks:
-1. **EBHI-SEG** (6-class biopsy diagnostics, 2,228 histology images; Shi et al., 2023)
-2. **CRC-HGD-v1** (5-class histopathology grading, 1,914 tiles; Wang et al., 2026)
-3. **Kather MSI/MSS** (2-class molecular phenotype classification, 139,143 tiles)
+### 7.7 Cross-Cohort Downstream Generalization and Transfer Learning Validation
+We evaluated transfer learning on three external downstream cohorts. Fine-tuning started from the baseline distilled checkpoint without reflection padding, before the MedLite-CRC Reflect variant described in Section 7.5. These results therefore provide a conservative estimate of downstream transfer because the source-task reflection-padding variant was not used.
 
-For each downstream cohort, we compared fine-tuning the model initialized with our pre-trained SOTA weights (transfer learning) against training the identical architecture from scratch under identical hyperparameter conditions. The exact pre-trained checkpoint used for initialization was the best MobileNetV2 KD student (`ckpt_epoch058_acc0.9946.pt`). 
+* **EBHI-SEG** (6-class biopsy diagnostics, 2,228 tiles; Shi et al., 2023)
+* **CRC-HGD-v1** (5-class histopathology grading, 1,914 tiles; Amjadi et al., 2026)
+* **Kather MSI/MSS** (2-class molecular phenotype classification, 139,143 tiles; Kather et al., 2019)
 
-**Downstream Split Methodologies & Experimental Rigor:**
-*   **EBHI-SEG:** 2,228 images dynamically split 80/20 (image-level, random seed 42) into 1,782 training and 446 test images.
-*   **CRC-HGD-v1:** 1,914 images dynamically split 80/20 (image-level, random seed 42) into 1,531 training and 383 test images.
-*   **Kather MSI/MSS:** 139,143 images utilizing the dataset's official patient-disjoint train/test directory split.
-*   **Protocol Details:** For all downstream tasks, data augmentation (color jittering, flips, etc.) was strictly applied only to the training splits. Because EBHI-SEG and CRC-HGD-v1 utilize an image-level split, patient leakage between training and testing may be present in those two tasks. Furthermore, due to dataset size constraints, early stopping was monitored directly on the test splits, meaning hyperparameters were tuned on the evaluation set. 
-
-During transfer learning, the backbone was frozen for an initial warmup period (10 epochs for Kather MSI/MSS) before full end-to-end fine-tuning with a learning rate of $10^{-4}$ and early stopping based on validation loss. For the Kather MSI/MSS task, which requires patient-level predictions from individual patches, we aggregated patch probabilities using Test-Time Aggregation (TTA) by averaging all patch logits per patient to generate the final WSI-level molecular classification.
+For each downstream cohort, we compared fine-tuning from the pre-trained weights with training the same architecture from scratch under the same hyperparameters. EBHI-SEG used an image-level 80/20 split with seed 42, giving 1,782 training and 446 evaluation images from 2,228 images. CRC-HGD-v1 used the same image-level 80/20 split with seed 42, giving 1,531 training and 383 evaluation images from 1,914 images. Kather MSI/MSS used the dataset's official patient-disjoint train/test directory split. We applied color jitter and flips only to the training data. The EBHI-SEG and CRC-HGD-v1 image-level splits may allow patient or specimen leakage. In addition, early stopping for those two experiments was monitored on the evaluation/test split, so those results involved tuning on the evaluation data and should be treated as transfer/development results rather than pristine held-out test estimates. For Kather MSI/MSS, patch probabilities were aggregated to the patient level because MSI status is a slide- or patient-level label. All downstream experiments used the NVIDIA RTX 4060 and the epoch budgets in Section 4.2. The EBHI-SEG and CRC-HGD-v1 image-level splits, together with evaluation-set early stopping, limit their interpretation as pristine held-out clinical tests.
 
 #### 7.7.1 Quantitative Transfer Performance
 
-| Downstream Cohort | Class Count | Training Mode | Accuracy | Macro-F1 | Absolute Delta (Acc / F1) |
+**Table 7.2. Cross-cohort downstream transfer-learning performance compared with training the same architecture from scratch.**
+| Downstream Cohort | Classes | Training Mode | Accuracy | Macro-F1 | Delta (Acc / F1) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **EBHI-SEG** (Biopsy diagnostics) | 6 | Scratch | 42.47% | 38.52% | **+31.80% / +23.99%** |
-| | | **Pretrained (Ours)** | **74.27%** | **62.51%** | |
-| **CRC-HGD-v1** (Colorectal grading) | 5 | Scratch | 57.07% | 30.90% | **+14.13% / +11.04%** |
-| | | **Pretrained (Ours)** | **71.20%** | **41.94%** | |
-| **Kather MSI/MSS** (Molecular phenotype) | 2 | Scratch | 63.88% | 54.74% | **+17.77% / +8.40%** |
-| | | **Pretrained (TTA)** | **81.65%** | **63.14%** | |
+| **EBHI-SEG** (biopsy diagnostics) | 6 | Scratch | 42.47% | 38.52% | |
+| | | **Pretrained (Ours)** | **74.27%** | **62.51%** | **+31.80% / +23.99%** |
+| **CRC-HGD-v1** (colorectal grading) | 5 | Scratch | 57.07% | 30.90% | |
+| | | **Pretrained (Ours)** | **71.20%** | **41.94%** | **+14.13% / +11.04%** |
+| **Kather MSI/MSS** (molecular phenotype) | 2 | Scratch | 63.88% | 54.74% | |
+| | | **Pretrained (patient-level aggregation)** | **81.65%** | **63.14%** | **+17.77% / +8.40%** |
 
-#### 7.7.2 Biological & Clinical Interpretations
+**Biological and Clinical Interpretations**
+* **Biopsy pathology transfer (EBHI-SEG)**. EBHI-SEG contains substantial background and class imbalance. The scratch model reached 42.47% accuracy and had difficulty with smaller classes such as Serrated Adenoma. Starting from the pre-trained weights increased accuracy to 74.27%. This suggests that the source model learned features related to gland borders and cell layers that are useful for biopsy images. Because the split is image-level and early stopping used the evaluation split, this should be treated as a transfer/development result rather than a pristine held-out test estimate.
+* **Glandular differentiation grading (CRC-HGD-v1)**. The Well, Moderately, and Poorly-differentiated classes show substantial morphological variation. The scratch model performed poorly on this task, while the pre-trained model reached 71.20% accuracy. F1 for the Poorly Differentiated class increased from 0.3505 to 0.6422. The result is consistent with transfer of higher-level tissue organization features, but the image-level split and evaluation-set early stopping mean that this remains a transfer/development evaluation.
+* **Molecular phenotype generalization (Kather MSI/MSS)**. We used patient-level aggregation of patch probabilities with the dataset's official patient-disjoint split. The pre-trained weights reached 81.65% patient-level accuracy, 17.77 percentage points above the scratch baseline. This result is consistent with the possibility that the learned features capture morphology associated with molecular phenotype across a whole slide.
 
-1. **Biopsy Pathology Transfer (EBHI-SEG):** Standard biopsy classification suffers from heavy background noise and class imbalances. The model trained from scratch failed to resolve minor classes (like Serrated Adenoma), achieving a poor 42.47% accuracy. In contrast, the pre-trained weights immediately converged to **74.27% accuracy**, showing that the latent space developed during pre-training contains robust descriptors for gland borders and cell layers that easily adapt to biopsy-specific structures.
-2. **Glandular Differentiation Grading (CRC-HGD-v1):** Grading colorectal cancer is a notoriously challenging clinical task due to the high morphological variability between Well, Moderately, and Poorly differentiated classes. While the scratch baseline struggled, the pre-trained model achieved **71.20% accuracy**, boosting the F1-score of the hardest class (**Poorly Differentiated tumor grade**) from **0.3505 up to 0.6422 (almost double)**. This demonstrates that the pre-trained weights successfully capture high-level biological tissue organization patterns.
-3. **Molecular Phenotype Generalization (Kather MSI/MSS):** Directly predicting genetic Microsatellite Instability (MSI) from histological images is a high-level task. Using Test-Time Aggregation (TTA) to group patch probabilities by patient, the pre-trained weights converged to **81.65% patient-level accuracy**, outperforming the scratch baseline by **+17.77% absolute accuracy**. This suggests that our pre-trained model's features capture scattered morphological indicators of molecular changes across the whole slide.
+## 8. Discussion
+The results show that strong histopathology performance does not require a large parameter count. MedLite-CRC uses 0.48M parameters and performs well on the held-out STARC-9 split (99.79%) and on the noisy CRC-5000 image-level evaluation split (92.00% for the standard model and 93.94% with KD). These results support the idea that a small model can generalize beyond the CRC-VAL-HE-7K development/validation cohort, although they do not prove that parameter count alone causes the improvement. The literature comparison also shows that raw accuracy is not the appropriate sole criterion for positioning this model: several recent methods report 99%+ benchmark accuracy under different protocols, whereas MedLite-CRC is designed around a much smaller parameter budget and practical CPU/INT8 deployment. In the controlled experiments of Table 5.1, the 0.48M-parameter KD model reaches 96.47% ± 0.22% cross-patient accuracy (mean across three seeds), above MobileNetV2 (94.82%), ShuffleNetV2 (95.08%), EfficientNet-B0 (94.81%), and ResNet-50 (94.33%). Thus, the main contribution is a favorable accuracy–efficiency trade-off rather than a claim of absolute SOTA accuracy. The main constraints are that the study is patch-based rather than slide-level, several evaluations use image-level rather than patient-disjoint splits, and the available datasets do not provide comprehensive demographic metadata; these factors should be considered when interpreting clinical generalizability.
 
----
+### 8.1 Carbon Footprint and Computational Efficiency Analysis
+We use a grid carbon intensity of 0.82 kg CO₂/kWh for the footprint calculations. This is the Indian national grid emission factor reported by the Central Electricity Authority (CEA), Government of India, in the CO₂ Baseline Database for the Indian Power Sector. We use it as a representative baseline for developing country grid conditions where low-resource edge deployment may be relevant.
 
-## 8. Discussion & Limitations
-Our experiments demonstrate that deep learning architectures for histopathology do not require massive parameter counts to achieve high accuracy. By restricting our parameter capacity to 0.48M, MedLite-CRC acts as a regularizer, forcing the network to learn generic, scale-invariant morphological features. This is confirmed by our superior performance on the massive multi-centric STARC-9 dataset (99.79%) and the noisy CRC-5000 cohort (92.00%).
+Because grid carbon intensity varies substantially by region, we also report the same footprint figures under three additional illustrative intensities: a global average of approximately 0.48 kg CO₂/kWh (IEA, Global Energy Review), a United States average of approximately 0.37 kg CO₂/kWh (U.S. EPA eGRID), and a European Union average of approximately 0.23 kg CO₂/kWh (European Environment Agency). Since CO₂ mass scales linearly with the assumed intensity for a fixed energy estimate, the MedLite-CRC (KD INT8) training footprint of 221.4 g CO₂ at 0.82 kg CO₂/kWh becomes approximately 128.3 g at the global average, 99.9 g at the U.S. average, and 62.9 g at the EU average; the inference footprint of 1.052 g CO₂ per 100,000 images becomes approximately 0.609 g, 0.475 g, and 0.299 g respectively. These figures are illustrative approximations based on published national or regional averages rather than site-specific measurements, and the relative comparison between MedLite-CRC and the baseline architectures in Table 8.1 is unaffected by the choice of intensity, since all models are scaled by the same factor.
 
-### 8.1 Carbon Footprint & Computational Efficiency Analysis
-To quantify the environmental and financial benefits of MedLite-CRC for large-scale histopathological screening, we conducted a comprehensive computational efficiency and carbon footprint analysis. Calculations assume a grid carbon intensity average of $0.82 \text{ kg CO}_2/\text{kWh}$, representing the Indian national grid emission factor as reported by the Central Electricity Authority (CEA), Government of India (CO2 Baseline Database for the Indian Power Sector). This serves as a representative baseline for developing countries where edge deployment is most valuable. Training energy was measured on a workstation utilizing an RTX 4060 GPU ($85\text{W}$ TDP + $50\text{W}$ system overhead), and inference was benchmarked on a standard edge-spec CPU ($28\text{W}$ TDP).
-
-| Model Configuration | Parameters (M) | CPU Latency (ms) | Training Energy (kWh) | Training $\text{CO}_2$ (g) | Inference Energy (J/img) | Inference $\text{CO}_2$ (g/100k img) |
+**Table 8.1. Estimated computational and carbon footprint of MedLite-CRC and reference architectures.**
+| Model Configuration | Params (M) | CPU Latency (ms) | Est. Training Energy (kWh) | Est. Training $	ext{CO}_2$ (g) | Est. Inference Energy (J/img) | Est. Inference $	ext{CO}_2$ (g/100k img) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **MedLite-CRC (Ours, KD INT8)** | **0.48** | **1.65** | **0.270** | **221.4** | **0.0462** | **1.052** |
-| **MedLite-CRC (Ours, FP32)** | **0.48** | **8.28** | **0.270** | **221.4** | **0.2318** | **5.281** |
+| **MedLite-CRC (Ours, FP32)** | **0.48** | **7.93** | **0.270** | **221.4** | **0.2220** | **5.058** |
 | ShuffleNetV2 | 1.26 | 5.13 | 0.351 | 287.8 | 0.1436 | 3.272 |
 | MobileNetV2 | 2.24 | 7.48 | 0.371 | 304.4 | 0.2094 | 4.771 |
 | EfficientNet-B0 | 4.02 | 11.72 | 0.472 | 387.4 | 0.3282 | 7.475 |
 | ResNet-50 | 23.53 | 19.06 | 0.775 | 635.5 | 0.5337 | 12.156 |
 
-*Method Note on Scope: Training energy figures measure the direct training pass of each respective model ($135\text{W}$ system power draw on an RTX 4060 GPU workstation). For MedLite-CRC (KD INT8), the $0.270\text{ kWh}$ figure represents the primary student training run ($2.0\text{ hours}$). Adding the single QAT fine-tuning epoch adds $+0.0045\text{ kWh}$ ($+3.7\text{g CO}_2$), bringing total combined student + QAT training energy to $0.275\text{ kWh}$. Off-line MobileNetV2 teacher pre-training ($0.371\text{ kWh}$) is excluded as a one-time pre-computation.*
-
-To compare the resource requirements, we visualize the relative carbon footprint and computational costs below:
+Training-energy values are estimates of the direct training pass for each model, using a 135 W system power draw on an RTX 4060 GPU workstation rather than wall-meter measurements. For MedLite-CRC (KD INT8), the 0.270 kWh estimate covers the main 60-epoch student run, which took 2.0 hours. The one QAT fine-tuning epoch adds 0.0045 kWh, or 3.7 g CO₂, giving 0.275 kWh and 225.1 g CO₂ for the student plus QAT. We exclude the MobileNetV2 teacher pre-training cost (0.371 kWh, 304.4 g CO₂) because the cached teacher weights are reused across student experiments.
 
 ![Figure 8: Computational and Carbon Footprint Analysis Comparison](../assets/carbon_efficiency_comparison.png)
 
-#### Key Insights:
-1.  **Training Efficiency:** The extremely compact size of MedLite-CRC reduces training time to 2.0 hours, consuming only $0.270 \text{ kWh}$ of energy ($221.4\text{g CO}_2$). This represents a **1.8× reduction** in carbon emissions compared to EfficientNet-B0 and a **2.9× reduction** compared to ResNet-50.
-2.  **Edge Inference Footprint:** During deployment, the fully quantized MedLite-CRC (INT8) model requires only $0.0462\text{ J}$ of energy per image ($1.052\text{g CO}_2$ per 100,000 images). The estimated inference energy consumption is 5.0× lower than its FP32 counterpart, 4.5× lower than MobileNetV2, 7.1× lower than EfficientNet-B0, and 11.5× lower than ResNet-50.
-3.  **Scalability in Low-Resource Settings:** By keeping the inference latency under 2.1 ms and energy requirements to micro-joules, MedLite-CRC suggests potential suitability for low-power edge deployment, such as running on local batteries or solar-powered point-of-care devices in clinics with unstable power grids, without contributing to local grid stress or high carbon footprints.
-
-### Clinical & Technical Limitations:
-1.  **Patch-Level Evaluation:** MedLite-CRC is evaluated on $224\times224$ pixel patches. In clinical workflows, whole slide images are gigapixel files. True deployment requires integrating our model as a feature extractor in a Multiple Instance Learning (MIL) framework to aggregate patch predictions to slide-level diagnoses.
-2.  **Stain Dependency:** While our learnable stain normalization layer improves cross-patient generalization (+0.59%), it cannot completely overcome severe stain variances across laboratories.
-3.  **Fibrous Connective Tissue Confusion:** The model maintains a lower classification accuracy on Stroma (82.19%) and Smooth Muscle (76.18%) due to their visual similarities. Differentiating wavy stroma from straight muscle remains a biological bottleneck for H&E staining without specialized IHC markers.
-
----
+**Key Insights**
+* **Training efficiency**. MedLite-CRC requires 2.0 hours for the main training run, with an estimated 0.270 kWh of energy and 221.4 g CO₂. This corresponds to 1.75x lower estimated emissions than EfficientNet-B0 and 2.9x lower than ResNet-50.
+* **Edge inference footprint**. The INT8 model uses an estimated 0.0462 J per image, corresponding to 1.052 g CO₂ per 100,000 images. This is 4.8x lower than the FP32 MedLite-CRC model, 4.5x lower than MobileNetV2, 7.1x lower than EfficientNet-B0, and 11.5x lower than ResNet-50.
+* **Low-resource scalability**. The combination of sub-2 ms CPU latency and an estimated 0.0462 J per image makes MedLite-CRC a candidate for low-power edge deployment. We have not tested it on battery-powered or solar-powered hardware.
 
 ## 9. Conclusion
-In this study, we presented **MedLite-CRC**, an ultra-lightweight, 0.48M parameter CNN designed for colorectal cancer tissue classification on edge devices. MedLite-CRC delivers an inference speed of 1.65 ms on standard CPUs with an INT8 disk size of 0.72 MB. Through multi-cohort benchmarking and leave-one-out ablations, we demonstrated that parameter constraints act as a powerful regularizer, enabling our model to tie or outperform architectures up to 48× larger. 
+We presented MedLite-CRC, a 0.48M-parameter CNN for colorectal tissue classification on edge hardware. On the CPU used in our benchmark, the INT8 model runs in 1.65 ms per image and occupies 0.72 MB. Across multiple cohorts and ablation settings, the results are consistent with the idea that a tight parameter budget can limit domain overfitting and allow a much smaller model to remain competitive with larger CNNs. The literature comparison indicates that MedLite-CRC should not be interpreted as an absolute accuracy leader on the saturated NCT-CRC-HE-100K/CRC-VAL-HE-7K benchmarks. Rather, its contribution is the combination of cross-patient performance, a sub-million-parameter model, controlled baseline superiority on the development/validation cohort, and practical INT8 CPU inference.
 
-We documented the Squeeze-and-Excitation "Attention Paradox," showing that attention mechanisms can overfit to scanner-specific staining channels, and evaluated spatial biases using quantitative Grad-CAM alignment. Our findings provide a highly efficient, scientifically honest baseline for edge-deployable computational pathology.
+We also examined the effect of SE and Coordinate Attention, measured spatial activation with Grad-CAM, and tested transfer to other pathology tasks. The attention ablations reduced cross-site performance, while the transfer experiments showed that the pre-trained weights can provide a useful starting point for other datasets. Together, these experiments define both the strengths and the current limits of MedLite-CRC as an edge-oriented computational pathology model.
 
----
+## 10. Declarations
+* **Code and Data Availability**: The MedLite-CRC source code, trained weights, and automated Grad-CAM analysis pipeline are publicly available at [https://github.com/shaik-hasan-AS/CRC_Classification.git](https://github.com/shaik-hasan-AS/CRC_Classification.git). The datasets used include NCT-CRC-HE-100K, CRC-VAL-HE-7K, STARC-9, CRC-5000, EBHI-SEG, CRC-HGD-v1, and Kather MSI/MSS; access is provided through their respective public repositories or dataset records.
+* **Ethical Considerations**: This study used only publicly available, de-identified histopathology datasets. No new human participants were recruited and no new human-subject data were collected. Accordingly, no institutional ethical approval was sought for this study.
+* **Funding and Conflicts of Interest**: The authors declare no competing financial interests or personal relationships that could have influenced the work reported in this paper.
 
-## 10. References
-
-1.  **Arora, S., Bhaskara, A., Ge, R., & Ma, T. (2014).** Provable bounds for learning some deep representations. *International Conference on Machine Learning (ICML)*.
-2.  **Campanella, G., Hanna, M. G., Geneser, L., et al. (2019).** Clinical-grade computational pathology using weakly supervised deep learning on whole slide images. *Nature Medicine*, 25(8), 1301-1309.
-3.  **Chollet, F. (2017).** Xception: Deep learning with depthwise separable convolutions. *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)*, 1251-1258.
-4.  **Geirhos, R., Rubisch, P., Michaelis, C., et al. (2019).** ImageNet-trained CNNs are biased towards texture; increasing shape bias improves accuracy and robustness. *International Conference on Learning Representations (ICLR)*.
-5.  **He, K., Zhang, X., Ren, S., & Sun, J. (2016).** Deep residual learning for image recognition. *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)*, 770-778.
-6.  **Howard, A. G., Zhu, M., Chen, B., et al. (2017).** MobileNets: Efficient convolutional neural networks for mobile vision applications. *arXiv preprint arXiv:1704.04861*.
-7.  **Hu, J., Shen, L., & Sun, G. (2018).** Squeeze-and-excitation networks. *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)*, 7132-7141.
-8.  **Ignatov, A., & Malivenko, G. (2024).** NCT-CRC-HE: Not All Histopathological Datasets Are Equally Useful. *arXiv preprint arXiv:2409.11546*.
-9.  **Ioffe, S., & Szegedy, C. (2015).** Batch normalization: Accelerating deep network training by reducing internal covariate shift. *International Conference on Machine Learning (ICML)*.
-10. **Kang, H., Song, H., & Kim, C. (2021).** StainNet: A fast and robust stain normalization network. *Medical Image Computing and Computer Assisted Intervention (MICCAI)*, 102-111.
-11. **Kather, J. N., Weis, C. A., Bianconi, F., et al. (2016).** Multi-class texture analysis in colorectal cancer histology. *Scientific Reports*, 6, 27988.
-12. **Kather, J. N., Halama, N., & Marx, A. (2018).** 100,000 histological images of human colorectal cancer and healthy tissue. *Zenodo*. https://doi.org/10.5281/zenodo.1214456.
-13. **Li, Y., Goh, W. W., & Jhanjhi, N. Z. (2025).** A lightweight CNN for colon cancer tissue classification and visualization. *Frontiers in Oncology*, 15, 10842.
-14. **Lin, M., Chen, Q., & Yan, S. (2013).** Network in network. *arXiv preprint arXiv:1312.4400*.
-15. **Macenko, M., Niethammer, M., Marron, J. S., et al. (2009).** A method for normalizing histology slides for quantitative analysis. *IEEE International Symposium on Biomedical Imaging (ISBI)*, 1107-1110.
-16. **Ma, N., Zhang, X., Zheng, H. T., & Sun, J. (2018).** ShuffleNet V2: Practical guidelines for efficient CNN architecture design. *Proceedings of the European Conference on Computer Vision (ECCV)*, 116-131.
-17. **McNemar, Q. (1947).** Note on the sampling error of the difference between correlated proportions. *Psychometrika*, 12(2), 153-157.
-18. **Reinhard, E., Adhikhmin, M., Gooch, B., & Shirley, P. (2001).** Color transfer between images. *IEEE Computer Graphics and Applications*, 21(5), 34-41.
-19. **Sandler, M., Howard, A., Zhu, M., et al. (2018).** MobileNetV2: Inverted residuals and linear bottlenecks. *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)*, 4510-4520.
-20. **Selvaraju, R. R., Cogswell, M., Das, A., et al. (2017).** Grad-CAM: Visual explanations from deep networks via gradient-based localization. *Proceedings of the IEEE International Conference on Computer Vision (ICCV)*, 618-626.
-21. **Shen, Y., Zhang, J., & Wang, Y. (2022).** RandStainNA: Learning stain-invariant features via random stain normalization and augmentation. *Medical Image Computing and Computer Assisted Intervention (MICCAI)*, 154-163.
-22. **Subramanian, B., Jeyaraj, R., Peterson, M. N., et al. (2025).** STARC-9: A Large-scale Dataset for Multi-Class Tissue Classification for CRC Histopathology. *Neural Information Processing Systems (NeurIPS) Datasets and Benchmarks Track*.
-23. **Szegedy, C., Liu, W., Jia, Y., et al. (2015).** Going deeper with convolutions. *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)*, 1-9.
-24. **Tellez, D., Balkenhol, M., Otte-Höller, I., et al. (2019).** Quantifying the effects of data augmentation and stain color normalization in convolutional neural networks for computational pathology. *Medical Image Analysis*, 56, 114-124.
-25. **Ulyanov, D., Vedaldi, A., & Lempitsky, V. (2016).** Instance normalization: The missing ingredient for fast stylization. *arXiv preprint arXiv:1607.08022*.
-26. **Woo, S., Park, J., Lee, J. Y., & Kweon, I. S. (2018).** CBAM: Convolutional block attention module. *Proceedings of the European Conference on Computer Vision (ECCV)*, 3-19.
-27. **Shi, X., et al. (2023).** EBHI-SEG: A novel dataset for endoscopic biopsy histopathological image segmentation and classification. *Frontiers in Medicine*, 10, 1114673. DOI: 10.3389/fmed.2023.1114673
-28. **Wang, X., et al. (2026).** CRC-HGD-v1: Colorectal cancer histological grading dataset. *Mendeley Data*, V2.
+## 11. References
+1. Campanella, G., Hanna, M. G., Geneslaw, L., et al. (2019). Clinical-grade computational pathology using weakly supervised deep learning on whole slide images. Nature Medicine, 25(8), 1301-1309.
+2. Chollet, F. (2017). Xception: Deep learning with depthwise separable convolutions. Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 1251-1258.
+3. Geirhos, R., Rubisch, P., Michaelis, C., et al. (2019). ImageNet-trained CNNs are biased towards texture; increasing shape bias improves accuracy and robustness. International Conference on Learning Representations (ICLR).
+4. Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017). On calibration of modern neural networks. International Conference on Machine Learning (ICML). Proceedings of Machine Learning Research, 70, 1321-1330.
+5. He, K., Zhang, X., Ren, S., & Sun, J. (2016). Deep residual learning for image recognition. Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 770-778.
+6. Hinton, G., Vinyals, O., & Dean, J. (2015). Distilling the knowledge in a neural network. arXiv preprint arXiv:1503.02531.
+7. Hou, Q., Zhou, D., & Feng, J. (2021). Coordinate attention for efficient mobile network design. Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 13713-13722.
+8. Hu, J., Shen, L., & Sun, G. (2018). Squeeze-and-excitation networks. Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 7132-7141.
+9. Ignatov, A., & Malivenko, G. (2024). NCT-CRC-HE: Not All Histopathological Datasets Are Equally Useful. arXiv preprint arXiv:2409.11546.
+10. Ioffe, S., & Szegedy, C. (2015). Batch normalization: Accelerating deep network training by reducing internal covariate shift. International Conference on Machine Learning (ICML). PMLR 37, 448-456.
+11. Kang, H., Luo, D., Feng, W., Zeng, S., Quan, T., Hu, J., & Liu, X. (2021). StainNet: A fast and robust stain normalization network. Frontiers in Medicine, 8, 746307. https://doi.org/10.3389/fmed.2021.746307.
+12. Kather, J. N., Weis, C. A., Bianconi, F., et al. (2016). Multi-class texture analysis in colorectal cancer histology. Scientific Reports, 6, 27988.
+13. Kather, J. N., Halama, N., & Marx, A. (2018). 100,000 histological images of human colorectal cancer and healthy tissue. Zenodo. https://doi.org/10.5281/zenodo.1214456.
+14. Kather, J. N., et al. (2019). Deep learning can predict microsatellite instability directly from histology in gastrointestinal cancer. Nature Medicine, 25(7), 1054-1056.
+15. Li, J., Goh, W. W., & Jhanjhi, N. Z. (2025). A lightweight CNN for colon cancer tissue classification and visualization. Frontiers in Oncology, 15, 1659010. https://doi.org/10.3389/fonc.2025.1659010.
+16. Lin, T.-Y., Goyal, P., Girshick, R., He, K., & Dollar, P. (2017). Focal loss for dense object detection. Proceedings of the IEEE International Conference on Computer Vision (ICCV), 2980-2988.
+17. Lin, M., Chen, Q., & Yan, S. (2013). Network in network. arXiv preprint arXiv:1312.4400.
+18. Loshchilov, I., & Hutter, F. (2019). Decoupled weight decay regularization. International Conference on Learning Representations (ICLR).
+19. Macenko, M., Niethammer, M., Marron, J. S., et al. (2009). A method for normalizing histology slides for quantitative analysis. IEEE International Symposium on Biomedical Imaging (ISBI), 1107-1110.
+20. Ma, N., Zhang, X., Zheng, H. T., & Sun, J. (2018). ShuffleNet V2: Practical guidelines for efficient CNN architecture design. Proceedings of the European Conference on Computer Vision (ECCV), 116-131.
+21. McNemar, Q. (1947). Note on the sampling error of the difference between correlated proportions. Psychometrika, 12(2), 153-157.
+22. Reinhard, E., Adhikhmin, M., Gooch, B., & Shirley, P. (2001). Color transfer between images. IEEE Computer Graphics and Applications, 21(5), 34-41.
+23. Sandler, M., Howard, A., Zhu, M., Zhmoginov, A., & Chen, L.-C. (2018). MobileNetV2: Inverted residuals and linear bottlenecks. Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 4510-4520.
+24. Selvaraju, R. R., Cogswell, M., Das, A., et al. (2017). Grad-CAM: Visual explanations from deep networks via gradient-based localization. Proceedings of the IEEE International Conference on Computer Vision (ICCV), 618-626.
+25. Shen, Y., Luo, Y., Shen, D., & Ke, J. (2022). RandStainNA: Learning stain-agnostic features from histology slides by bridging stain augmentation and normalization. Medical Image Computing and Computer Assisted Intervention (MICCAI), 212-221. https://doi.org/10.1007/978-3-031-16434-7_21.
+26. Shi, X., et al. (2023). EBHI-Seg: A novel enteroscope biopsy histopathological hematoxylin and eosin image dataset for image segmentation tasks. Frontiers in Medicine, 10, 1114673. https://doi.org/10.3389/fmed.2023.1114673.
+27. Subramanian, B., Jeyaraj, R., Peterson, M. N., et al. (2025). STARC-9: A Large-scale Dataset for Multi-Class Tissue Classification for CRC Histopathology. Advances in Neural Information Processing Systems 38, Datasets and Benchmarks Track.
+28. Szegedy, C., Liu, W., Jia, Y., et al. (2015). Going deeper with convolutions. Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 1-9.
+29. Tan, M., & Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolutional neural networks. Proceedings of the 36th International Conference on Machine Learning, PMLR 97, 6105-6114.
+30. Tellez, D., Litjens, G., Bandi, P., Bulten, W., Bokhorst, J.-M., Ciompi, F., & van der Laak, J. (2019). Quantifying the effects of data augmentation and stain color normalization in convolutional neural networks for computational pathology. Medical Image Analysis, 58, 101544. https://doi.org/10.1016/j.media.2019.101544.
+31. Van der Maaten, L., & Hinton, G. (2008). Visualizing data using t-SNE. Journal of Machine Learning Research, 9(86), 2579-2605.
+32. Amjadi, E., Bahreini, A., Hakimian, S. M., Emami, M. H., Fahim, A., Rahimi, H., & Bolhasani, H. (2026). CRC-HGD-v1: A Histopathological Image Dataset for Grading Colorectal Cancer. Mendeley Data, V4. https://doi.org/10.17632/yfp5sfj47m.4.
+33. Woo, S., Park, J., Lee, J. Y., & Kweon, I. S. (2018). CBAM: Convolutional block attention module. Proceedings of the European Conference on Computer Vision (ECCV), 3-19.
+34. Yun, S., Han, D., Oh, S. J., et al. (2019). CutMix: Regularization strategy to train strong classifiers with localizable features. Proceedings of the IEEE International Conference on Computer Vision (ICCV), 6023-6032.
+35. Hasan, S. A. S. (2026). MedLite-CRC: A Lightweight, Edge-Deployable CNN for Colorectal Cancer Histopathology. GitHub repository. https://github.com/shaik-hasan-AS/CRC_Classification.
+36. Ghosh, S., Bandyopadhyay, A., Sahay, S., Ghosh, R., Kundu, I., & Santosh, K. C. (2021). Colorectal histology tumor detection using ensemble deep neural network. Engineering Applications of Artificial Intelligence, 100, 104202. https://doi.org/10.1016/j.engappai.2021.104202
+37. Shawesh, R. A., & Chen, Y. X. (2021). Enhancing histopathological colorectal cancer image classification by using convolutional neural network. medRxiv. https://doi.org/10.1101/2021.03.17.21253390
+38. Tanveer, M., Akram, M. U., & Khan, A. M. (2024). TransNetV: An optimized hybrid model for enhanced colorectal cancer image classification. Biomedical Signal Processing and Control, 96, 106579. https://doi.org/10.1016/j.bspc.2024.106579
+39. Intissar, D. H., & Yassine, B. A. (2025). Detecting early gastrointestinal polyps in histology and endoscopy images using deep learning. Frontiers in Artificial Intelligence, 8, 1571075. https://doi.org/10.3389/frai.2025.1571075
+40. Firildak, K., Celik, G., & Talu, M. F. (2025). Supervised constructive learning-based model for identifying colorectal cancer tissue types from histopathological images. International Journal of Imaging Systems and Technology, 35, e70161. https://doi.org/10.1002/ima.70161
+41. Tsai, M.-J., & Tao, Y.-H. (2021). Deep Learning Techniques for the Classification of Colorectal Cancer Tissue. Electronics, 10(14), 1662. https://doi.org/10.3390/electronics10141662.
+42. Kumar, A., et al. (2023). CRCCN-Net: Automated framework for classification of colorectal tissue using histopathological images. Biomedical Signal Processing and Control, 79(2), 104172. https://doi.org/10.1016/j.bspc.2022.104172.
+43. Khazaee Fadafen, M., & Rezaee, K. (2023). Ensemble-based multi-tissue classification approach of colorectal cancer histology images using a novel hybrid deep learning framework. Scientific Reports, 13, 8823. https://doi.org/10.1038/s41598-023-35431-x.
+44. Sharkas, M., & Attallah, O. (2024). Color-CADx: a deep learning approach for colorectal cancer classification through triple convolutional neural networks and discrete cosine transform. Scientific Reports, 14, 6914. https://doi.org/10.1038/s41598-024-56820-w.
