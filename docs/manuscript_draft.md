@@ -252,7 +252,7 @@ We used a leave-one-out ablation study on CRC-VAL-HE-7K to examine the contribut
 * Latency in this table is a relative forward-pass GPU microbenchmark used only to compare configurations 1 to 5 under the same conditions. It is not the CPU deployment latency reported in Table 5.1 and Section 8.1, so the two measurements should not be compared directly.
 
 ### 6.1 Learnable Stain Adaptation Benefit
-Adding the learnable stain adaptation layer (Configuration 2 versus Configuration 1) raises accuracy from 94.05% to 94.64%, a gain of 0.59 points. The ablation latency changes from 0.664 ms to 0.658 ms, which is not a measurable deployment cost. The layer contains only six trainable scalars and can be fused into the first convolution in the FP32 path (Section 3.1).
+Adding the learnable stain adaptation layer (Configuration 2 versus Configuration 1) changed the seed-42 accuracy from 94.05% to 94.64% in this single-seed comparison; however, as reported in Section 5, the 3-seed mean for this configuration (92.98% ± 1.66%) does not show a reliable gain over baseline, so this 0.59-point difference should not be read as a confirmed improvement. The ablation latency changes from 0.664 ms to 0.658 ms, which is not a measurable deployment cost. The layer contains only six trainable scalars and can be fused into the first convolution in the FP32 path (Section 3.1).
 
 ### 6.2 Multi-Scale Convolutional Feature Extraction
 Adding the parallel multi-scale branch (Configuration 3 versus Configuration 2) raises Macro-F1 from 0.9319 to 0.9327, a gain of 0.08 points. Relative to Configuration 1 (0.9257), the two additions together improve Macro-F1 by 0.70 points. The 3×3, 5×5, and 7×7 branches give the model access to structures at different spatial scales.
