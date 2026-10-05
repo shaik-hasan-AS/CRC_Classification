@@ -266,15 +266,17 @@ Applying temperature scaling successfully aligns the model's confidence scores w
 
 ## 6. Ablation Studies & The Attention Paradox
 
-To systematically validate each component, we performed a leave-one-out ablation study on the `CRC-VAL-HE-7K` validation set. To ensure the stability and statistical rigor of our most critical claims, all core configurations (Baseline, Config 2, Config 3, and KD SOTA) were strictly verified across three independent random seeds. All verification seeds were fully trained to convergence (up to 200 epochs with early stopping) and checkpoint selection relied exclusively on the in-distribution `NCT-CRC-HE-100K` validation split, ensuring zero data leakage to the evaluation cohort. 
+To systematically validate each component, we performed a leave-one-out ablation study on the `CRC-VAL-HE-7K` validation set. Each configuration in the principal ablation table below was first trained once with a fixed random seed (seed 42) to establish the baseline convergence topology. 
 
-The Baseline CNN yielded $94.05\% \pm 0.46\%$ across three seeds. Adding Stain Adaptation (Config 2) resulted in $92.98\% \pm 1.66\%$, highlighting severe convergence instability across random initializations. Adding the MultiScale Branch (Config 3) improved the mean to $93.98\% \pm 1.12\%$, partially stabilizing the architecture. Ultimately, the KD MobileNetV2 student yielded **$96.47\% \pm 0.22\%$** across three independent, fully-converged seeds. The seed-averaged KD performance ($96.47\%$) exceeds the fully-converged Baseline CNN mean ($94.05\%$) by **+2.42%** absolute—well outside the observed seed variance—definitively confirming that the Knowledge Distillation gain acts as a robust structural regularizer.
+To ensure the stability and statistical rigor of our most critical claims, all core configurations (Baseline, Config 2, Config 3, and KD SOTA) were then strictly verified across three independent random seeds. All verification seeds were fully trained to convergence (up to 200 epochs with early stopping) and checkpoint selection relied exclusively on the in-distribution `NCT-CRC-HE-100K` validation split, ensuring zero data leakage to the evaluation cohort. 
 
-| Model Configuration | Parameters | GFLOPs | Size (disk) | Latency (ms) | Accuracy (Mean ± SD) |
-|---|:---:|:---:|:---:|:---:|:---:|
-| **1. Baseline CNN** | 0.453M | 0.349 | 1.89 MB | **0.664** | 94.05% ± 0.46% |
-| **2. Baseline + Stain Adaptation** | 0.453M | 0.349 | 1.89 MB | **0.658** | 92.98% ± 1.66% |
-| **3. Baseline + Stain + MultiScale ← Final Architecture** | 0.482M | 0.726 | 2.02 MB | 0.845 | 93.98% ± 1.12% |
+The Baseline CNN yielded a 3-seed mean of $94.05\% \pm 0.46\%$. Adding Stain Adaptation (Config 2) resulted in a mean of $92.98\% \pm 1.66\%$, highlighting severe convergence instability across random initializations. Adding the MultiScale Branch (Config 3) improved the mean to $93.98\% \pm 1.12\%$, partially stabilizing the architecture. Ultimately, the KD MobileNetV2 student yielded a hyper-stable **$96.47\% \pm 0.22\%$** mean across three independent, fully-converged seeds. The seed-averaged KD performance ($96.47\%$) exceeds the Baseline CNN mean ($94.05\%$) by **+2.42%** absolute, and exceeds the final attention-free standard architecture mean ($93.98\%$) by **+2.49%** absolute—well outside the observed seed variance—definitively confirming that the Knowledge Distillation gain acts as a robust structural regularizer.
+
+| Model Configuration | Parameters | GFLOPs | Size (disk) | Latency (ms) | Accuracy (Seed 42) | Macro F1 | Wtd F1 |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **1. Baseline CNN** | 0.453M | 0.349 | 1.89 MB | **0.664** | 94.05% | 0.9257 | 0.9410 |
+| **2. Baseline + Stain Adaptation** | 0.453M | 0.349 | 1.89 MB | **0.658** | **94.64%** | 0.9319 | **0.9468** |
+| **3. Baseline + Stain + MultiScale ← Final Architecture** | 0.482M | 0.726 | 2.02 MB | 0.845 | 94.71% | **0.9327** | 0.9469 |
 | **4. + SEBlock (Negative Finding)** | **0.490M** | **0.726** | **2.05 MB** | 0.788 | 93.82% | 0.9233 | 0.9396 |
 | **5. + Coordinate Attention (Negative Finding)** | 0.488M | 0.726 | 2.05 MB | 0.850 | 93.44% | 0.9177 | 0.9349 |
 
