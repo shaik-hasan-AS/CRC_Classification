@@ -15,7 +15,7 @@ CYAN="\033[36m"
 YELLOW="\033[33m"
 RESET="\033[0m"
 
-clear
+clear || true
 echo -e "${BOLD}${GREEN}======================================================================${RESET}"
 echo -e "${BOLD}${GREEN}               MedLite-CRC Replication Console for Reviewers         ${RESET}"
 echo -e "${BOLD}${GREEN}======================================================================${RESET}"
