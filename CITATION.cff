@@ -3,7 +3,7 @@ message: "If you use this software in your research, please cite it as below."
 authors:
   - family-names: "A S"
     given-names: "Shaik Hasan"
-title: "MedLite-CRC: An Ultra-Lightweight, Attention-Free CNN for Domain-Robust Colorectal Cancer Classification"
+title: "MedLite-CRC: A Lightweight Attention-Free CNN for Cross-Cohort Colorectal Histopathology Tissue Classification"
 version: 1.0.0
 date-released: 2026-06-29
 url: "https://github.com/shaik-hasan-AS/CRC_Classification"

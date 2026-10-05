@@ -1,4 +1,4 @@
-# MedLite-CRC: An Ultra-Lightweight, Attention-Free CNN for Cross-Cohort Colorectal Histopathology Tissue Classification
+# MedLite-CRC: A Lightweight Attention-Free CNN for Cross-Cohort Colorectal Histopathology Tissue Classification
 
 [![SOTA Accuracy](https://img.shields.io/badge/SOTA-96.27%25-brightgreen.svg)](#🔬-key-scientific-highlights)
 [![Model Size](https://img.shields.io/badge/Model%20Size-2.02MB-blue.svg)](#🔬-key-scientific-highlights)
@@ -160,7 +160,7 @@ bash scripts/replicate_all.sh
 If you find this code or our weights useful in your research, please cite:
 ```bibtex
 @misc{hasan2026medlite,
-  title={MedLite-CRC: An Ultra-Lightweight, Attention-Free CNN for Cross-Cohort Colorectal Histopathology Tissue Classification},
+  title={MedLite-CRC: A Lightweight Attention-Free CNN for Cross-Cohort Colorectal Histopathology Tissue Classification},
   author={Shaik Hasan A S},
   howpublished={\url{https://github.com/shaik-hasan-AS/CRC_Classification}},
   year={2026}

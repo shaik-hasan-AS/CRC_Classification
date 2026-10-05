@@ -1,4 +1,4 @@
-# MedLite-CRC: An Ultra-Lightweight, Attention-Free CNN for Cross-Cohort Colorectal Histopathology Tissue Classification
+# MedLite-CRC: A Lightweight Attention-Free CNN for Cross-Cohort Colorectal Histopathology Tissue Classification
 
 **Author:** Shaik Hasan A S
   
