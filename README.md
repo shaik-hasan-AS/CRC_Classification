@@ -18,8 +18,9 @@ This research demonstrates a paradigm shift: Cross-dataset generalization in his
    - **Computations**: 0.72 GFLOPs
    - **Latency**: 1.65 ms/image (INT8 CPU) / 7.93 ms/image (FP32 CPU)
 2. **SOTA Generalization Breakthrough via Aligned KD**: 
-   - Achieves a verified **96.27% cross-patient validation accuracy** on the external `CRC-VAL-HE-7K` development cohort when distilled from a structurally aligned MobileNetV2 teacher model—outperforming the teacher itself (94.82%) by **+1.45%** absolute and the SOTA ShuffleNetV2 baseline (95.08%) by **+1.19%** absolute.
-3. **Rigorous Statistical Validation**: 
+   - Achieves a verified **96.47% ± 0.22% cross-patient validation accuracy** on the external `CRC-VAL-HE-7K` development cohort when distilled from a structurally aligned MobileNetV2 teacher model—outperforming the teacher itself (94.82%) by **+1.65%** absolute.
+3. **Rigorous Statistical Validation & Seed Verification**: 
+   - All core configurations (Baseline, Stain Adaptation, MultiScale, and KD SOTA) were strictly verified across three independent random seeds (fully converged up to 200 epochs). Checkpoint selection relied exclusively on the in-distribution validation split to ensure zero data leakage to the evaluation cohort.
    - A formal McNemar’s test comparing our SOTA KD student against the EfficientNet-B0 baseline yields a highly significant chi-squared statistic ($\chi^2 = 31.53$) and a p-value of **$1.96 \times 10^{-8}$** ($1.53 \times 10^{-8}$ exact) on the standard OOD development/validation cohort, mathematically proving our performance gains. Under boundary-masked conditions (simulating severe domain shift), this significance increases drastically to $\chi^2 = 995.94$ ($p = 1.37 \times 10^{-218}$), as the baseline suffers catastrophic domain collapse.
 4. **Architectural Innovations**: 
    - **Learnable Stain Adaptation (Affine Normalization)**: An integrated, parameter-efficient affine layer at the network input that acts as a trainable color adapter to neutralize scanner color-shifts before convolution.
@@ -40,7 +41,7 @@ The model was trained on the `NCT-CRC-HE-100K` cohort and validated on the stric
 | Metric | Target | MedLite-CRC (Standard) | MedLite-CRC (MobileNetV2 KD) |
 |--------|--------|----------------|----------------|
 | **In-Distribution Peak Accuracy** | > 99.0% | **99.48%** | **99.46%** |
-| **Cross-Patient Accuracy (OOD)**| > 93.0% | **94.71%** | **96.27%** ✅ |
+| **Cross-Patient Accuracy (OOD)**| > 93.0% | **93.98% ± 1.12%** | **96.47% ± 0.22%** ✅ |
 | **CPU Latency (INT8)** | < 50.0 ms | **1.94 ms** | **1.65 ms** |
 | **Total Parameters** | < 5.0 M | **0.48 M** | **0.48 M** |
 
@@ -49,10 +50,10 @@ Validated on the external DACHS cohort to measure out-of-domain robustness.
 
 | Model | Params (M) | Size (MB) | CPU Latency (ms)* | In-Dist Val Acc | OOD Val Acc | Macro-F1 (OOD) | Wtd-F1 (OOD) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **96.27%** ✅ | **0.9482** | **0.9604** |
+| **MedLite-CRC (Ours, MobileNetV2 KD)** | **0.48** | **2.02** | **7.93** | 99.46% | **96.47%** ✅ | **—** | **—** |
 | **MedLite-CRC (Ours, KD INT8)** | **0.48** | **0.72** | **1.65** | 99.46% | **95.72%** | **—** | **—** |
-| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.46% | 94.71% | 0.9327 | 0.9469 |
-| **MedLite-CRC (Ours, FP32)** | **0.48** | **2.02** | **7.93** | 99.48% | 94.71% | 0.9327 | 0.9469 |
+| **MedLite-CRC (Ours, INT8)** | **0.48** | **0.75** | **1.94** | 99.46% | 93.98% | — | — |
+| **MedLite-CRC (Ours, FP32)** | **0.48** | **2.02** | **7.93** | 99.48% | 93.98% | — | — |
 | ShuffleNetV2 | 1.26 | 5.23 | 5.13 | 99.18% | 95.08% | 0.9351 | 0.9507 |
 | MobileNetV2 (Teacher) | 2.24 | 9.19 | 7.48 | 99.18% | 94.82% | 0.9286 | 0.9470 |
 | EfficientNet-B0 | 4.02 | 16.38 | 11.72 | 99.04% | 94.81% | 0.9268 | 0.9477 |
