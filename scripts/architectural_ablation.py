@@ -5,6 +5,12 @@ Instantiates MedLite-CRC architectural variants to measure their parameters
 and FLOPs. Generates a markdown table of the results.
 """
 
+import sys
+from pathlib import Path
+
+# Ensure repo root is on sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import torch
 from models.medlite_crc import MedLiteCRC, count_parameters
 

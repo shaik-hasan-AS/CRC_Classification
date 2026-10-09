@@ -150,11 +150,35 @@ To train the model from scratch on the 100K dataset:
 python train.py --config configs/config.yaml
 ```
 
-### 6. Peer-Reviewer Replication Guide (Replicating Results)
-We provide an interactive verification console that walks peer reviewers through reproducing every major table, figure, and scientific claim (OOD evaluation, multi-cohort validation, statistical significance, Expected Calibration Error, computational efficiency, and Grad-CAM spatial analysis) in the manuscript:
+### 6. ⚡ Peer-Reviewer Replication Guide (Reproduce All Results)
+
+We provide both an **interactive replication console** and **direct 1-liner commands** to verify every table, figure, and empirical claim reported in the manuscript:
+
+#### A. Automated Replication Console
 ```bash
+# Launch interactive replication console (select tasks 1-9)
 bash scripts/replicate_all.sh
+
+# Or run all quick analytical verifications (Tasks 1, 3, 4, 5, 7, 8, 9) non-interactively:
+bash scripts/replicate_all.sh all
 ```
+
+#### B. Direct 1-Liner Replication Matrix
+Reviewers can directly replicate any specific table, figure, or statistical test using the standalone commands below:
+
+| Manuscript Claim / Result | Section / Table | Standalone Command | Expected Output / Target Metric |
+| :--- | :---: | :--- | :--- |
+| **SOTA Cross-Patient OOD Accuracy** | **Table 1** | `python evaluate.py --config configs/config.yaml --checkpoint outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt` | **96.27%** Accuracy, Macro-F1: 0.9482 (3-seed mean: **96.47% ± 0.22%**) |
+| **Full Per-Class Evaluation** | **Sec 5.1** | `python scripts/run_full_eval.py` | Complete 9-class precision/recall/F1 & leave-one-out metrics |
+| **STARC-9 Benchmark (54k validation tiles)** | **Table 2 & Sec 5.5** | `bash scripts/run_starc9_benchmarks.sh` | **99.79%** (Standard) / **99.75%** (MobileNetV2 KD) |
+| **CRC-5000 Clinical Benchmark** | **Table 2 & Sec 5.5** | `bash scripts/run_crc5000_benchmarks.sh` | **92.00%** (Standard) / **93.94%** (MobileNetV2 KD) |
+| **Architectural Leave-One-Out Ablations** | **Table 3 & Sec 5.2** | `python scripts/architectural_ablation.py` | Baseline (0.453M / 0.35G), Stain (0.453M), MultiScale (0.482M / 0.73G), +SE (0.490M) |
+| **Paired McNemar's Significance Test** | **Sec 5.3** | `python scripts/statistical_test.py` | $\chi^2 = 31.53$, $p = 1.96 \times 10^{-8}$ vs EfficientNet-B0 |
+| **Expected Calibration Error (ECE)** | **Sec 5.6** | `python scripts/calibration_analysis.py` | Reliability diagrams & ECE optimization |
+| **Grad-CAM Spatial Mitigation** | **Sec 7** | `python scripts/analyze_gradcam_spatial.py --checkpoint outputs/checkpoints_kd_v2_v2/ckpt_epoch002_acc0.9935.pt --mask_border_width 8` | Vanishing grad rate: 10.30%, slide background noise reduction: 17.9% |
+| **Carbon Footprint & Efficiency** | **Sec 8 & Tab 8.1** | `python scripts/compute_efficiency_analysis.py` | Full CO$_2$ footprint & inference energy table (India grid 0.82 kg CO$_2$/kWh) |
+| **CPU Inference Latency Benchmark** | **Sec 8** | `python scripts/benchmark_all_cpu.py` | Latency (ms/img, batch size 1 across all 6 architectures) |
+| **INT8 Quantization Benchmark** | **Sec 8** | `python scripts/quantize_int8.py` | **0.72 MB** disk footprint, **95.72%** quantized OOD accuracy |
 
 ---
 
@@ -178,7 +202,7 @@ medlite_crc/
 ├── assets/          # High-resolution figures and performance plots
 ├── configs/         # YAML configurations for hyperparameters
 ├── data/            # Data loaders and stain normalization pipelines
-├── docs/            # Ablation notes, statistical significance, and manuscript draft
+├── docs/            # Ablation notes, statistical logs, and supplementary materials
 ├── models/          # MedLite-CRC architecture definition
 ├── outputs/         # Saved checkpoints, evaluation logs, and GradCAM visual outputs
 ├── scripts/         # Scripts for benchmarking, 3-seed validation, INT8 quantization, and GradCAM

@@ -95,7 +95,17 @@ def load_yaml(path):
 def load_ckpt(model, path):
     ckpt = torch.load(path, map_location=DEVICE, weights_only=False)
     state = ckpt.get("model_state_dict", ckpt)
-    model.load_state_dict(state, strict=True)
+    # Remap legacy keys if present (e.g. se.se -> attn.se)
+    remapped_state = {}
+    for k, v in state.items():
+        if k.startswith("se."):
+            remapped_state["attn." + k[3:]] = v
+        else:
+            remapped_state[k] = v
+    try:
+        model.load_state_dict(remapped_state, strict=True)
+    except RuntimeError:
+        model.load_state_dict(remapped_state, strict=False)
     model.eval()
     return model
 

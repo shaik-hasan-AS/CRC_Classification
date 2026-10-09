@@ -1,4 +1,10 @@
 import time
+import sys
+from pathlib import Path
+
+# Ensure repo root is on sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import torch
 import torchvision.models as models
 from torchvision.models import ResNet50_Weights, MobileNet_V2_Weights, ShuffleNet_V2_X1_0_Weights, EfficientNet_B0_Weights
