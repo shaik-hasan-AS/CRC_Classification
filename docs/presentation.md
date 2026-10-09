@@ -2,7 +2,7 @@
 
 > **Purpose:** A single, self-contained document to walk your research guide through everything accomplished in this internship project — what was built, why it matters, what failed, what succeeded, and what the results prove.
 >
-> **Full technical details:** See [`docs/manuscript_draft.md`](./manuscript_draft.md) | [`docs/ablation_notes.md`](./ablation_notes.md) | [`docs/experimental_logbook.md`](./experimental_logbook.md) | [`docs/supplementary_materials.md`](./supplementary_materials.md)
+> **Full technical details:** See Submitted Manuscript | [`docs/ablation_notes.md`](./ablation_notes.md) | [`docs/experimental_logbook.md`](./experimental_logbook.md) | [`docs/supplementary_materials.md`](./supplementary_materials.md)
 
 ---
 
@@ -283,7 +283,7 @@ This is perhaps the most clinically significant result. We took the pre-trained 
 
 **Bottom line:** MedLite-CRC is not just a CRC tissue classifier. It is a **general-purpose histopathological feature extractor** that transfers to biopsy diagnostics, tumor grading, and molecular phenotyping — all with the same 0.48M parameter backbone.
 
-> **Full transfer learning analysis:** [`docs/experimental_logbook.md §7`](./experimental_logbook.md) and [`docs/manuscript_draft.md §7.7`](./manuscript_draft.md)
+> **Full transfer learning analysis:** [`docs/experimental_logbook.md §7`](./experimental_logbook.md) and Submitted Manuscript (§7.7)
 
 ---
 
@@ -344,7 +344,7 @@ This is perhaps the most clinically significant result. We took the pre-trained 
 
 | Claim | Where to Find It |
 |---|---|
-| Full paper text | [`docs/manuscript_draft.md`](./manuscript_draft.md) |
+| Full paper text | Submitted Manuscript (available upon publication) |
 | Every ablation experiment narrative | [`docs/ablation_notes.md`](./ablation_notes.md) |
 | All raw per-class metrics, logbook | [`docs/experimental_logbook.md`](./experimental_logbook.md) |
 | Statistical tests, detailed negative ablations | [`docs/supplementary_materials.md`](./supplementary_materials.md) |

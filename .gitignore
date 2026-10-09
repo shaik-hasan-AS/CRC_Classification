@@ -20,5 +20,6 @@ __pycache__/
 # Temporary generated files
 configs/temp_*.yaml
 
-
-
+# Unpublished manuscript (excluded to prevent plagiarism / web crawler indexing)
+docs/*manuscript*
+rewrite_manuscript.py
