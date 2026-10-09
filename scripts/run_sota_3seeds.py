@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import yaml
 import json
@@ -52,7 +53,7 @@ def run_seed(seed, run_idx):
             
     if best_ckpt_path is None:
         print(f"🔄 Fine-tuning SOTA model with seed {seed}...")
-        train_cmd = [".venv/bin/python", "train.py", "--config", temp_config, "--finetune", FINETUNE_CKPT]
+        train_cmd = [sys.executable, "train.py", "--config", temp_config, "--finetune", FINETUNE_CKPT]
         
         log_file = f"outputs/logs_sota_seed{seed}/train_stdout.log"
         os.makedirs(f"outputs/logs_sota_seed{seed}", exist_ok=True)
@@ -75,7 +76,7 @@ def run_seed(seed, run_idx):
     
     # 4. Evaluate the model
     print(f"📊 Evaluating model on cross-val dataset...")
-    eval_cmd = [".venv/bin/python", "evaluate.py", "--config", temp_config, "--checkpoint", best_ckpt_path]
+    eval_cmd = [sys.executable, "evaluate.py", "--config", temp_config, "--checkpoint", best_ckpt_path]
     
     with open(f"outputs/logs_sota_seed{seed}/eval_stdout.log", "w") as lf:
         subprocess.run(eval_cmd, stdout=lf, stderr=subprocess.STDOUT, check=True)

@@ -2,7 +2,11 @@
 # Sequential execution of all CRC-5000 benchmarking runs.
 # MedLite-CRC + 4 Baselines.
 
-PYTHON=".venv/bin/python"
+if [ -f ".venv/bin/python" ]; then
+    PYTHON=".venv/bin/python"
+else
+    PYTHON="${PYTHON:-python3}"
+fi
 
 echo "========================================================"
 echo " CRC-5000 Benchmarking (MedLite-CRC vs Baselines)"

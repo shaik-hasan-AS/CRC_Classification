@@ -15,6 +15,12 @@ if [ ! -f "$SOTA_CKPT" ]; then
     exit 1
 fi
 
-.venv/bin/python train.py --config configs/kather_finetune.yaml --finetune "$SOTA_CKPT"
+if [ -f ".venv/bin/python" ]; then
+    PYTHON=".venv/bin/python"
+else
+    PYTHON="${PYTHON:-python3}"
+fi
+
+$PYTHON train.py --config configs/kather_finetune.yaml --finetune "$SOTA_CKPT"
 
 echo -e "${BOLD}${GREEN}Kather MSI/MSS optimization completed successfully!${RESET}"

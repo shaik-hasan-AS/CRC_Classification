@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import yaml
 import json
@@ -32,7 +33,7 @@ def run_seed(seed, run_idx):
         
     # 2. Train the model
     print(f"🔄 Training model with seed {seed}...")
-    train_cmd = [".venv/bin/python", "train.py", "--config", temp_config]
+    train_cmd = [sys.executable, "train.py", "--config", temp_config]
     
     # We use subprocess.run and pipe stdout to a file to keep the console clean
     log_file = f"outputs/logs_seed{seed}/train_stdout.log"
@@ -62,7 +63,7 @@ def run_seed(seed, run_idx):
     
     # 4. Evaluate the model
     print(f"📊 Evaluating model on cross-val dataset...")
-    eval_cmd = [".venv/bin/python", "evaluate.py", "--config", temp_config, "--checkpoint", best_ckpt_path]
+    eval_cmd = [sys.executable, "evaluate.py", "--config", temp_config, "--checkpoint", best_ckpt_path]
     
     with open(f"outputs/logs_seed{seed}/eval_stdout.log", "w") as lf:
         subprocess.run(eval_cmd, stdout=lf, stderr=subprocess.STDOUT, check=True)

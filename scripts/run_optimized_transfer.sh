@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 echo "Starting Optimized Transfer Learning on 3 Datasets"
-PYTHON=.venv/bin/python
+if [ -f ".venv/bin/python" ]; then
+    PYTHON=".venv/bin/python"
+else
+    PYTHON="${PYTHON:-python3}"
+fi
 
 SOTA_CKPT="outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt"
 

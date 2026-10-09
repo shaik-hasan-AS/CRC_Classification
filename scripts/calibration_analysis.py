@@ -272,9 +272,9 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Calibration & ECE Analysis')
-    parser.add_argument('--checkpoint', required=True,
+    parser.add_argument('--checkpoint', default='outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt',
                         help='Path to model checkpoint (.pt)')
-    parser.add_argument('--config', default='configs/config.yaml',
+    parser.add_argument('--config', default='configs/kd_mobilenet_teacher.yaml',
                         help='Path to config YAML file')
     parser.add_argument('--output_dir', default='assets/',
                         help='Directory to save reliability diagram')

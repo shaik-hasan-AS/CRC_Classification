@@ -16,7 +16,12 @@ try:
     from statsmodels.stats.contingency_tables import mcnemar
 except ImportError:
     print("Please install statsmodels to run this script: pip install statsmodels")
-    exit(1)
+import sys
+import os
+from pathlib import Path
+
+# Ensure repo root is on sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from data.dataset import get_crossval_loader, CRC_CLASSES
 from models.medlite_crc import build_model
@@ -116,9 +121,9 @@ def main(args):
         print("\nConclusion: The difference between the models is NOT statistically significant (p >= 0.05).")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Run McNemar's test on model predictions.")
     parser.add_argument("--config", default="configs/config.yaml")
-    parser.add_argument("--ckpt_a", required=True, help="Checkpoint for MedLite-CRC")
-    parser.add_argument("--ckpt_b", required=True, help="Checkpoint for Baseline Model")
+    parser.add_argument("--ckpt_a", default="outputs/checkpoints_kd_mobilenet/ckpt_epoch058_acc0.9946.pt", help="Checkpoint for MedLite-CRC")
+    parser.add_argument("--ckpt_b", default="outputs/checkpoints_efficientnetb0/ckpt_epoch053_acc0.9904.pt", help="Checkpoint for Baseline Model (EfficientNet-B0)")
     args = parser.parse_args()
     main(args)

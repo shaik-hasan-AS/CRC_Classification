@@ -2,7 +2,11 @@
 # Sequential execution of all STARC-9 10% benchmarking runs.
 # MedLite-CRC + 4 Baselines.
 
-PYTHON=".venv/bin/python"
+if [ -f ".venv/bin/python" ]; then
+    PYTHON=".venv/bin/python"
+else
+    PYTHON="${PYTHON:-python3}"
+fi
 
 echo "========================================================"
 echo " STARC-9 10% Benchmarking (MedLite-CRC vs Baselines)"

@@ -3,7 +3,11 @@
 # Results will prove MedLite-CRC efficiency vs heavy baselines
 
 EVAL_CONFIG="configs/crc7k_eval.yaml"
-PYTHON=".venv/bin/python"
+if [ -f ".venv/bin/python" ]; then
+    PYTHON=".venv/bin/python"
+else
+    PYTHON="${PYTHON:-python3}"
+fi
 
 echo "========================================================"
 echo " Baseline Evaluation on CRC-VAL-HE-7K (Cross-Patient)"
